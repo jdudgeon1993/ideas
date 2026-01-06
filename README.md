@@ -266,6 +266,138 @@
                     <div class="flex gap-2 pt-4">
                         <button @click="transferModal.show = false" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-black uppercase text-xs">Cancel</button>
                         <button @click="executeTransfer()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black uppercase text-xs shadow-lg shadow-indigo-100">Move Now</button>
+                                    <button @click="forms.recipe.tempIngs.splice(idx, 1)" class="ml-2">&times;</button>
+                        </div>
+                    </template>
+                </div>
+                <button @click="saveRecipe()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Save Recipe</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <template x-for="recipe in recipes" :key="recipe.id">
+                    <div class="bg-white p-5 rounded-2xl border-white hover:border-indigo-100 border-2 transition-all shadow-sm">
+                        <div class="flex justify-between">
+                            <h3 class="font-black text-lg" x-text="recipe.title"></h3>
+                            <button @click="deleteItem('recipes', recipe.id)" class="text-[10px] font-black text-gray-300 hover:text-red-500 uppercase">Del</button>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-4">
+                            <template x-for="i in recipe.ingredients">
+                                <span class="text-[10px] px-2 py-1 rounded-md border font-black uppercase" :class="getIngredientStatusClass(i.name)" x-text="i.name"></span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <section x-show="activeTab === 'Meal Plan'" class="space-y-4">
+            <h2 class="text-2xl font-black tracking-tight uppercase">Schedule</h2>
+            <div class="bg-white p-4 rounded-2xl border border-gray-200 flex flex-wrap gap-2 shadow-sm">
+                <select x-model="forms.plan.recipeId" class="border p-2 flex-1 rounded-xl text-sm font-bold outline-none">
+                    <option value="">Choose Recipe...</option>
+                    <template x-for="r in recipes">
+                        <option :value="r.id" x-text="r.title"></option>
+                    </template>
+                </select>
+                <input type="date" x-model="forms.plan.date" class="border p-2 rounded-xl text-sm font-bold outline-none">
+                <button @click="addToPlan()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black uppercase text-[10px]">Add to Plan</button>
+            </div>
+            <div class="grid gap-3">
+                <template x-for="plan in sortedMealPlan" :key="plan.id">
+                    <div class="bg-white p-4 flex justify-between items-center rounded-2xl border-l-4 border-indigo-500 shadow-sm">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-gray-50 p-2 rounded-xl text-center min-w-[65px]">
+                                <span class="text-[10px] font-black text-gray-400 block uppercase" x-text="formatDateDay(plan.date)"></span>
+                                <span class="text-xl font-black text-indigo-600" x-text="formatDateNum(plan.date)"></span>
+                            </div>
+                            <h4 class="font-black text-gray-800 text-lg" x-text="getRecipeName(plan.recipeId)"></h4>
+                        </div>
+                        <button @click="cookMeal(plan)" class="bg-gray-900 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-black transition">Mark Cooked</button>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <section x-show="activeTab === 'Shopping'" class="space-y-4">
+            <h2 class="text-2xl font-black tracking-tight uppercase">Shopping List</h2>
+            <div class="space-y-6">
+                <template x-for="(items, category) in groupedShoppingList" :key="category">
+                    <div class="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+                        <div class="bg-gray-900 px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest" x-text="category"></div>
+                        <div class="divide-y divide-gray-50">
+                            <template x-for="item in items" :key="item.name">
+                                <div class="p-6 flex flex-col lg:flex-row justify-between gap-6">
+                                    <div class="flex-1">
+                                        <p class="font-black text-2xl text-gray-800" x-text="item.name"></p>
+                                        <span class="text-red-500 text-[10px] font-black uppercase" x-text="'Suggested: ' + item.shortage + ' ' + item.unit"></span>
+                                    </div>
+                                    <div class="bg-indigo-50/50 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end border border-indigo-50">
+                                        <div>
+                                            <label class="text-[9px] font-black text-indigo-400 uppercase">Bought Qty</label>
+                                            <input type="number" x-model.number="item.shortage" class="w-full border p-2 rounded-xl text-sm font-black outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="text-[9px] font-black text-indigo-400 uppercase">Destination</label>
+                                            <select x-model="item.location" class="w-full border p-2 rounded-xl text-sm font-black outline-none">
+                                                <template x-for="loc in locations">
+                                                    <option :value="loc" x-text="loc"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[9px] font-black text-indigo-400 uppercase">Expiry</label>
+                                            <input type="date" x-model="item.boughtExpiry" class="w-full border p-2 rounded-xl text-sm font-black outline-none">
+                                        </div>
+                                        <button @click="checkoutItem(item)" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-md transition active:scale-95">Confirm</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <section x-show="activeTab === 'Settings'" class="space-y-6">
+            <h2 class="text-2xl font-black tracking-tight uppercase">Settings</h2>
+            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                <h3 class="font-black text-xs uppercase text-gray-400 mb-4">Storage Locations</h3>
+                <div class="flex mb-4 gap-2">
+                    <input type="text" x-model="newLocName" class="border p-2 flex-1 rounded-xl text-sm outline-none" placeholder="e.g. Garage Freezer">
+                    <button @click="addLocation()" class="bg-gray-800 text-white px-4 rounded-xl font-black uppercase text-xs">Add</button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="loc in locations">
+                        <div class="bg-gray-50 px-3 py-1 rounded-lg flex items-center text-[10px] font-black uppercase border border-gray-200">
+                            <span x-text="loc"></span>
+                            <button @click="removeList('locations', loc)" class="ml-2 text-red-500">&times;</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </section>
+
+        <div x-show="transferModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg" x-transition>
+            <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 border border-gray-100" @click.away="transferModal.show = false">
+                <h3 class="text-xl font-black text-gray-800 mb-2 uppercase tracking-tight">Move Item</h3>
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-6" x-text="'Currently in: ' + transferModal.batch?.location"></p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-indigo-500 uppercase">Quantity to Move</label>
+                        <input type="number" step="0.1" x-model.number="transferModal.moveQty" class="w-full border-2 border-indigo-50 p-3 rounded-xl text-lg font-black outline-none focus:border-indigo-400">
+                        <p class="text-[9px] text-gray-400 mt-1" x-text="'Max available: ' + transferModal.batch?.qty"></p>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black text-indigo-500 uppercase">New Location</label>
+                        <select x-model="transferModal.newLoc" class="w-full border-2 border-indigo-50 p-3 rounded-xl font-black text-sm outline-none focus:border-indigo-400">
+                            <template x-for="loc in locations">
+                                <option :value="loc" x-text="loc"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button @click="transferModal.show = false" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-black uppercase text-xs">Cancel</button>
+                        <button @click="executeTransfer()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black uppercase text-xs shadow-lg shadow-indigo-100">Move Now</button>
                     </div>
                 </div>
             </div>
