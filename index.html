@@ -1,489 +1,1981 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartPantry - Fully Integrated v5.7</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        [x-cloak] { display: none !important; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .tab-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 800; }
-        .modal-bg { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chef's Cove | Kitchen OS (Pantry First)</title>
+<style>
+/* ---------------------------------------------------
+   🌸 COLOR PALETTE & THEMES
+--------------------------------------------------- */
+:root {
+  --sage: #8A9A5B;
+  --oat: #F1E9D2;
+  --clay: #B36A5E;
+  --cream: #FAF9F6;
+  --ink: #2F3E46;
+  --rose: #C2918C;
+  --blush: #E8D4CE;
+  --shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+body.theme-daylight {
+  --sage: #8A9A5B;
+  --oat: #F1E9D2;
+  --clay: #B36A5E;
+  --cream: #FAF9F6;
+  --ink: #2F3E46;
+  --rose: #C2918C;
+  --blush: #E8D4CE;
+}
+body.theme-hearth {
+  --sage: #9C6B4F;
+  --oat: #F2DFCF;
+  --clay: #7A3E2E;
+  --cream: #FDF6EE;
+  --ink: #3B2A2A;
+  --rose: #C87A7A;
+  --blush: #E2C0B3;
+}
+body.theme-garden {
+  --sage: #6D8B55;
+  --oat: #E6F0DD;
+  --clay: #A5695F;
+  --cream: #F7FBF2;
+  --ink: #244034;
+  --rose: #99B58A;
+  --blush: #D4E1C3;
+}
+
+/* ---------------------------------------------------
+   GLOBAL
+--------------------------------------------------- */
+body {
+  font-family: 'Georgia', serif;
+  background: var(--oat);
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.6;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+small { font-size: 0.75rem; }
+
+/* ---------------------------------------------------
+   HEADER
+--------------------------------------------------- */
+header {
+  background: rgba(138,154,91,0.9);
+  color: white;
+  padding: 1.1rem 1rem;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  letter-spacing: 0.08em;
+}
+
+header p {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  opacity: 0.95;
+}
+
+.theme-toggle {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.theme-toggle button {
+  border: none;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(250,249,246,0.2);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.75rem;
+  transition: 0.2s ease;
+}
+.theme-toggle button.active {
+  background: #fff;
+  color: var(--sage);
+}
+
+/* ---------------------------------------------------
+   LAYOUT
+--------------------------------------------------- */
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 18px 40px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .dashboard {
+    grid-template-columns: 1.1fr 1.1fr 0.9fr;
+    gap: 24px;
+    padding: 32px 32px 48px;
+  }
+}
+
+/* ---------------------------------------------------
+   CARD
+--------------------------------------------------- */
+.card {
+  background: var(--cream);
+  border-radius: 22px;
+  padding: 20px 20px 22px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(0,0,0,0.03);
+  transition: 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+}
+
+/* ---------------------------------------------------
+   HEADINGS
+--------------------------------------------------- */
+h2, h3 {
+  color: var(--clay);
+  padding-bottom: 6px;
+  position: relative;
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+h2::after, h3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 60px;
+  height: 3px;
+  background: var(--rose);
+  border-radius: 2px;
+}
+
+/* ---------------------------------------------------
+   PANTRY
+--------------------------------------------------- */
+.pantry-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.pantry-filters select {
+  font-size: 0.8rem;
+}
+
+.pantry-list {
+  margin-top: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.pantry-item {
+  margin-bottom: 14px;
+}
+
+.pantry-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pantry-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.pantry-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.pantry-actions button {
+  border: none;
+  background: #fff;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  color: var(--sage);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.pantry-meta {
+  font-size: 0.75rem;
+  color: rgba(0,0,0,0.7);
+}
+
+.pantry-locations {
+  font-size: 0.78rem;
+  margin-top: 4px;
+}
+
+.bar-container {
+  background: #eee;
+  height: 10px;
+  border-radius: 6px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: var(--sage);
+  transition: width 0.4s ease;
+}
+
+.bar-fill.low {
+  background: var(--clay);
+}
+
+/* ---------------------------------------------------
+   INPUTS & BUTTONS
+--------------------------------------------------- */
+.form-group {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+input, select, textarea {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-family: inherit;
+  background: #fff;
+  font-size: 0.85rem;
+}
+
+textarea {
+  min-height: 70px;
+  resize: vertical;
+}
+
+.btn {
+  background: linear-gradient(135deg, var(--sage), var(--rose));
+  color: white;
+  border: none;
+  padding: 9px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.25s ease;
+  font-size: 0.85rem;
+}
+.btn:hover {
+  filter: brightness(92%);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--sage);
+  color: var(--sage);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------------------------------------------------
+   RECIPES
+--------------------------------------------------- */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.recipe-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 12px;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.05);
+  transition: 0.22s ease;
+  font-size: 0.9rem;
+}
+
+.recipe-card:hover {
+  border-color: var(--sage);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.recipe-name {
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.recipe-status {
+  margin-top: 4px;
+  font-size: 0.75rem;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--blush);
+  color: var(--ink);
+  font-size: 0.7rem;
+  margin-right: 4px;
+  margin-top: 3px;
+}
+
+/* ---------------------------------------------------
+   PLANNER
+--------------------------------------------------- */
+.day-list {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+@media (min-width: 768px) {
+  .day-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.day-row {
+  background: #fff;
+  border-radius: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.day-status {
+  font-size: 0.7rem;
+  margin-top: 4px;
+  color: rgba(0,0,0,0.7);
+}
+
+/* ---------------------------------------------------
+   SHOPPING & SEASONAL
+--------------------------------------------------- */
+.shopping-section {
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+.shopping-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.shopping-item input[type="checkbox"] {
+  margin-top: 3px;
+}
+
+.shopping-label {
+  flex: 1;
+}
+
+.shopping-meta {
+  font-size: 0.75rem;
+  color: rgba(0,0,0,0.7);
+}
+
+.shopping-source {
+  font-size: 0.7rem;
+  color: rgba(0,0,0,0.6);
+}
+
+#shopping-list {
+  background: #fff7ec;
+  padding: 10px;
+  border-radius: 12px;
+  margin-top: 8px;
+  border-left: 4px solid var(--clay);
+  font-size: 0.8rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.seasonal {
+  margin-top: 12px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.seasonal-item {
+  margin-bottom: 4px;
+}
+
+/* ---------------------------------------------------
+   MODALS (BASE)
+--------------------------------------------------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(4px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--cream);
+  padding: 22px 18px 18px;
+  border-radius: 18px;
+  width: 92%;
+  max-width: 520px;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.3s ease;
+  position: relative;
+  font-size: 0.85rem;
+}
+
+.modal h3 {
+  margin-top: 0;
+  font-size: 1rem;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  cursor: pointer;
+  color: var(--clay);
+}
+
+.modal-section-title {
+  font-weight: bold;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* ---------------------------------------------------
+   RECIPE CARD MODAL (HYBRID AESTHETIC)
+--------------------------------------------------- */
+.recipe-card-modal {
+  max-width: 640px;
+  padding-top: 36px;
+  background: #fdfaf5;
+  background-image: linear-gradient(180deg, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 100% 26px;
+  position: relative;
+}
+
+.recipe-card-tab {
+  position: absolute;
+  top: -18px;
+  left: 40px;
+  padding: 4px 16px;
+  border-radius: 10px 10px 2px 2px;
+  background: var(--sage);
+  color: #fff;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.recipe-card-header {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.recipe-card-title {
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+}
+
+.recipe-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+.recipe-card-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .recipe-card-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recipe-card-section-title {
+  font-weight: bold;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+
+.recipe-card-ingredients {
+  font-size: 0.8rem;
+}
+
+.recipe-card-steps {
+  font-size: 0.8rem;
+}
+
+.recipe-card-footer {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #eee;
+  font-size: 0.7rem;
+  margin-right: 4px;
+}
+
+/* ---------------------------------------------------
+   COOK CONFIRMATION MODAL
+--------------------------------------------------- */
+.confirm-list {
+  font-size: 0.8rem;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+
+/* ---------------------------------------------------
+   UTILITY
+--------------------------------------------------- */
+</style>
 </head>
-<body class="bg-gray-100 p-4 md:p-8 font-sans text-gray-900">
+<body class="theme-daylight">
 
-    <div x-data="pantryApp()" x-init="init()" x-cloak class="max-w-5xl mx-auto space-y-6">
-        
-        <nav class="flex border-b border-gray-200 space-x-2 md:space-x-6 overflow-x-auto bg-white p-2 rounded-t-2xl shadow-sm sticky top-0 z-20">
-            <template x-for="tab in ['Pantry', 'Recipes', 'Meal Plan', 'Shopping', 'Settings']">
-                <button @click="activeTab = tab" 
-                        :class="activeTab === tab ? 'tab-active' : 'text-gray-400'" 
-                        class="pb-2 px-4 text-xs md:text-sm uppercase tracking-widest transition-all whitespace-nowrap" 
-                        x-text="tab"></button>
-            </template>
-        </nav>
+<header>
+  <div class="header-inner">
+    <div>
+      <h1>🌿 Chef's Cove</h1>
+      <p>Pantry‑first, multi‑location, recipe‑card kitchen OS.</p>
+    </div>
+    <div class="theme-toggle">
+      <span>Theme:</span>
+      <button onclick="setTheme('daylight')" class="active" id="btn-daylight">Daylight</button>
+      <button onclick="setTheme('hearth')" id="btn-hearth">Hearth</button>
+      <button onclick="setTheme('garden')" id="btn-garden">Garden</button>
+    </div>
+  </div>
+</header>
 
-        <section x-show="activeTab === 'Pantry'" class="space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 class="text-2xl font-black tracking-tight uppercase">Inventory</h2>
-                <select x-model="filterLocation" class="text-sm border p-2 rounded-xl bg-white shadow-sm font-bold text-indigo-600 outline-none">
-                    <option value="">All Storage</option>
-                    <template x-for="loc in locations">
-                        <option :value="loc" x-text="loc"></option>
-                    </template>
-                </select>
-            </div>
+<!-- ADD INGREDIENT MODAL -->
+<div class="modal-backdrop" id="addIngModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('addIngModal')">×</button>
+    <h3>➕ Add ingredient</h3>
+    <small>Pantry is your source of truth. Everything else depends on it.</small>
+    <div class="form-group">
+      <input type="text" id="modal-ing-name" placeholder="Name (e.g., Chicken breast)">
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="modal-ing-qty" placeholder="Quantity" min="0" step="0.1" style="flex:1;">
+        <input type="text" id="modal-ing-unit" placeholder="Unit (e.g., lb, g, pcs, bag)" style="flex:1;">
+      </div>
+      <div style="display:flex; gap:6px;">
+        <select id="modal-ing-category" style="flex:1;">
+          <option value="">Category</option>
+          <option value="Meat">Meat</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Produce">Produce</option>
+          <option value="Pantry">Pantry Staples</option>
+          <option value="Frozen">Frozen</option>
+          <option value="Spices">Spices</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="modal-ing-location" style="flex:1;">
+          <option value="">Location</option>
+          <option value="Pantry">Pantry</option>
+          <option value="Fridge">Fridge</option>
+          <option value="Freezer">Freezer</option>
+          <option value="Counter">Counter</option>
+        </select>
+      </div>
+      <input type="number" id="modal-ing-threshold" placeholder="Low stock threshold (total)" min="0" step="0.1">
+      <input type="date" id="modal-ing-expiry" placeholder="Expiry (optional)">
+      <input type="text" id="modal-ing-notes" placeholder="Notes (optional)">
+      <button class="btn" onclick="saveIngredient()">Save to pantry</button>
+    </div>
+  </div>
+</div>
 
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="md:col-span-2">
-                        <label class="text-[10px] font-black text-gray-400 uppercase">Item Name</label>
-                        <input type="text" x-model="forms.pantry.name" placeholder="e.g. Ground Beef" class="w-full border p-2 rounded-xl outline-none focus:ring-2 ring-indigo-100">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-indigo-500 uppercase">Batch Expiry</label>
-                        <input type="date" x-model="forms.pantry.expiry_date" class="w-full border p-2 rounded-xl bg-indigo-50 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-gray-400 uppercase">Qty & Unit</label>
-                        <div class="flex">
-                            <input type="number" step="0.1" x-model.number="forms.pantry.qty" class="w-1/2 border p-2 rounded-l-xl">
-                            <input type="text" x-model="forms.pantry.unit" placeholder="lb/oz" class="w-1/2 border p-2 rounded-r-xl border-l-0">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-orange-500 uppercase">Min Stock</label>
-                        <input type="number" step="0.1" x-model.number="forms.pantry.min_threshold" class="w-full border p-2 rounded-xl">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-gray-400 uppercase">Store In</label>
-                        <select x-model="forms.pantry.location" class="w-full border p-2 rounded-xl">
-                            <template x-for="loc in locations">
-                                <option :value="loc" x-text="loc"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-gray-400 uppercase">Category</label>
-                        <select x-model="forms.pantry.category" class="w-full border p-2 rounded-xl">
-                            <template x-for="cat in categories">
-                                <option :value="cat" x-text="cat"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <button @click="savePantryItem()" class="md:col-span-1 bg-indigo-600 text-white p-2 rounded-xl font-black hover:bg-indigo-700 transition self-end h-[42px] uppercase text-xs">Add Batch</button>
-                </div>
-            </div>
+<!-- EDIT INGREDIENT MODAL -->
+<div class="modal-backdrop" id="editIngModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('editIngModal')">×</button>
+    <h3 id="edit-ing-title">Edit ingredient</h3>
+    <div id="edit-ing-locations" style="font-size:0.78rem; margin-bottom:6px;"></div>
+    <div class="form-group">
+      <div style="display:flex; gap:6px;">
+        <input type="text" id="edit-ing-unit" placeholder="Unit label" style="flex:1;">
+        <input type="number" id="edit-ing-threshold" placeholder="Low stock threshold (total)" min="0" step="0.1" style="flex:1;">
+      </div>
+      <div style="display:flex; gap:6px;">
+        <select id="edit-ing-category" style="flex:1;">
+          <option value="">Category</option>
+          <option value="Meat">Meat</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Produce">Produce</option>
+          <option value="Pantry">Pantry Staples</option>
+          <option value="Frozen">Frozen</option>
+          <option value="Spices">Spices</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" id="edit-ing-notes" placeholder="Notes (optional)" style="flex:1;">
+      </div>
+      <button class="btn" onclick="updateIngredient()">Update</button>
+      <button class="btn btn-ghost" style="margin-top:4px;" onclick="deleteIngredient()">Remove from pantry</button>
+    </div>
+  </div>
+</div>
 
-            <div class="grid gap-4">
-                <template x-for="item in filteredPantryItems" :key="item.id">
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden" :class="getTotalQty(item) <= item.min_threshold ? 'border-orange-300 ring-1 ring-orange-100' : ''">
-                        <div class="p-4 flex justify-between items-center bg-white border-b border-gray-50">
-                            <div>
-                                <h3 class="font-black text-lg text-gray-800" x-text="item.name"></h3>
-                                <span class="text-[10px] font-black text-gray-400 uppercase" x-text="item.category"></span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-2xl font-black text-gray-800" x-text="getTotalQty(item)"></span>
-                                <span class="text-[10px] text-gray-400 font-black block uppercase" x-text="item.unit"></span>
-                            </div>
-                        </div>
+<!-- TRANSFER MODAL -->
+<div class="modal-backdrop" id="transferModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('transferModal')">×</button>
+    <h3 id="transfer-title">Transfer ingredient</h3>
+    <small>Move quantity between locations (e.g., Freezer → Fridge).</small>
+    <div class="form-group">
+      <div style="display:flex; gap:6px;">
+        <select id="transfer-from" style="flex:1;">
+          <option value="">From location</option>
+        </select>
+        <select id="transfer-to" style="flex:1;">
+          <option value="">To location</option>
+          <option value="Pantry">Pantry</option>
+          <option value="Fridge">Fridge</option>
+          <option value="Freezer">Freezer</option>
+          <option value="Counter">Counter</option>
+        </select>
+      </div>
+      <input type="number" id="transfer-qty" placeholder="Quantity to move" min="0" step="0.1">
+      <input type="date" id="transfer-expiry" placeholder="New expiry (optional)">
+      <button class="btn" onclick="confirmTransfer()">Transfer</button>
+    </div>
+  </div>
+</div>
 
-                        <div class="p-3 bg-gray-50/30 space-y-2">
-                            <template x-for="(batch, index) in getFilteredBatches(item)">
-                                <div class="flex flex-wrap md:flex-nowrap justify-between items-center bg-white p-3 rounded-xl border border-gray-100 shadow-sm gap-4">
-                                    <div class="flex-1 min-w-[120px]">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-[10px] font-black uppercase" :class="getExpiryTextClass(batch.expiry)" x-text="getExpiryLabel(batch.expiry)"></span>
-                                            <span class="text-[10px] px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-md font-black uppercase" x-text="batch.location"></span>
-                                        </div>
-                                        <span class="text-xs font-bold text-gray-400" x-text="batch.expiry ? formatDate(batch.expiry) : 'Shelf Stable'"></span>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <button @click="openTransferModal(item, batch)" class="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg transition">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                                        </button>
-                                        <div class="flex items-center bg-gray-50 rounded-xl p-1 border">
-                                            <button @click="adjustBatch(item, batch, -0.1)" class="w-8 h-8 font-black text-gray-400 hover:text-red-500">-</button>
-                                            <input type="number" step="0.1" x-model.number="batch.qty" @change="save()" class="w-12 bg-transparent text-center font-black text-sm outline-none">
-                                            <button @click="adjustBatch(item, batch, 0.1)" class="w-8 h-8 font-black text-gray-400 hover:text-green-500">+</button>
-                                        </div>
-                                        <button @click="removeBatch(item, batch)" class="text-gray-300 hover:text-red-500 font-black text-xl px-2">&times;</button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </section>
-
-        <section x-show="activeTab === 'Recipes'" class="space-y-4">
-            <h2 class="text-2xl font-black tracking-tight uppercase">Recipes</h2>
-            <div class="bg-white p-6 rounded-2xl shadow-md border border-gray-200 space-y-4">
-                <input type="text" x-model="forms.recipe.title" placeholder="Recipe Title" class="w-full text-xl font-black border-b pb-2 outline-none">
-                <div class="flex gap-2">
-                    <input type="text" x-model="forms.recipe.ingName" placeholder="Ingredient Name" class="border p-2 flex-1 rounded-xl text-sm">
-                    <input type="number" step="0.1" x-model.number="forms.recipe.ingQty" class="border p-2 w-20 rounded-xl text-sm" placeholder="Qty">
-                    <button @click="addIngToRecipeForm()" class="bg-gray-900 text-white px-6 rounded-xl font-black text-[10px] uppercase">Add</button>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="(ing, idx) in forms.recipe.tempIngs">
-                        <div class="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center">
-                            <span x-text="ing.name + ': ' + ing.qty"></span>
-                            <button @click="forms.recipe.tempIngs.splice(idx, 1)" class="ml-2 font-bold">&times;</button>
-                        </div>
-                    </template>
-                </div>
-                <button @click="saveRecipe()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black uppercase text-xs shadow-lg">Save Recipe</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <template x-for="recipe in recipes" :key="recipe.id">
-                    <div class="bg-white p-5 rounded-2xl border-white hover:border-indigo-100 border-2 transition-all shadow-sm">
-                        <div class="flex justify-between">
-                            <h3 class="font-black text-lg" x-text="recipe.title"></h3>
-                            <button @click="deleteItem('recipes', recipe.id)" class="text-[10px] font-black text-gray-300 hover:text-red-500 uppercase">Delete</button>
-                        </div>
-                        <div class="flex flex-wrap gap-1 mt-4">
-                            <template x-for="i in recipe.ingredients">
-                                <span class="text-[10px] px-2 py-1 rounded-md border font-black uppercase flex items-center gap-1" :class="getIngredientStatusClass(i.name)">
-                                    <span x-text="i.name"></span>
-                                    <template x-show="isIngredientExpired(i.name)">
-                                        <span class="text-[8px] bg-red-100 text-red-600 px-1 rounded">EXPIRED!</span>
-                                    </template>
-                                </span>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </section>
-
-        <section x-show="activeTab === 'Meal Plan'" class="space-y-4">
-            <h2 class="text-2xl font-black tracking-tight uppercase">Meal Plan</h2>
-            <div class="bg-white p-4 rounded-2xl border border-gray-200 flex flex-wrap gap-2 shadow-sm">
-                <select x-model="forms.plan.recipeId" class="border p-2 flex-1 rounded-xl text-sm font-bold outline-none">
-                    <option value="">Select a Recipe...</option>
-                    <template x-for="r in recipes">
-                        <option :value="r.id" x-text="r.title"></option>
-                    </template>
-                </select>
-                <input type="date" x-model="forms.plan.date" class="border p-2 rounded-xl text-sm font-bold outline-none">
-                <button @click="addToPlan()" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-black uppercase text-[10px]">Add to Plan</button>
-            </div>
-            <div class="grid gap-3">
-                <template x-for="plan in sortedMealPlan" :key="plan.id">
-                    <div class="bg-white p-4 flex justify-between items-center rounded-2xl border-l-4 border-indigo-500 shadow-sm">
-                        <div class="flex items-center space-x-4">
-                            <div class="bg-gray-50 p-2 rounded-xl text-center min-w-[65px]">
-                                <span class="text-[10px] font-black text-gray-400 block uppercase" x-text="formatDateDay(plan.date)"></span>
-                                <span class="text-xl font-black text-indigo-600" x-text="formatDateNum(plan.date)"></span>
-                            </div>
-                            <h4 class="font-black text-gray-800 text-lg" x-text="getRecipeName(plan.recipeId)"></h4>
-                        </div>
-                        <button @click="cookMeal(plan)" class="bg-gray-900 text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-black transition">Mark Cooked</button>
-                    </div>
-                </template>
-            </div>
-        </section>
-
-        <section x-show="activeTab === 'Shopping'" class="space-y-4">
-            <h2 class="text-2xl font-black tracking-tight uppercase">Shopping List</h2>
-            <div class="space-y-6">
-                <template x-for="(items, category) in groupedShoppingList" :key="category">
-                    <div class="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
-                        <div class="bg-gray-900 px-4 py-3 text-[10px] font-black text-white uppercase tracking-widest" x-text="category"></div>
-                        <div class="divide-y divide-gray-50">
-                            <template x-for="item in items" :key="item.name">
-                                <div class="p-6 flex flex-col lg:flex-row justify-between gap-6">
-                                    <div class="flex-1">
-                                        <p class="font-black text-2xl text-gray-800" x-text="item.name"></p>
-                                        <span class="text-red-500 text-[10px] font-black uppercase" x-text="'Need: ' + item.shortage + ' ' + item.unit"></span>
-                                        <p x-show="item.reason === 'expired'" class="text-[9px] text-orange-500 font-bold uppercase mt-1 italic">* Replacing expired stock</p>
-                                    </div>
-                                    <div class="bg-indigo-50/50 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 items-end border border-indigo-50">
-                                        <div>
-                                            <label class="text-[9px] font-black text-indigo-400 uppercase">Bought Qty</label>
-                                            <input type="number" step="0.1" x-model.number="item.shortage" class="w-full border p-2 rounded-xl text-sm font-black outline-none bg-white">
-                                        </div>
-                                        <div>
-                                            <label class="text-[9px] font-black text-indigo-400 uppercase">Location</label>
-                                            <select x-model="item.location" class="w-full border p-2 rounded-xl text-sm font-black outline-none bg-white">
-                                                <template x-for="loc in locations">
-                                                    <option :value="loc" x-text="loc"></option>
-                                                </template>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label class="text-[9px] font-black text-indigo-400 uppercase">Expiry</label>
-                                            <input type="date" x-model="item.boughtExpiry" class="w-full border p-2 rounded-xl text-sm font-black outline-none bg-white">
-                                        </div>
-                                        <button @click="checkoutItem(item)" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase shadow-md transition active:scale-95">Check-In</button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </section>
-
-        <section x-show="activeTab === 'Settings'" class="space-y-6">
-            <h2 class="text-2xl font-black tracking-tight uppercase">Settings</h2>
-            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                <h3 class="font-black text-xs uppercase text-gray-400 mb-4">Storage Locations</h3>
-                <div class="flex mb-4 gap-2">
-                    <input type="text" x-model="newLocName" class="border p-2 flex-1 rounded-xl text-sm outline-none" placeholder="e.g. Garage Freezer">
-                    <button @click="addLocation()" class="bg-gray-800 text-white px-4 rounded-xl font-black uppercase text-xs">Add</button>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="loc in locations">
-                        <div class="bg-gray-50 px-3 py-1 rounded-lg flex items-center text-[10px] font-black uppercase border border-gray-200">
-                            <span x-text="loc"></span>
-                            <button @click="removeList('locations', loc)" class="ml-2 text-red-500 font-bold">&times;</button>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </section>
-
-        <div x-show="transferModal.show" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-bg" x-transition x-cloak>
-            <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 border border-gray-100" @mousedown.self="transferModal.show = false">
-                <h3 class="text-xl font-black text-gray-800 mb-2 uppercase">Move Stock</h3>
-                <p class="text-[10px] font-bold text-gray-400 uppercase mb-6" x-text="'Currently in: ' + (transferModal.batch ? transferModal.batch.location : '')"></p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-black text-indigo-500 uppercase">Amount to Transfer</label>
-                        <input type="number" step="0.1" x-model.number="transferModal.moveQty" class="w-full border-2 border-indigo-50 p-3 rounded-xl text-lg font-black outline-none focus:border-indigo-400">
-                        <p class="text-[9px] text-gray-400 mt-1" x-text="'Max: ' + (transferModal.batch ? transferModal.batch.qty : 0)"></p>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-black text-indigo-500 uppercase">New Location</label>
-                        <select x-model="transferModal.newLoc" class="w-full border-2 border-indigo-50 p-3 rounded-xl font-black text-sm outline-none">
-                            <template x-for="loc in locations">
-                                <option :value="loc" x-text="loc"></option>
-                            </template>
-                        </select>
-                    </div>
-                    <div class="flex gap-2 pt-4">
-                        <button @click="transferModal.show = false" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-black uppercase text-xs">Cancel</button>
-                        <button @click="executeTransfer()" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-black uppercase text-xs shadow-lg">Confirm Move</button>
-                    </div>
-                </div>
-            </div>
+<!-- RECIPE CARD MODAL -->
+<div class="modal-backdrop" id="recipeModal">
+  <div class="modal recipe-card-modal">
+    <button class="close-btn" onclick="closeModal('recipeModal')">×</button>
+    <div class="recipe-card-tab" id="recipe-card-tab">Recipe</div>
+    <div class="recipe-card-header">
+      <div class="recipe-card-title" id="recipe-title">Recipe</div>
+      <div class="recipe-card-meta">
+        <div id="recipe-tags"></div>
+        <div id="recipe-meta-right">
+          <span id="recipe-servings">Serves: 2</span>
         </div>
+      </div>
+    </div>
+    <div class="recipe-card-body">
+      <div>
+        <div class="recipe-card-section-title">Ingredients</div>
+        <div class="recipe-card-ingredients" id="recipe-ingredients"></div>
+      </div>
+      <div>
+        <div class="recipe-card-section-title">Steps</div>
+        <ol class="recipe-card-steps" id="recipe-steps"></ol>
+      </div>
+    </div>
+    <div class="recipe-card-footer">
+      <div>
+        <span style="font-size:0.78rem;">Scale:</span>
+        <select id="scale-select" style="font-size:0.78rem;">
+          <option value="1">1x</option>
+          <option value="0.5">0.5x</option>
+          <option value="2">2x</option>
+        </select>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="btn" id="cook-btn" onclick="openCookConfirm()">Cook now</button>
+        <button class="btn btn-ghost" onclick="closeModal('recipeModal')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- COOK CONFIRMATION MODAL -->
+<div class="modal-backdrop" id="cookConfirmModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('cookConfirmModal')">×</button>
+    <h3>Confirm cooking</h3>
+    <small>Review what will be used from your pantry. Units are as you entered them.</small>
+    <div class="form-group">
+      <div style="display:flex; gap:6px; align-items:center;">
+        <span style="font-size:0.8rem;">Servings multiplier:</span>
+        <select id="cook-servings" style="flex:1;">
+          <option value="1">1x</option>
+          <option value="0.5">0.5x</option>
+          <option value="2">2x</option>
+          <option value="3">3x</option>
+        </select>
+      </div>
+      <div class="confirm-list" id="cook-confirm-list"></div>
+      <small style="color:rgba(0,0,0,0.7);">
+        If units differ between pantry and recipe, you may need to eyeball amounts. Chef's Cove won't convert units.
+      </small>
+      <button class="btn" onclick="confirmCook()">Confirm & update pantry</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHOPPING CHECKOUT MODAL -->
+<div class="modal-backdrop" id="checkoutModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal('checkoutModal')">×</button>
+    <h3 id="checkout-title">Add to pantry</h3>
+    <small>Confirm what you purchased and where you stored it.</small>
+    <div class="form-group">
+      <input type="text" id="checkout-name" placeholder="Name" disabled>
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="checkout-qty" placeholder="Quantity bought" min="0" step="0.1" style="flex:1;">
+        <input type="text" id="checkout-unit" placeholder="Unit label (e.g. g, pcs, bag)" style="flex:1;">
+      </div>
+      <select id="checkout-location">
+        <option value="">Location</option>
+        <option value="Pantry">Pantry</option>
+        <option value="Fridge">Fridge</option>
+        <option value="Freezer">Freezer</option>
+        <option value="Counter">Counter</option>
+      </select>
+      <select id="checkout-category">
+        <option value="">Category</option>
+        <option value="Meat">Meat</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Produce">Produce</option>
+        <option value="Pantry">Pantry Staples</option>
+        <option value="Frozen">Frozen</option>
+        <option value="Spices">Spices</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="number" id="checkout-threshold" placeholder="Low stock threshold (total, optional)" min="0" step="0.1">
+      <input type="date" id="checkout-expiry" placeholder="Expiry (optional)">
+      <input type="text" id="checkout-notes" placeholder="Notes (optional)">
+      <button class="btn" onclick="confirmCheckout()">Add to pantry</button>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard">
+
+  <!-- LEFT: PANTRY -->
+  <div class="card">
+    <h2>🧺 Pantry (source of truth)</h2>
+    <small>Multi-location, user-defined units, real-world tracking.</small>
+    <button class="btn" style="margin-top:10px; width:100%;" onclick="openModal('addIngModal')">
+      Add / stock ingredient
+    </button>
+
+    <div class="pantry-filters">
+      <select id="filter-category" onchange="updatePantryUI()" >
+        <option value="">All categories</option>
+        <option value="Meat">Meat</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Produce">Produce</option>
+        <option value="Pantry">Pantry Staples</option>
+        <option value="Frozen">Frozen</option>
+        <option value="Spices">Spices</option>
+        <option value="Other">Other</option>
+      </select>
+      <select id="filter-location" onchange="updatePantryUI()">
+        <option value="">All locations</option>
+        <option value="Pantry">Pantry</option>
+        <option value="Fridge">Fridge</option>
+        <option value="Freezer">Freezer</option>
+        <option value="Counter">Counter</option>
+      </select>
     </div>
 
-    <script>
-        function pantryApp() {
-            return {
-                activeTab: 'Pantry',
-                pantry: [],
-                recipes: [],
-                mealPlan: [],
-                shoppingList: [],
-                locations: ['Main Freezer', 'Second Freezer', 'Kitchen Fridge', 'Pantry Shelf'],
-                categories: ['Produce', 'Dairy', 'Meat', 'Grains', 'Frozen', 'Other'],
-                filterLocation: '',
-                newLocName: '',
-                transferModal: { show: false, item: null, batch: null, moveQty: 0, newLoc: '' },
-                forms: {
-                    pantry: { name: '', qty: 0, min_threshold: 0, unit: '', location: 'Main Freezer', category: 'Other', expiry_date: '' },
-                    recipe: { title: '', tempIngs: [], ingName: '', ingQty: 0 },
-                    plan: { recipeId: '', date: '' }
-                },
+    <div class="pantry-list" id="pantry-display"></div>
+  </div>
 
-                init() {
-                    const suffix = 'v5_7';
-                    this.pantry = JSON.parse(localStorage.getItem('sp_pantry_' + suffix) || '[]');
-                    this.recipes = JSON.parse(localStorage.getItem('sp_recipes_' + suffix) || '[]');
-                    this.mealPlan = JSON.parse(localStorage.getItem('sp_plan_' + suffix) || '[]');
-                    this.locations = JSON.parse(localStorage.getItem('sp_locations_' + suffix) || JSON.stringify(this.locations));
-                    this.generateShoppingList();
-                },
+  <!-- CENTER: RECIPES -->
+  <div class="card">
+    <h2>🍲 Recipes</h2>
+    <small>Pantry-aware, structured in the background, soft and nostalgic in the UI.</small>
 
-                save() {
-                    const suffix = 'v5_7';
-                    localStorage.setItem('sp_pantry_' + suffix, JSON.stringify(this.pantry));
-                    localStorage.setItem('sp_recipes_' + suffix, JSON.stringify(this.recipes));
-                    localStorage.setItem('sp_plan_' + suffix, JSON.stringify(this.mealPlan));
-                    localStorage.setItem('sp_locations_' + suffix, JSON.stringify(this.locations));
-                    this.generateShoppingList();
-                },
+    <div class="recipe-grid" id="recipe-list"></div>
 
-                // --- SMART HELPERS ---
-                getDaysUntil(d) { 
-                    if (!d) return 999;
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
-                    return Math.ceil((new Date(d) - today) / 86400000); 
-                },
+    <div class="form-group" style="margin-top:18px;">
+      <h3>📝 New recipe</h3>
+      <input type="text" id="new-rec-name" placeholder="Recipe title">
+      <input type="text" id="new-rec-tags" placeholder="Tags (comma separated, optional)">
+      <div style="display:flex; gap:6px;">
+        <input type="number" id="new-rec-servings" placeholder="Serves (optional)" min="1" step="1" style="flex:1;">
+        <input type="text" id="new-rec-time" placeholder="Total time (e.g. 30 min)" style="flex:1;">
+      </div>
+      <textarea id="new-rec-ings" placeholder="Ingredients (one per line, e.g. '200 g Pasta', '2 pcs Tomato')"></textarea>
+      <textarea id="new-rec-steps" placeholder="Steps (each on a new line)"></textarea>
+      <button class="btn" style="background:var(--clay)" onclick="addNewRecipe()">Save recipe</button>
+    </div>
+  </div>
 
-                isIngredientExpired(name) {
-                    const item = this.pantry.find(p => p.name.toLowerCase() === name.toLowerCase());
-                    if (!item || item.batches.length === 0) return false;
-                    // Returns true if ALL batches for this item are expired
-                    return item.batches.every(b => this.getDaysUntil(b.expiry) < 0);
-                },
+  <!-- RIGHT: PLANNER + SHOPPING + SEASONAL -->
+  <div class="card">
+    <h2>📅 Weekly plan & shopping</h2>
+    <div style="font-size:0.8rem;">
+      <div><strong>Today:</strong> <span id="today-meal">Not planned</span></div>
+      <small>Assign recipes to days. Chef's Cove calculates what you need.</small>
+    </div>
 
-                getIngredientStatusClass(name) {
-                    const pItem = this.pantry.find(p => p.name.toLowerCase() === name.toLowerCase());
-                    if (!pItem || this.getValidQty(pItem) <= 0) return 'text-red-400 border-red-100';
-                    if (this.isIngredientExpired(name)) return 'text-orange-600 border-orange-200 bg-orange-50';
-                    return 'text-green-600 border-green-100';
-                },
+    <div class="day-list" id="day-list"></div>
 
-                getValidQty(item) {
-                    // Only counts non-expired stock for "Valid" logic
-                    return item.batches
-                        .filter(b => this.getDaysUntil(b.expiry) >= 0)
-                        .reduce((sum, b) => sum + (parseFloat(b.qty) || 0), 0);
-                },
+    <div class="shopping-section">
+      <h3 style="margin-top:8px;">🛒 Shopping list</h3>
+      <small>Generated from plans, low stock, expiring items, and your additions.</small>
+      <div class="form-group" style="margin-top:8px;">
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="user-item-name" placeholder="Add custom item">
+          <button class="btn" style="flex:0 0 auto;" onclick="addUserShoppingItem()">Add</button>
+        </div>
+      </div>
+      <div id="shopping-list"></div>
+    </div>
 
-                getTotalQty(item) {
-                    return item.batches.reduce((sum, b) => sum + (parseFloat(b.qty) || 0), 0).toFixed(1);
-                },
+    <div class="seasonal">
+      <strong>🌱 Seasonal & smart notes</strong>
+      <div id="seasonal-list" style="margin-top:4px;"></div>
+    </div>
+  </div>
 
-                // --- CORE PANTRY ---
-                savePantryItem() {
-                    if(!this.forms.pantry.name) return;
-                    const batch = { qty: parseFloat(this.forms.pantry.qty) || 0, expiry: this.forms.pantry.expiry_date, location: this.forms.pantry.location };
-                    let existing = this.pantry.find(p => p.name.toLowerCase() === this.forms.pantry.name.toLowerCase());
-                    if (existing) {
-                        if (batch.qty > 0) existing.batches.push(batch);
-                        existing.min_threshold = this.forms.pantry.min_threshold;
-                    } else {
-                        this.pantry.push({ id: Date.now(), name: this.forms.pantry.name, category: this.forms.pantry.category, unit: this.forms.pantry.unit || 'Units', min_threshold: this.forms.pantry.min_threshold || 0, batches: batch.qty > 0 ? [batch] : [] });
-                    }
-                    this.sortBatches();
-                    this.forms.pantry.name = ''; this.forms.pantry.qty = 0;
-                    this.save();
-                },
+</div>
 
-                sortBatches() {
-                    this.pantry.forEach(item => item.batches.sort((a,b) => (a.expiry || '9999-12-31') > (b.expiry || '9999-12-31') ? 1 : -1));
-                },
+<script>
+/* ---------------------------------------------------
+   LOCAL STORAGE HELPERS
+--------------------------------------------------- */
+const STORAGE_KEY = "chefsCoveV5_unitsSoft";
 
-                openTransferModal(item, batch) {
-                    this.transferModal = { show: true, item, batch, moveQty: batch.qty, newLoc: this.locations[0] };
-                },
+function saveState() {
+  const state = {
+    pantry,
+    recipes,
+    planner,
+    shoppingExtras,
+    theme: currentTheme
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
 
-                executeTransfer() {
-                    const { item, batch, moveQty, newLoc } = this.transferModal;
-                    if (moveQty <= 0 || moveQty > batch.qty) return;
-                    if (moveQty === batch.qty) {
-                        batch.location = newLoc;
-                    } else {
-                        batch.qty = parseFloat((batch.qty - moveQty).toFixed(2));
-                        item.batches.push({ qty: moveQty, expiry: batch.expiry, location: newLoc });
-                    }
-                    this.sortBatches();
-                    this.transferModal.show = false;
-                    this.save();
-                },
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const state = JSON.parse(raw);
+    if (state.pantry) pantry = state.pantry;
+    if (state.recipes) recipes = state.recipes;
+    if (state.planner) planner = state.planner;
+    if (state.shoppingExtras) shoppingExtras = state.shoppingExtras;
+    if (state.theme) {
+      currentTheme = state.theme;
+      setTheme(currentTheme, true);
+    }
+  } catch (_) {}
+}
 
-                // --- SHOPPING LOGIC (WITH EXPIRY AWARENESS) ---
-                generateShoppingList() {
-                    let needs = {};
-                    this.mealPlan.forEach(p => {
-                        this.recipes.find(r => r.id == p.recipeId)?.ingredients.forEach(i => {
-                            needs[i.name.toLowerCase()] = (needs[i.name.toLowerCase()] || 0) + i.qty;
-                        });
-                    });
+/* ---------------------------------------------------
+   STATE
+--------------------------------------------------- */
+/*
+pantry[name] = {
+  unit,            // user-defined label (string)
+  category,
+  threshold,
+  notes,
+  locations: {
+    [location]: { qty, expires }
+  }
+}
+*/
+let pantry = {
+  "Chicken breast": {
+    unit: "lb",
+    category: "Meat",
+    threshold: 0.5,
+    notes: "",
+    locations: {
+      Freezer: { qty: 1.5, expires: "" },
+      Fridge: { qty: 0.5, expires: "" }
+    }
+  },
+  "Sage": {
+    unit: "g",
+    category: "Spices",
+    threshold: 5,
+    notes: "",
+    locations: {
+      Pantry: { qty: 20, expires: "" }
+    }
+  },
+  "Pasta": {
+    unit: "g",
+    category: "Pantry",
+    threshold: 150,
+    notes: "",
+    locations: {
+      Pantry: { qty: 500, expires: "" }
+    }
+  },
+  "Tomato": {
+    unit: "pcs",
+    category: "Produce",
+    threshold: 2,
+    notes: "",
+    locations: {
+      Fridge: { qty: 3, expires: "" }
+    }
+  }
+};
 
-                    this.shoppingList = [];
-                    this.pantry.forEach(item => {
-                        const validStock = this.getValidQty(item);
-                        const totalStock = parseFloat(this.getTotalQty(item));
-                        const required = Math.max(needs[item.name.toLowerCase()] || 0, item.min_threshold || 0);
+// recipes: Kitchen OS style but with soft units
+let recipes = [
+  {
+    name: "Herb Chicken",
+    tags: ["Comfort", "Weeknight"],
+    steps: [
+      "Preheat oven to 190°C (375°F).",
+      "Season chicken with salt, pepper, and chopped sage.",
+      "Roast until golden and cooked through, about 25–30 minutes."
+    ],
+    totalTime: "30 min",
+    servings: 2,
+    ingredients: [
+      { name: "Chicken breast", amount: 1, unit: "lb" },
+      { name: "Sage", amount: 5, unit: "g" }
+    ]
+  },
+  {
+    name: "Tomato Pasta",
+    tags: ["Quick", "Light"],
+    steps: [
+      "Cook pasta in salted boiling water until al dente.",
+      "Sauté chopped tomatoes with garlic and olive oil.",
+      "Toss pasta with sauce and finish with herbs."
+    ],
+    totalTime: "20 min",
+    servings: 2,
+    ingredients: [
+      { name: "Pasta", amount: 120, unit: "g" },
+      { name: "Tomato", amount: 2, unit: "pcs" }
+    ]
+  }
+];
 
-                        if (validStock < required) {
-                            this.shoppingList.push({ 
-                                name: item.name, 
-                                shortage: (required - validStock).toFixed(1), 
-                                unit: item.unit, 
-                                category: item.category, 
-                                location: this.locations[0], 
-                                boughtExpiry: '',
-                                reason: (totalStock >= required && validStock < required) ? 'expired' : 'stock'
-                            });
-                        }
-                    });
-                },
+const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+let planner = {
+  Mon: null,
+  Tue: null,
+  Wed: null,
+  Thu: null,
+  Fri: null,
+  Sat: null,
+  Sun: null
+};
 
-                checkoutItem(shopItem) {
-                    let pItem = this.pantry.find(p => p.name.toLowerCase() === shopItem.name.toLowerCase());
-                    const batch = { qty: shopItem.shortage, expiry: shopItem.boughtExpiry, location: shopItem.location };
-                    if (pItem) { pItem.batches.push(batch); this.sortBatches(); }
-                    this.save();
-                },
+// shopping extras: missing + user-added
+let shoppingExtras = [];
 
-                // --- RECIPE LOGIC ---
-                addIngToRecipeForm() {
-                    if(!this.forms.recipe.ingName) return;
-                    let exists = this.pantry.find(p => p.name.toLowerCase() === this.forms.recipe.ingName.toLowerCase());
-                    if (!exists) this.pantry.push({ id: Date.now(), name: this.forms.recipe.ingName, category: 'Other', unit: 'Units', min_threshold: 0, batches: [] });
-                    this.forms.recipe.tempIngs.push({ name: this.forms.recipe.ingName, qty: parseFloat(this.forms.recipe.ingQty) || 0 });
-                    this.forms.recipe.ingName = ''; this.forms.recipe.ingQty = 0;
-                    this.save();
-                },
+// selections
+let selectedIngredientName = null;
+let selectedRecipe = null;
+let checkoutItem = null;
+let transferItemName = null;
 
-                saveRecipe() {
-                    if(!this.forms.recipe.title) return;
-                    this.recipes.push({ id: Date.now(), title: this.forms.recipe.title, ingredients: [...this.forms.recipe.tempIngs] });
-                    this.forms.recipe = { title: '', tempIngs: [], ingName: '', ingQty: 0 };
-                    this.save();
-                },
+// for cook confirmation
+let pendingCook = {
+  recipe: null,
+  baseScale: 1
+};
 
-                cookMeal(plan) {
-                    const recipe = this.recipes.find(r => r.id == plan.recipeId);
-                    if (!recipe) return;
-                    recipe.ingredients.forEach(ing => {
-                        let item = this.pantry.find(p => p.name.toLowerCase() === ing.name.toLowerCase());
-                        if(item) {
-                            let needed = ing.qty;
-                            // Prioritize cooking with expired or soonest-to-expire food
-                            item.batches.sort((a,b) => (a.expiry || '9999') > (b.expiry || '9999') ? 1 : -1);
-                            for (let b of item.batches) {
-                                if (needed <= 0) break;
-                                if (b.qty <= needed) { needed -= b.qty; b.qty = 0; } 
-                                else { b.qty -= needed; needed = 0; }
-                            }
-                            item.batches = item.batches.filter(b => b.qty > 0);
-                        }
-                    });
-                    this.mealPlan = this.mealPlan.filter(p => p.id !== plan.id);
-                    this.save();
-                },
+let currentTheme = "daylight";
 
-                // --- UI UTILS ---
-                getFilteredBatches(item) { return this.filterLocation ? item.batches.filter(b => b.location === this.filterLocation) : item.batches; },
-                get filteredPantryItems() { 
-                    let list = this.pantry;
-                    if (this.filterLocation) list = list.filter(item => item.batches.some(b => b.location === this.filterLocation));
-                    return list.sort((a,b) => a.name.localeCompare(b.name));
-                },
-                get groupedShoppingList() { return this.shoppingList.reduce((acc, i) => { (acc[i.category] = acc[i.category] || []).push(i); return acc; }, {}); },
-                get sortedMealPlan() { return [...this.mealPlan].sort((a,b) => new Date(a.date) - new Date(b.date)); },
-                getRecipeName(id) { return this.recipes.find(r => r.id == id)?.title || 'Unknown'; },
-                getExpiryTextClass(d) { let days = this.getDaysUntil(d); return days < 0 ? 'text-red-600' : (days <= 7 ? 'text-orange-600' : 'text-indigo-400'); },
-                getExpiryLabel(d) { let days = this.getDaysUntil(d); if (!d) return 'Stable'; if (days < 0) return 'EXPIRED'; if (days === 0) return 'TODAY'; return days + 'd'; },
-                formatDate(d) { return new Date(d).toLocaleDateString(undefined, {month:'short', day:'numeric'}); },
-                formatDateDay(d) { return new Date(d).toLocaleDateString(undefined, {weekday:'short'}); },
-                formatDateNum(d) { return new Date(d).getDate(); },
-                adjustBatch(item, batch, amount) { batch.qty = Math.max(0, parseFloat((batch.qty + amount).toFixed(2))); if (batch.qty <= 0) this.removeBatch(item, batch); this.save(); },
-                removeBatch(item, batch) { item.batches = item.batches.filter(b => b !== batch); if (item.batches.length === 0 && item.min_threshold <= 0) this.pantry = this.pantry.filter(i => i.id !== item.id); this.save(); },
-                addToPlan() { if(this.forms.plan.recipeId && this.forms.plan.date) { this.mealPlan.push({ id: Date.now(), ...this.forms.plan }); this.save(); }},
-                addLocation() { if(this.newLocName) { this.locations.push(this.newLocName); this.newLocName=''; this.save(); }},
-                removeList(list, val) { this[list] = this[list].filter(v => v !== val); this.save(); },
-                deleteItem(type, id) { this[type] = this[type].filter(i => i.id !== id); this.save(); }
-            }
+/* ---------------------------------------------------
+   THEME
+--------------------------------------------------- */
+function setTheme(theme, skipSave) {
+  document.body.classList.remove("theme-daylight","theme-hearth","theme-garden");
+  document.body.classList.add("theme-" + theme);
+  document.getElementById("btn-daylight").classList.remove("active");
+  document.getElementById("btn-hearth").classList.remove("active");
+  document.getElementById("btn-garden").classList.remove("active");
+  document.getElementById("btn-" + theme).classList.add("active");
+  currentTheme = theme;
+  if (!skipSave) saveState();
+}
+
+/* ---------------------------------------------------
+   HELPERS
+--------------------------------------------------- */
+function totalQtyForItem(item) {
+  if (!item.locations) return 0;
+  return Object.values(item.locations).reduce((sum, loc) => sum + (loc.qty || 0), 0);
+}
+
+/* ---------------------------------------------------
+   PANTRY UI
+--------------------------------------------------- */
+function updatePantryUI() {
+  const display = document.getElementById("pantry-display");
+  const filterCat = document.getElementById("filter-category").value;
+  const filterLoc = document.getElementById("filter-location").value;
+  display.innerHTML = "";
+
+  Object.keys(pantry).sort().forEach(name => {
+    const item = pantry[name];
+    if (filterCat && item.category !== filterCat) return;
+
+    const hasFilterLoc = filterLoc
+      ? item.locations && Object.keys(item.locations).includes(filterLoc)
+      : true;
+    if (!hasFilterLoc) return;
+
+    const total = totalQtyForItem(item);
+    const threshold = item.threshold || 0;
+    const pct = threshold > 0 ? Math.min(100, (total / threshold) * 100) : 100;
+    const isLow = threshold > 0 && total <= threshold;
+
+    const metaParts = [];
+    if (item.category) metaParts.push(item.category);
+    if (item.notes) metaParts.push(item.notes);
+
+    const locLines = [];
+    if (item.locations) {
+      Object.keys(item.locations).forEach(loc => {
+        if (filterLoc && loc !== filterLoc) return;
+        const entry = item.locations[loc];
+        const exp = entry.expires ? ` (exp ${entry.expires})` : "";
+        locLines.push(`${loc}: ${entry.qty} ${item.unit || ""}${exp}`);
+      });
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "pantry-item";
+
+    const headerRow = document.createElement("div");
+    headerRow.className = "pantry-header-row";
+
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "pantry-label";
+    labelDiv.innerHTML = `<span>${name}</span><span style="font-size:0.8rem; font-weight:normal;">Total: ${total} ${item.unit || ""}</span>`;
+
+    const actionsDiv = document.createElement("div");
+    actionsDiv.className = "pantry-actions";
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.onclick = () => openEditIngredient(name);
+    const transferBtn = document.createElement("button");
+    transferBtn.textContent = "Transfer";
+    transferBtn.onclick = () => openTransferModal(name);
+    actionsDiv.appendChild(editBtn);
+    actionsDiv.appendChild(transferBtn);
+
+    headerRow.appendChild(labelDiv);
+    headerRow.appendChild(actionsDiv);
+
+    const metaDiv = document.createElement("div");
+    metaDiv.className = "pantry-meta";
+    metaDiv.textContent = metaParts.join(" · ") || "Uncategorized";
+
+    const locDiv = document.createElement("div");
+    locDiv.className = "pantry-locations";
+    locDiv.innerHTML = locLines.length ? locLines.join("<br>") : "<em>No locations set</em>";
+
+    const barContainer = document.createElement("div");
+    barContainer.className = "bar-container";
+    const barFill = document.createElement("div");
+    barFill.className = "bar-fill" + (isLow ? " low" : "");
+    barFill.style.width = pct + "%";
+    barContainer.appendChild(barFill);
+
+    wrapper.appendChild(headerRow);
+    wrapper.appendChild(metaDiv);
+    wrapper.appendChild(locDiv);
+    wrapper.appendChild(barContainer);
+
+    display.appendChild(wrapper);
+  });
+}
+
+/* ---------------------------------------------------
+   MODALS
+--------------------------------------------------- */
+function openModal(id) {
+  document.getElementById(id).style.display = "flex";
+}
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+/* ---------------------------------------------------
+   ADD INGREDIENT
+--------------------------------------------------- */
+function saveIngredient() {
+  const name = document.getElementById("modal-ing-name").value.trim();
+  const qty = parseFloat(document.getElementById("modal-ing-qty").value);
+  const unit = (document.getElementById("modal-ing-unit").value || "").trim();
+  const category = document.getElementById("modal-ing-category").value || "";
+  const location = document.getElementById("modal-ing-location").value || "";
+  const threshold = parseFloat(document.getElementById("modal-ing-threshold").value);
+  const expiry = document.getElementById("modal-ing-expiry").value || "";
+  const notes = document.getElementById("modal-ing-notes").value || "";
+
+  if (!name || isNaN(qty) || !location) return;
+
+  if (!pantry[name]) {
+    pantry[name] = {
+      unit,
+      category,
+      threshold: isNaN(threshold) ? 0 : threshold,
+      notes,
+      locations: {}
+    };
+  } else {
+    if (unit) pantry[name].unit = unit;
+    if (category) pantry[name].category = category;
+    if (!isNaN(threshold)) pantry[name].threshold = threshold;
+    if (notes) pantry[name].notes = notes;
+  }
+
+  if (!pantry[name].locations[location]) {
+    pantry[name].locations[location] = { qty: 0, expires: "" };
+  }
+  pantry[name].locations[location].qty += qty;
+  if (expiry) pantry[name].locations[location].expires = expiry;
+
+  document.getElementById("modal-ing-name").value = "";
+  document.getElementById("modal-ing-qty").value = "";
+  document.getElementById("modal-ing-unit").value = "";
+  document.getElementById("modal-ing-category").value = "";
+  document.getElementById("modal-ing-location").value = "";
+  document.getElementById("modal-ing-threshold").value = "";
+  document.getElementById("modal-ing-expiry").value = "";
+  document.getElementById("modal-ing-notes").value = "";
+
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+  closeModal("addIngModal");
+}
+
+/* ---------------------------------------------------
+   EDIT INGREDIENT
+--------------------------------------------------- */
+function openEditIngredient(name) {
+  selectedIngredientName = name;
+  const item = pantry[name];
+  document.getElementById("edit-ing-title").innerText = `Edit ${name}`;
+  document.getElementById("edit-ing-unit").value = item.unit || "";
+  document.getElementById("edit-ing-threshold").value = item.threshold || "";
+  document.getElementById("edit-ing-category").value = item.category || "";
+  document.getElementById("edit-ing-notes").value = item.notes || "";
+
+  const locDiv = document.getElementById("edit-ing-locations");
+  const lines = [];
+  if (item.locations) {
+    Object.keys(item.locations).forEach(loc => {
+      const entry = item.locations[loc];
+      const exp = entry.expires ? ` (exp ${entry.expires})` : "";
+      lines.push(`${loc}: ${entry.qty} ${item.unit || ""}${exp}`);
+    });
+  }
+  locDiv.innerHTML = lines.length ? lines.join("<br>") : "<em>No locations set</em>";
+
+  openModal("editIngModal");
+}
+
+function updateIngredient() {
+  if (!selectedIngredientName) return;
+  const item = pantry[selectedIngredientName];
+  const threshold = parseFloat(document.getElementById("edit-ing-threshold").value);
+  item.unit = (document.getElementById("edit-ing-unit").value || "").trim();
+  item.category = document.getElementById("edit-ing-category").value || "";
+  item.notes = document.getElementById("edit-ing-notes").value || "";
+  item.threshold = isNaN(threshold) ? 0 : threshold;
+
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+  closeModal("editIngModal");
+  selectedIngredientName = null;
+}
+
+function deleteIngredient() {
+  if (!selectedIngredientName) return;
+  delete pantry[selectedIngredientName];
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+  closeModal("editIngModal");
+  selectedIngredientName = null;
+}
+
+/* ---------------------------------------------------
+   TRANSFER BETWEEN LOCATIONS
+--------------------------------------------------- */
+function openTransferModal(name) {
+  transferItemName = name;
+  const item = pantry[name];
+  document.getElementById("transfer-title").innerText = `Transfer ${name}`;
+
+  const fromSelect = document.getElementById("transfer-from");
+  fromSelect.innerHTML = '<option value="">From location</option>';
+  if (item.locations) {
+    Object.keys(item.locations).forEach(loc => {
+      const opt = document.createElement("option");
+      const entry = item.locations[loc];
+      opt.value = loc;
+      opt.textContent = `${loc} (${entry.qty} ${item.unit || ""})`;
+      fromSelect.appendChild(opt);
+    });
+  }
+
+  document.getElementById("transfer-to").value = "";
+  document.getElementById("transfer-qty").value = "";
+  document.getElementById("transfer-expiry").value = "";
+  openModal("transferModal");
+}
+
+function confirmTransfer() {
+  if (!transferItemName) return;
+  const item = pantry[transferItemName];
+  const from = document.getElementById("transfer-from").value;
+  const to = document.getElementById("transfer-to").value;
+  const qty = parseFloat(document.getElementById("transfer-qty").value);
+  const expiry = document.getElementById("transfer-expiry").value || "";
+
+  if (!from || !to || from === to || isNaN(qty) || qty <= 0) return;
+  if (!item.locations[from] || item.locations[from].qty < qty) return;
+
+  item.locations[from].qty -= qty;
+  if (item.locations[from].qty <= 0.0001) {
+    delete item.locations[from];
+  }
+
+  if (!item.locations[to]) {
+    item.locations[to] = { qty: 0, expires: "" };
+  }
+  item.locations[to].qty += qty;
+  if (expiry) item.locations[to].expires = expiry;
+
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+  closeModal("transferModal");
+  transferItemName = null;
+}
+
+/* ---------------------------------------------------
+   RECIPES
+--------------------------------------------------- */
+function getTotalAvailableFor(name, unitLabel) {
+  const item = pantry[name];
+  if (!item) return 0;
+  // if units match exactly, we trust numbers; if not, still return total as soft guidance
+  return totalQtyForItem(item);
+}
+
+function getRecipeReadiness(recipe) {
+  let status = "ready";
+  for (const ing of recipe.ingredients) {
+    const total = getTotalAvailableFor(ing.name, ing.unit);
+    if (total === 0) return "missing";
+    if (total < ing.amount) status = status === "missing" ? "missing" : "low";
+  }
+  return status;
+}
+
+function renderRecipes() {
+  const grid = document.getElementById("recipe-list");
+  grid.innerHTML = "";
+
+  recipes.forEach(recipe => {
+    const status = getRecipeReadiness(recipe);
+    const label =
+      status === "ready" ? "✔️ Ready" :
+      status === "low" ? "⚠️ Low or partial" :
+      "❌ Missing ingredients";
+
+    const card = document.createElement("div");
+    card.className = "recipe-card";
+    card.onclick = () => openRecipeModal(recipe);
+
+    card.innerHTML = `
+      <div style="font-size:1.6rem;">🍲</div>
+      <div class="recipe-name">${recipe.name}</div>
+      <div class="recipe-status">${label}</div>
+      <div>
+        ${(recipe.tags || []).map(t => `<span class="tag">${t}</span>`).join("")}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+/* ---------------------------------------------------
+   PARSE INGREDIENT LINE (soft units)
+--------------------------------------------------- */
+function parseIngredientLine(line) {
+  const parts = line.trim().split(/\s+/);
+  if (parts.length < 2) return null;
+  const amount = parseFloat(parts[0].replace(",", "."));
+  if (isNaN(amount)) return null;
+  const unit = parts[1]; // just label
+  const name = parts.slice(2).join(" ") || ""; // if no name, we treat unit as name
+  if (!name) return null;
+  return { name, amount, unit };
+}
+
+/* ---------------------------------------------------
+   ADD NEW RECIPE + AUTO-CREATE MISSING PANTRY ITEMS
+--------------------------------------------------- */
+function addNewRecipe() {
+  const name = document.getElementById("new-rec-name").value.trim();
+  const tagStr = document.getElementById("new-rec-tags").value;
+  const ingsStr = document.getElementById("new-rec-ings").value;
+  const stepsStr = document.getElementById("new-rec-steps").value;
+  const servingsVal = parseInt(document.getElementById("new-rec-servings").value, 10);
+  const timeStr = document.getElementById("new-rec-time").value.trim();
+
+  if (!name || !ingsStr.trim()) return;
+
+  const tags = tagStr.split(",").map(t => t.trim()).filter(Boolean);
+  const ingLines = ingsStr.split("\n").map(l => l.trim()).filter(Boolean);
+  const ingredients = [];
+  const missingForShopping = [];
+
+  ingLines.forEach(line => {
+    const ing = parseIngredientLine(line);
+    if (!ing) return;
+    ingredients.push(ing);
+
+    if (!pantry[ing.name]) {
+      pantry[ing.name] = {
+        unit: ing.unit,
+        category: "",
+        threshold: ing.amount,
+        notes: "",
+        locations: {
+          Pantry: { qty: 0, expires: "" }
         }
-    </script>
+      };
+      missingForShopping.push(ing);
+    }
+  });
+
+  const steps = stepsStr
+    .split("\n")
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  const recipe = {
+    name,
+    tags,
+    steps,
+    totalTime: timeStr || "",
+    servings: !isNaN(servingsVal) && servingsVal > 0 ? servingsVal : null,
+    ingredients
+  };
+
+  recipes.push(recipe);
+
+  missingForShopping.forEach(ing => {
+    shoppingExtras.push({
+      id: "missing-" + ing.name + "-" + Date.now() + Math.random(),
+      name: ing.name,
+      amount: ing.amount,
+      unit: ing.unit,
+      source: "missing"
+    });
+  });
+
+  document.getElementById("new-rec-name").value = "";
+  document.getElementById("new-rec-tags").value = "";
+  document.getElementById("new-rec-ings").value = "";
+  document.getElementById("new-rec-steps").value = "";
+  document.getElementById("new-rec-servings").value = "";
+  document.getElementById("new-rec-time").value = "";
+
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+}
+
+/* ---------------------------------------------------
+   RECIPE CARD MODAL + COOK FLOW
+--------------------------------------------------- */
+function openRecipeModal(recipe) {
+  selectedRecipe = recipe;
+  pendingCook.recipe = recipe;
+  pendingCook.baseScale = 1;
+  document.getElementById("scale-select").value = "1";
+
+  document.getElementById("recipe-title").innerText = recipe.name;
+  document.getElementById("recipe-card-tab").innerText = recipe.name;
+
+  const tagsDiv = document.getElementById("recipe-tags");
+  tagsDiv.innerHTML = (recipe.tags || []).map(t => `<span class="tag">${t}</span>`).join("");
+
+  const metaRight = document.getElementById("recipe-meta-right");
+  const parts = [];
+  if (recipe.servings) parts.push(`Serves: ${recipe.servings}`);
+  if (recipe.totalTime) parts.push(recipe.totalTime);
+  metaRight.innerHTML = parts.join(" · ");
+
+  renderRecipeCardIngredients(recipe, 1);
+
+  const stepsOl = document.getElementById("recipe-steps");
+  stepsOl.innerHTML = "";
+  (recipe.steps || []).forEach(step => {
+    const li = document.createElement("li");
+    li.textContent = step;
+    stepsOl.appendChild(li);
+  });
+
+  const readiness = getRecipeReadiness(recipe);
+  const cookBtn = document.getElementById("cook-btn");
+  cookBtn.disabled = (readiness === "missing");
+
+  openModal("recipeModal");
+}
+
+document.getElementById("scale-select").addEventListener("change", (e) => {
+  if (!selectedRecipe) return;
+  const scale = parseFloat(e.target.value);
+  pendingCook.baseScale = scale;
+  renderRecipeCardIngredients(selectedRecipe, scale);
+});
+
+function renderRecipeCardIngredients(recipe, scale) {
+  const ingDiv = document.getElementById("recipe-ingredients");
+  ingDiv.innerHTML = "";
+  recipe.ingredients.forEach(ing => {
+    const scaledAmount = ing.amount * scale;
+    const total = getTotalAvailableFor(ing.name, ing.unit);
+    let statusIcon = "✔️";
+    if (total === 0) statusIcon = "❌";
+    else if (total < scaledAmount) statusIcon = "⚠️";
+
+    const unitLabel = ing.unit ? ` ${ing.unit}` : "";
+    const line = document.createElement("div");
+    line.style.marginBottom = "3px";
+    let lineText = `${statusIcon} ${scaledAmount} ${unitLabel} ${ing.name}`;
+    if (pantry[ing.name]) {
+      const pUnit = pantry[ing.name].unit || "";
+      if (pUnit && pUnit !== ing.unit) {
+        lineText += ` (Pantry unit: ${pUnit}, recipe unit: ${ing.unit})`;
+      } else {
+        lineText += ` (Pantry: ${total} ${pUnit})`;
+      }
+    } else {
+      lineText += " (Not in pantry)";
+    }
+    line.textContent = lineText;
+    ingDiv.appendChild(line);
+  });
+}
+
+function openCookConfirm() {
+  if (!pendingCook.recipe) return;
+  document.getElementById("cook-servings").value = String(pendingCook.baseScale);
+  renderCookConfirmList();
+  openModal("cookConfirmModal");
+}
+
+document.getElementById("cook-servings").addEventListener("change", renderCookConfirmList);
+
+function renderCookConfirmList() {
+  if (!pendingCook.recipe) return;
+  const scale = parseFloat(document.getElementById("cook-servings").value) || 1;
+  const r = pendingCook.recipe;
+  const listDiv = document.getElementById("cook-confirm-list");
+  listDiv.innerHTML = "";
+  r.ingredients.forEach(ing => {
+    const needed = ing.amount * scale;
+    const total = getTotalAvailableFor(ing.name, ing.unit);
+    const item = pantry[ing.name];
+    const pUnit = item ? (item.unit || "") : "";
+    const unitsMatch = item && item.unit && item.unit === ing.unit;
+
+    const row = document.createElement("div");
+    row.style.marginBottom = "4px";
+    let text = `• ${ing.name}: need ${needed} ${ing.unit || ""}, pantry total ${total} ${pUnit || ""}`;
+    if (!item) {
+      text += " — not in pantry.";
+    } else if (!unitsMatch && ing.unit) {
+      text += " — units differ, eyeball needed amount.";
+    } else if (total < needed) {
+      text += " — low, may not be enough.";
+    } else {
+      text += " — OK.";
+    }
+    row.textContent = text;
+    listDiv.appendChild(row);
+  });
+}
+
+function confirmCook() {
+  if (!pendingCook.recipe) return;
+  const scale = parseFloat(document.getElementById("cook-servings").value) || 1;
+  const r = pendingCook.recipe;
+
+  r.ingredients.forEach(ing => {
+    const item = pantry[ing.name];
+    if (!item) return;
+    let remaining = ing.amount * scale;
+    const locEntries = Object.entries(item.locations || {}).sort((a, b) => {
+      const expA = a[1].expires || "9999-12-31";
+      const expB = b[1].expires || "9999-12-31";
+      return expA.localeCompare(expB);
+    });
+
+    for (const [loc, data] of locEntries) {
+      if (remaining <= 0) break;
+      const usable = Math.min(data.qty, remaining);
+      data.qty -= usable;
+      remaining -= usable;
+      if (data.qty <= 0.0001) {
+        delete item.locations[loc];
+      }
+    }
+  });
+
+  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const todayDay = days[todayIndex];
+  planner[todayDay] = r.name;
+
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+  closeModal("cookConfirmModal");
+  closeModal("recipeModal");
+}
+
+/* ---------------------------------------------------
+   PLANNER
+--------------------------------------------------- */
+function renderPlanner() {
+  const container = document.getElementById("day-list");
+  container.innerHTML = "";
+
+  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+
+  days.forEach((day, idx) => {
+    const row = document.createElement("div");
+    row.className = "day-row";
+
+    const select = document.createElement("select");
+    select.style.fontSize = "0.8rem";
+
+    const noneOption = document.createElement("option");
+    noneOption.value = "";
+    noneOption.textContent = "— no recipe —";
+    select.appendChild(noneOption);
+
+    recipes.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.name;
+      opt.textContent = r.name;
+      select.appendChild(opt);
+    });
+
+    select.value = planner[day] || "";
+    select.onchange = () => {
+      planner[day] = select.value || null;
+      updateTodayFromPlanner();
+      updateShoppingList();
+      renderPlanner();
+      saveState();
+    };
+
+    const header = document.createElement("div");
+    header.className = "day-header";
+    header.innerHTML = `<strong>${day}</strong>${idx === todayIndex ? ' <span class="badge">Today</span>' : ''}`;
+    header.appendChild(select);
+
+    const statusDiv = document.createElement("div");
+    statusDiv.className = "day-status";
+
+    const recipeName = planner[day];
+    if (!recipeName) {
+      statusDiv.textContent = "No recipe assigned.";
+    } else {
+      const recipe = recipes.find(r => r.name === recipeName);
+      if (!recipe) {
+        statusDiv.textContent = "Recipe not found.";
+      } else {
+        const readiness = getRecipeReadiness(recipe);
+        statusDiv.textContent =
+          readiness === "ready"
+            ? "✔️ Pantry ready for this recipe."
+            : readiness === "low"
+            ? "⚠️ Pantry is low / partial for this recipe."
+            : "❌ Missing ingredients for this recipe.";
+      }
+    }
+
+    row.appendChild(header);
+    row.appendChild(statusDiv);
+    container.appendChild(row);
+  });
+
+  updateTodayFromPlanner();
+}
+
+function updateTodayFromPlanner() {
+  const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const todayDay = days[todayIndex];
+  const todayMeal = planner[todayDay];
+  document.getElementById("today-meal").innerText = todayMeal || "Not planned";
+}
+
+/* ---------------------------------------------------
+   SHOPPING LIST ENGINE
+--------------------------------------------------- */
+function addUserShoppingItem() {
+  const name = document.getElementById("user-item-name").value.trim();
+  if (!name) return;
+  shoppingExtras.push({
+    id: "user-" + Date.now() + Math.random(),
+    name,
+    amount: null,
+    unit: "",
+    source: "user"
+  });
+  document.getElementById("user-item-name").value = "";
+  updateShoppingList();
+  saveState();
+}
+
+function buildShoppingList() {
+  const now = new Date();
+  const soonThresholdDays = 3;
+  const items = [];
+
+  // Planner shortages
+  days.forEach(day => {
+    const recipeName = planner[day];
+    if (!recipeName) return;
+    const recipe = recipes.find(r => r.name === recipeName);
+    if (!recipe) return;
+
+    recipe.ingredients.forEach(ing => {
+      const total = getTotalAvailableFor(ing.name, ing.unit);
+      if (total < ing.amount) {
+        const diff = ing.amount - total;
+        items.push({
+          key: `planner-${day}-${ing.name}-${ing.unit}`,
+          name: ing.name,
+          amount: diff,
+          unit: ing.unit,
+          reason: `Planned for ${day}`,
+          source: "planner"
+        });
+      }
+    });
+  });
+
+  // Low-stock
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    const total = totalQtyForItem(item);
+    const thresh = item.threshold || 0;
+    if (thresh > 0 && total <= thresh) {
+      items.push({
+        key: `low-${name}-${item.unit}`,
+        name,
+        amount: Math.max(thresh * 2 - total, thresh),
+        unit: item.unit,
+        reason: "Low stock (total)",
+        source: "low"
+      });
+    }
+  });
+
+  // Expiring soon
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    if (!item.locations) return;
+    Object.keys(item.locations).forEach(loc => {
+      const entry = item.locations[loc];
+      if (!entry.expires) return;
+      const expDate = new Date(entry.expires + "T00:00:00");
+      const diffDays = (expDate - now) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 0 && diffDays <= soonThresholdDays) {
+        items.push({
+          key: `expiring-${name}-${loc}-${item.unit}`,
+          name,
+          amount: 0,
+          unit: item.unit,
+          reason: `Expiring in ${Math.round(diffDays)} day(s) in ${loc}`,
+          source: "expiring"
+        });
+      }
+    });
+  });
+
+  // Extras
+  shoppingExtras.forEach(extra => {
+    items.push({
+      key: extra.id,
+      name: extra.name,
+      amount: extra.amount || 0,
+      unit: extra.unit || "",
+      reason: extra.source === "missing" ? "New recipe ingredient" : "Custom item",
+      source: extra.source
+    });
+  });
+
+  return items;
+}
+
+function updateShoppingList() {
+  const listDiv = document.getElementById("shopping-list");
+  const items = buildShoppingList();
+
+  if (!items.length) {
+    listDiv.innerHTML = "<small>No current needs. You're beautifully stocked. ✨</small>";
+    return;
+  }
+
+  listDiv.innerHTML = "";
+
+  items.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "shopping-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.onchange = () => {
+      checkbox.checked = false;
+      openCheckoutFromShopping(item);
+    };
+
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "shopping-label";
+    const amtStr = item.amount && item.amount > 0 ? `— need ${item.amount.toFixed(2)} ${item.unit || ""}` : "";
+    labelDiv.innerHTML = `<strong>${item.name}</strong> ${amtStr}`;
+
+    const meta = document.createElement("div");
+    meta.className = "shopping-meta";
+    meta.textContent = item.reason;
+
+    const source = document.createElement("div");
+    source.className = "shopping-source";
+    const srcLabel =
+      item.source === "planner" ? "From meal plan" :
+      item.source === "low" ? "Low stock" :
+      item.source === "expiring" ? "Expiring soon" :
+      item.source === "missing" ? "New recipe ingredient" :
+      "Added by you";
+    source.textContent = srcLabel;
+
+    labelDiv.appendChild(meta);
+    labelDiv.appendChild(source);
+
+    row.appendChild(checkbox);
+    row.appendChild(labelDiv);
+    listDiv.appendChild(row);
+  });
+}
+
+/* ---------------------------------------------------
+   SHOPPING CHECKOUT → PANTRY
+--------------------------------------------------- */
+function openCheckoutFromShopping(item) {
+  checkoutItem = item;
+  document.getElementById("checkout-title").innerText = `Add ${item.name} to pantry`;
+  document.getElementById("checkout-name").value = item.name;
+  document.getElementById("checkout-qty").value = item.amount && item.amount > 0 ? item.amount.toFixed(2) : "";
+  document.getElementById("checkout-unit").value = item.unit || (pantry[item.name]?.unit || "");
+  document.getElementById("checkout-location").value = "";
+  document.getElementById("checkout-category").value = pantry[item.name]?.category || "";
+  document.getElementById("checkout-threshold").value = pantry[item.name]?.threshold || "";
+  document.getElementById("checkout-expiry").value = "";
+  document.getElementById("checkout-notes").value = pantry[item.name]?.notes || "";
+  openModal("checkoutModal");
+}
+
+function confirmCheckout() {
+  if (!checkoutItem) return;
+
+  const name = document.getElementById("checkout-name").value.trim();
+  const qty = parseFloat(document.getElementById("checkout-qty").value);
+  const unit = (document.getElementById("checkout-unit").value || "").trim();
+  const location = document.getElementById("checkout-location").value;
+  const category = document.getElementById("checkout-category").value || "";
+  const threshold = parseFloat(document.getElementById("checkout-threshold").value);
+  const expiry = document.getElementById("checkout-expiry").value || "";
+  const notes = document.getElementById("checkout-notes").value || "";
+
+  if (!name || isNaN(qty) || !location) return;
+
+  if (!pantry[name]) {
+    pantry[name] = {
+      unit,
+      category,
+      threshold: isNaN(threshold) ? 0 : threshold,
+      notes,
+      locations: {}
+    };
+  } else {
+    const p = pantry[name];
+    if (unit) p.unit = unit;
+    if (category) p.category = category;
+    if (!isNaN(threshold)) p.threshold = threshold;
+    if (notes) p.notes = notes;
+  }
+
+  if (!pantry[name].locations[location]) {
+    pantry[name].locations[location] = { qty: 0, expires: "" };
+  }
+  pantry[name].locations[location].qty += qty;
+  if (expiry) pantry[name].locations[location].expires = expiry;
+
+  shoppingExtras = shoppingExtras.filter(extra => extra.id !== checkoutItem.key && extra.id !== checkoutItem.id);
+
+  checkoutItem = null;
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonalSuggestions();
+  saveState();
+  closeModal("checkoutModal");
+}
+
+/* ---------------------------------------------------
+   SEASONAL NOTES
+--------------------------------------------------- */
+function updateSeasonalSuggestions() {
+  const now = new Date();
+  const month = now.getMonth();
+  const notes = [];
+
+  if (month === 11 || month <= 1) {
+    notes.push("Cold months: soups, stews, and roasts are perfect for using root vegetables and bones.");
+  } else if (month >= 5 && month <= 8) {
+    notes.push("Warm months: lean into salads, grilled meals, and herb-heavy dishes.");
+  } else {
+    notes.push("Transitional seasons: great time for bakes, gratins, and one-pan meals.");
+  }
+
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    if (!item.locations) return;
+    Object.keys(item.locations).forEach(loc => {
+      const entry = item.locations[loc];
+      if (!entry.expires) return;
+      const d = new Date(entry.expires + "T00:00:00");
+      const diffDays = (d - now) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 0 && diffDays <= 3) {
+        notes.push(`Use soon: ${name} in ${loc} (expiring in ${Math.round(diffDays)} day(s)).`);
+      }
+    });
+  });
+
+  if (!notes.length) {
+    notes.push("You're in a calm spot. Plan, cook, and enjoy without rushing anything.");
+  }
+
+  const div = document.getElementById("seasonal-list");
+  div.innerHTML = "";
+  notes.forEach(text => {
+    const d = document.createElement("div");
+    d.className = "seasonal-item";
+    d.textContent = "• " + text;
+    div.appendChild(d);
+  });
+}
+
+/* ---------------------------------------------------
+   INIT
+--------------------------------------------------- */
+loadState();
+updatePantryUI();
+renderRecipes();
+renderPlanner();
+updateShoppingList();
+updateSeasonalSuggestions();
+</script>
+
 </body>
 </html>
