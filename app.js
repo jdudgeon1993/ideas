@@ -7,8 +7,46 @@ function uid() {
   return Math.random().toString(36).substr(2, 9);
 }
 
-// Pantry
+// Pantry - Multi-location data model
 let pantry = JSON.parse(localStorage.getItem("pantry") || "[]");
+
+// Migrate old pantry data to new multi-location structure
+function migratePantryData() {
+  let needsMigration = false;
+
+  pantry = pantry.map(item => {
+    // Check if this is old structure (has direct qty/location fields)
+    if (item.qty !== undefined && !item.locations) {
+      needsMigration = true;
+      return {
+        id: item.id,
+        name: item.name,
+        unit: item.unit,
+        category: item.category || "Other",
+        min: item.min || 0,
+        locations: [{
+          id: uid(),
+          location: item.location || "Pantry",
+          qty: item.qty || 0,
+          expiry: item.expiry || ""
+        }],
+        totalQty: item.qty || 0,
+        notes: item.notes || ""
+      };
+    }
+
+    // Already migrated, ensure totalQty is correct
+    if (item.locations) {
+      item.totalQty = item.locations.reduce((sum, loc) => sum + (loc.qty || 0), 0);
+    }
+
+    return item;
+  });
+
+  if (needsMigration) {
+    savePantry();
+  }
+}
 
 function savePantry() {
   localStorage.setItem("pantry", JSON.stringify(pantry));
@@ -16,6 +54,11 @@ function savePantry() {
 
 function getIngredient(id) {
   return pantry.find(item => item.id === id);
+}
+
+function getTotalQty(ingredient) {
+  if (!ingredient.locations) return 0;
+  return ingredient.locations.reduce((sum, loc) => sum + (loc.qty || 0), 0);
 }
 
 // Recipes
@@ -218,6 +261,23 @@ function modalIngredientRow({ ingredient = "", qty = "", unit = "" }) {
    PANTRY: MODAL + SAVE + RENDER
 --------------------------------------------------- */
 
+function modalLocationRow({ location = "", qty = "", expiry = "" }) {
+  return `
+    <div class="modal-location-row">
+      <select class="location-select">
+        <option ${location === "Pantry" ? "selected" : ""}>Pantry</option>
+        <option ${location === "Fridge" ? "selected" : ""}>Fridge</option>
+        <option ${location === "Freezer" ? "selected" : ""}>Freezer</option>
+        <option ${location === "Cellar" ? "selected" : ""}>Cellar</option>
+        <option ${location === "Other" ? "selected" : ""}>Other</option>
+      </select>
+      <input type="number" value="${qty}" placeholder="Qty" step="0.01">
+      <input type="date" value="${expiry}" placeholder="Expiry">
+      <button class="modal-remove-row" type="button">&times;</button>
+    </div>
+  `;
+}
+
 function openIngredientModal(existing = null) {
   const isEdit = !!existing;
 
@@ -226,21 +286,20 @@ function openIngredientModal(existing = null) {
     ? "Update your pantry item."
     : "Keep your pantry honest and human.";
 
+  const locationRows = (existing && existing.locations ? existing.locations : [{location: "Pantry", qty: "", expiry: ""}])
+    .map(loc => modalLocationRow({
+      location: loc.location,
+      qty: loc.qty,
+      expiry: loc.expiry || ""
+    }))
+    .join("");
+
   const contentHTML = `
-    ${modalFull(`
-      ${modalField({
+    ${modalRow([
+      modalField({
         label: "Ingredient Name",
         value: existing ? existing.name : "",
         placeholder: "e.g., Chicken Breast, Garlic, etc."
-      })}
-    `)}
-
-    ${modalRow([
-      modalField({
-        label: "Quantity On Hand",
-        type: "number",
-        value: existing ? existing.qty : "",
-        placeholder: "e.g., 5"
       }),
       modalField({
         label: "Unit of Measure",
@@ -264,19 +323,13 @@ function openIngredientModal(existing = null) {
       })
     ])}
 
-    ${modalRow([
-      modalField({
-        label: "Storage Location",
-        type: "select",
-        options: ["Pantry", "Fridge", "Freezer", "Cellar", "Other"],
-        value: existing ? existing.location : ""
-      }),
-      modalField({
-        label: "Expiration Date",
-        type: "date",
-        value: existing ? (existing.expiry || "") : ""
-      })
-    ])}
+    ${modalFull(`
+      <label style="font-weight:600; margin-bottom:0.35rem;">Storage Locations</label>
+      <div id="modal-location-list">
+        ${locationRows}
+      </div>
+      <button class="modal-add-row" id="add-location-row" type="button">+ Add Location</button>
+    `)}
   `;
 
   openCardModal({
@@ -296,21 +349,41 @@ function openIngredientModal(existing = null) {
       }
     ]
   });
+
+  // Add location row functionality
+  const addBtn = document.getElementById("add-location-row");
+  if (addBtn) {
+    addBtn.addEventListener("click", () => {
+      const list = document.getElementById("modal-location-list");
+      if (list) {
+        list.insertAdjacentHTML("beforeend", modalLocationRow({}));
+        attachLocationRowListeners();
+      }
+    });
+  }
+
+  attachLocationRowListeners();
+}
+
+function attachLocationRowListeners() {
+  const removeButtons = document.querySelectorAll(".modal-remove-row");
+  removeButtons.forEach(btn => {
+    btn.onclick = (e) => {
+      e.target.closest(".modal-location-row").remove();
+    };
+  });
 }
 
 function saveIngredient(existing) {
   const modal = document.querySelector(".modal-card");
-  const fields = modal.querySelectorAll(".modal-field input, .modal-field select, .modal-field textarea");
+  const fields = modal.querySelectorAll(".modal-field input, .modal-field select");
   const values = Array.from(fields).map(f => f.value.trim());
 
   const [
     name,
-    qty,
     unit,
     min,
-    category,
-    location,
-    expiry
+    category
   ] = values;
 
   if (!name) {
@@ -318,24 +391,36 @@ function saveIngredient(existing) {
     return;
   }
 
+  // Collect location data
+  const locationRows = modal.querySelectorAll(".modal-location-row");
+  const locations = Array.from(locationRows).map(row => {
+    const inputs = row.querySelectorAll("input, select");
+    return {
+      id: uid(),
+      location: inputs[0].value,
+      qty: Number(inputs[1].value || 0),
+      expiry: inputs[2].value || ""
+    };
+  }).filter(loc => loc.qty > 0); // Only keep locations with qty
+
+  const totalQty = locations.reduce((sum, loc) => sum + loc.qty, 0);
+
   if (existing) {
     existing.name = name;
-    existing.qty = Number(qty);
     existing.unit = unit;
-    existing.min = Number(min);
+    existing.min = Number(min || 0);
     existing.category = category;
-    existing.location = location;
-    existing.expiry = expiry;
+    existing.locations = locations;
+    existing.totalQty = totalQty;
   } else {
     pantry.push({
       id: uid(),
       name,
-      qty: Number(qty || 0),
       unit,
-      min: Number(min || 0),
       category,
-      location,
-      expiry,
+      min: Number(min || 0),
+      locations,
+      totalQty,
       notes: ""
     });
   }
@@ -767,8 +852,8 @@ function generateShoppingList() {
 
   // Threshold-based items
   pantry.forEach(item => {
-    if (item.min && item.qty < item.min) {
-      const needed = item.min - item.qty;
+    if (item.min && item.totalQty < item.min) {
+      const needed = item.min - item.totalQty;
       addShoppingItem({
         name: item.name,
         qty: needed,
@@ -780,6 +865,8 @@ function generateShoppingList() {
   });
 
   // Missing ingredients from planned meals
+  const reserved = calculateReservedIngredients();
+
   Object.keys(planner).forEach(dateStr => {
     const recipeId = planner[dateStr];
     const recipe = getRecipe(recipeId);
@@ -787,21 +874,41 @@ function generateShoppingList() {
 
     recipe.ingredients.forEach(ing => {
       const pantryItem = pantry.find(p => p.name === ing.name && p.unit === ing.unit);
-      const available = pantryItem ? pantryItem.qty : 0;
-      const missing = ing.qty - available;
 
-      if (missing > 0) {
+      if (!pantryItem) {
+        // Ingredient doesn't exist in pantry at all
         const existing = findShoppingItem(ing.name, ing.unit);
         if (existing) {
-          existing.qty += missing;
+          existing.qty = Math.max(existing.qty, ing.qty);
         } else {
           addShoppingItem({
             name: ing.name,
-            qty: missing,
+            qty: ing.qty,
             unit: ing.unit,
-            category: pantryItem ? pantryItem.category : "Other",
+            category: "Other",
             source: "Planner"
           });
+        }
+      } else {
+        // Check if we have enough after reservations
+        const key = `${ing.name}|${ing.unit}`;
+        const alreadyReserved = reserved[key] || 0;
+        const available = pantryItem.totalQty - alreadyReserved;
+
+        if (available < ing.qty) {
+          const missing = ing.qty - Math.max(0, available);
+          const existing = findShoppingItem(ing.name, ing.unit);
+          if (existing) {
+            existing.qty = Math.max(existing.qty, missing);
+          } else {
+            addShoppingItem({
+              name: ing.name,
+              qty: missing,
+              unit: ing.unit,
+              category: pantryItem.category,
+              source: "Planner"
+            });
+          }
         }
       }
     });
@@ -1038,20 +1145,36 @@ function saveCheckoutItems() {
     let pantryItem = pantry.find(p => p.name === name && p.unit === unit);
 
     if (pantryItem) {
-      pantryItem.qty += qty;
+      // Add to existing ingredient's location
+      const existingLoc = pantryItem.locations.find(l => l.location === storage);
+      if (existingLoc) {
+        existingLoc.qty += qty;
+        if (expiry) existingLoc.expiry = expiry;
+      } else {
+        pantryItem.locations.push({
+          id: uid(),
+          location: storage,
+          qty,
+          expiry
+        });
+      }
+      pantryItem.totalQty = getTotalQty(pantryItem);
       pantryItem.category = category;
-      pantryItem.location = storage;
-      pantryItem.expiry = expiry;
     } else {
+      // Create new ingredient
       pantry.push({
         id: uid(),
         name,
-        qty,
         unit,
         category,
-        location: storage,
         min: 0,
-        expiry,
+        locations: [{
+          id: uid(),
+          location: storage,
+          qty,
+          expiry
+        }],
+        totalQty: qty,
         notes: ""
       });
     }
@@ -1093,6 +1216,15 @@ function calculateReservedIngredients() {
   return reserved;
 }
 
+function getDaysUntilExpiry(expiryDate) {
+  if (!expiryDate) return null;
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const diffTime = expiry - now;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
 function updateDashboard() {
   // Today's meal
   const today = new Date().toISOString().split("T")[0];
@@ -1112,7 +1244,7 @@ function updateDashboard() {
 
       const key = `${ing.name}|${ing.unit}`;
       const reservedQty = reserved[key] || 0;
-      const available = pantryItem.qty - reservedQty;
+      const available = pantryItem.totalQty - reservedQty;
 
       return available >= ing.qty;
     });
@@ -1129,12 +1261,14 @@ function updateDashboard() {
     pantryCountEl.textContent = pantry.length;
   }
 
-  // Expired ingredients
+  // Expired ingredients (check across all locations)
   const now = new Date();
   const expired = pantry.filter(item => {
-    if (!item.expiry) return false;
-    const expiryDate = new Date(item.expiry);
-    return expiryDate < now;
+    return item.locations.some(loc => {
+      if (!loc.expiry) return false;
+      const expiryDate = new Date(loc.expiry);
+      return expiryDate < now;
+    });
   });
 
   const expiredEl = document.getElementById("dash-expired-count");
@@ -1222,17 +1356,56 @@ function applyPantryFilter() {
 
     const key = `${item.name}|${item.unit}`;
     const reservedQty = reserved[key] || 0;
-    const available = item.qty - reservedQty;
+    const available = item.totalQty - reservedQty;
+
+    // Find soonest expiry across all locations
+    let soonestExpiry = null;
+    let expiryStatus = "";
+    item.locations.forEach(loc => {
+      if (loc.expiry) {
+        const days = getDaysUntilExpiry(loc.expiry);
+        if (days !== null && (soonestExpiry === null || days < soonestExpiry)) {
+          soonestExpiry = days;
+        }
+      }
+    });
+
+    if (soonestExpiry !== null) {
+      if (soonestExpiry < 0) {
+        expiryStatus = `<span class="expiry-expired">Expired ${Math.abs(soonestExpiry)}d ago</span>`;
+      } else if (soonestExpiry === 0) {
+        expiryStatus = `<span class="expiry-today">Expires today!</span>`;
+      } else if (soonestExpiry <= 3) {
+        expiryStatus = `<span class="expiry-urgent">Expires in ${soonestExpiry}d</span>`;
+      } else if (soonestExpiry <= 7) {
+        expiryStatus = `<span class="expiry-soon">Expires in ${soonestExpiry}d</span>`;
+      } else {
+        expiryStatus = `<span class="expiry-ok">Expires in ${soonestExpiry}d</span>`;
+      }
+    }
+
+    // Location breakdown
+    const locationHTML = item.locations.map(loc => {
+      const locDays = getDaysUntilExpiry(loc.expiry);
+      const expiryText = locDays !== null
+        ? (locDays < 0 ? `(expired)` : locDays <= 7 ? `(${locDays}d)` : "")
+        : "";
+      return `<div class="pantry-location">📍 ${loc.location}: ${loc.qty} ${item.unit} ${expiryText}</div>`;
+    }).join("");
+
+    // Stock level indicator
+    const stockPercent = item.min > 0 ? Math.min(100, (available / item.min) * 100) : 100;
+    const stockClass = stockPercent < 50 ? 'stock-low' : stockPercent < 100 ? 'stock-medium' : 'stock-good';
 
     card.innerHTML = `
       <div class="pantry-item-header">
         <strong>${item.name}</strong>
-        <span class="pantry-item-badge">${item.category}</span>
+        <span class="pantry-item-badge ${item.category.toLowerCase()}">${item.category}</span>
       </div>
       <div class="pantry-item-quantities">
         <div class="pantry-qty">
           <span class="pantry-qty-label">On Hand</span>
-          <span class="pantry-qty-value">${item.qty} ${item.unit}</span>
+          <span class="pantry-qty-value">${item.totalQty} ${item.unit}</span>
         </div>
         <div class="pantry-qty">
           <span class="pantry-qty-label">Reserved</span>
@@ -1243,10 +1416,16 @@ function applyPantryFilter() {
           <span class="pantry-qty-value ${available < item.min ? 'pantry-qty-low' : ''}">${available} ${item.unit}</span>
         </div>
       </div>
-      <div class="pantry-item-meta">
-        <span>📍 ${item.location}</span>
-        <span>📅 ${item.expiry || "No expiry"}</span>
+      <div class="pantry-stock-indicator">
+        <div class="stock-bar">
+          <div class="stock-fill ${stockClass}" style="width: ${stockPercent}%"></div>
+        </div>
+        <span class="stock-text">Min: ${item.min} ${item.unit}</span>
       </div>
+      <div class="pantry-locations">
+        ${locationHTML}
+      </div>
+      ${expiryStatus ? `<div class="pantry-expiry">${expiryStatus}</div>` : ''}
     `;
 
     card.addEventListener("click", () => openIngredientModal(item));
@@ -1282,14 +1461,17 @@ function setupSmoothScroll() {
 --------------------------------------------------- */
 
 function init() {
+  // Migrate pantry data to new multi-location structure
+  migratePantryData();
+
   // Update date/time immediately and every minute
   updateDateTime();
   setInterval(updateDateTime, 60000);
 
-  // Render initial state
+  // Render initial state and auto-generate shopping list
   renderPantry();
   renderRecipes();
-  renderShoppingList();
+  generateShoppingList(); // Auto-generate shopping list on page load
   updateDashboard();
 
   // Wire pantry button
@@ -1327,15 +1509,6 @@ function init() {
   }
 
   // Shopping buttons
-  const btnGenerate = document.getElementById("btn-generate-shopping");
-  if (btnGenerate) {
-    btnGenerate.addEventListener("click", () => {
-      generateShoppingList();
-      renderPantry();
-      updateDashboard();
-    });
-  }
-
   const btnAddCustom = document.getElementById("btn-add-custom-item");
   if (btnAddCustom) {
     btnAddCustom.addEventListener("click", openCustomShoppingModal);

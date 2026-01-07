@@ -152,61 +152,34 @@
   </section>
 
 
-  <!-- SHOPPING + SEASONAL (TWO-COLUMN WRAP) -->
-  <section class="section section-bottom">
-    <div class="two-column">
+  <!-- SHOPPING LIST -->
+  <section class="section section-shopping" id="shopping-section">
+    <header class="section-header">
+      <h2>Shopping list</h2>
+      <p class="section-subtitle">
+        Auto-updated from meal plans and pantry thresholds.
+      </p>
+    </header>
 
-      <!-- SHOPPING LIST -->
-      <div class="column column-shopping" id="shopping-section">
-        <header class="section-header">
-          <h2>Shopping list</h2>
-          <p class="section-subtitle">
-            Thresholds, missing ingredients, and custom needs in one place.
-          </p>
-        </header>
+    <div class="shopping-add-inline">
+      <input
+        type="text"
+        id="user-item-name"
+        placeholder="Add custom item (e.g., 'Lemons')"
+      >
+      <button class="btn btn-secondary" id="btn-add-custom-item">
+        Add
+      </button>
+    </div>
 
-        <div class="shopping-toolbar">
-          <button class="btn btn-primary" id="btn-generate-shopping">
-            Refresh from plans & thresholds
-          </button>
-        </div>
+    <div id="shopping-list" class="shopping-list">
+      <!-- Shopping items injected here -->
+    </div>
 
-        <div class="shopping-add-inline">
-          <input
-            type="text"
-            id="user-item-name"
-            placeholder="Add custom item (e.g., 'Lemons')"
-          >
-          <button class="btn btn-secondary" id="btn-add-custom-item">
-            Add
-          </button>
-        </div>
-
-        <div id="shopping-list" class="shopping-list">
-          <!-- Shopping items injected here -->
-        </div>
-
-        <div class="shopping-actions">
-          <button class="btn btn-primary" id="btn-checkout">
-            Checkout & stock pantry
-          </button>
-        </div>
-      </div>
-
-      <!-- SEASONAL NUDGES -->
-      <div class="column column-seasonal" id="seasonal-section">
-        <header class="section-header">
-          <h2>Seasonal & gentle nudges</h2>
-          <p class="section-subtitle">
-            The seasons, your soon‑to‑expire ingredients, and a few soft suggestions.
-          </p>
-        </header>
-
-        <div id="seasonal-list" class="seasonal-list">
-          <!-- Seasonal nudges injected here -->
-        </div>
-      </div>
-
+    <div class="shopping-actions">
+      <button class="btn btn-primary" id="btn-checkout">
+        Checkout & stock pantry
+      </button>
     </div>
   </section>
 
