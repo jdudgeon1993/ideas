@@ -5,12 +5,10 @@
   <title>Chef's Cove — Cottagecore Edition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- App logic -->
   <script defer src="app.js"></script>
 </head>
+
 <body class="theme-daylight">
 
   <!-- Hero -->
@@ -21,16 +19,18 @@
   </header>
 
   <!-- Dashboard -->
-  <section class="section dashboard active">
+  <section class="section dashboard">
     <h2>Today & Week</h2>
+
     <div class="dashboard-stat-row">
       <div class="stat-pill">
         <span>Today’s meal</span>
         <span id="dash-today-meal">Not planned</span>
       </div>
+
       <div class="stat-pill">
         <span>Ready recipes</span>
-        <span id="dash-ready-recipes">–</span>
+        <span id="dash-ready-recipes">0</span>
       </div>
     </div>
 
@@ -42,24 +42,21 @@
 
   <!-- Pantry -->
   <section class="section pantry">
-    <div class="section-header">
-      <h2>Pantry</h2>
-      <small>Your source of truth. Multi‑location, soft units.</small>
-    </div>
+    <h2>Pantry</h2>
+    <p>Your source of truth. Multi‑location, soft units.</p>
 
     <div class="pantry-header-controls">
-      <div class="pantry-filters">
-        <select id="filter-category">
-          <option value="">All categories</option>
-          <option value="Meat">Meat</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Produce">Produce</option>
-          <option value="Pantry">Pantry Staples</option>
-          <option value="Frozen">Frozen</option>
-          <option value="Spices">Spices</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
+      <select id="filter-category">
+        <option value="">All categories</option>
+        <option value="Meat">Meat</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Produce">Produce</option>
+        <option value="Pantry">Pantry Staples</option>
+        <option value="Frozen">Frozen</option>
+        <option value="Spices">Spices</option>
+        <option value="Other">Other</option>
+      </select>
+
       <button class="btn" id="btn-add-ingredient">Add / stock ingredient</button>
     </div>
 
@@ -68,16 +65,14 @@
 
   <!-- Recipes -->
   <section class="section recipes">
-    <div class="section-header">
-      <h2>Recipes</h2>
-      <small>Pantry‑aware, cozy cards with seasonal flair.</small>
-    </div>
+    <h2>Recipes</h2>
+    <p>Pantry‑aware, cozy cards with seasonal flair.</p>
 
     <button class="btn" id="btn-new-recipe">New recipe</button>
     <div id="recipe-list" class="recipe-grid"></div>
   </section>
 
-  <!-- Planner (Monthly Calendar) -->
+  <!-- Planner -->
   <section class="section planner">
     <div class="planner-header">
       <h2>Planner</h2>
@@ -85,15 +80,14 @@
     </div>
 
     <p>Plan your month like a handwritten kitchen calendar.</p>
+
     <div id="day-grid"></div>
   </section>
 
   <!-- Shopping -->
   <section class="section shopping">
-    <div class="section-header">
-      <h2>Shopping List</h2>
-      <small>Generated from plans + pantry, with your personal additions.</small>
-    </div>
+    <h2>Shopping List</h2>
+    <p>Generated from plans + pantry, with your personal additions.</p>
 
     <div class="shopping-controls">
       <input type="text" id="user-item-name" placeholder="Add custom item">
@@ -105,14 +99,12 @@
 
   <!-- Seasonal -->
   <section class="section seasonal">
-    <div class="section-header">
-      <h2>Seasonal & Gentle Nudges</h2>
-      <small>Let the seasons guide your meals.</small>
-    </div>
+    <h2>Seasonal & Gentle Nudges</h2>
+    <p>Let the seasons guide your meals.</p>
 
     <div id="seasonal-list" class="seasonal-list"></div>
   </section>
 
-  <!-- Modals injected by JS -->
+  <!-- Modal root injected by JS -->
 </body>
 </html>
