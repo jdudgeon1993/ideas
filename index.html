@@ -16,8 +16,8 @@
     <div class="header-left">
       <div class="header-logo">🍽️</div>
       <div class="header-title">
-        <h1>Chef’s Kiss</h1>
-        <p class="header-tagline">Seasonal kitchen companion</p>
+        <h1>Chef's Kiss</h1>
+        <p class="header-tagline">Kitchen companion</p>
       </div>
     </div>
     <div class="header-right">
@@ -28,14 +28,19 @@
     </div>
   </header>
 
+  <!-- NAVIGATION -->
+  <nav class="site-nav">
+    <button class="nav-link" data-scroll-target="#pantry-section">Pantry</button>
+    <button class="nav-link" data-scroll-target="#recipes-section">Recipes</button>
+    <button class="nav-link" id="nav-planner">Meal Plan</button>
+    <button class="nav-link" data-scroll-target="#shopping-section">Shopping List</button>
+  </nav>
+
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-inner">
-      <h2>A cozy kitchen management system made simple.</h2>
-      <p class="hero-subtext">
-        Track your pantry, plan meals, build your shopping list, and follow the seasons—without the overwhelm.
-      </p>
-    </div>
+    <p class="hero-tagline">
+      Track your pantry, plan meals, and build your shopping list—without the overwhelm.
+    </p>
   </section>
 
   <!-- TODAY & WEEK DASHBOARD -->
@@ -77,10 +82,15 @@
     </div>
 
     <div class="dashboard-actions">
-      <button class="btn btn-primary" data-scroll-target="#planner-section">Open planner</button>
+      <button class="btn btn-primary" id="btn-open-planner">Open meal plan</button>
       <button class="btn btn-secondary" data-scroll-target="#recipes-section">Browse recipes</button>
     </div>
   </section>
+
+  <!-- FLOATING PLANNER BUTTON -->
+  <button class="floating-planner-btn" id="floating-planner-btn" title="Open Meal Plan">
+    📅
+  </button>
 
   <!-- PANTRY + RECIPES (TWO-COLUMN WRAP) -->
   <section class="section section-inventory">
@@ -141,26 +151,6 @@
     </div>
   </section>
 
-  <!-- PLANNER (MONTHLY CALENDAR, FULL WIDTH) -->
-  <section class="section section-planner" id="planner-section">
-    <header class="section-header">
-      <h2>Planner</h2>
-      <p class="section-subtitle">
-        Plan your month like a handwritten kitchen calendar.
-      </p>
-    </header>
-
-    <div class="planner-header-row">
-      <div class="planner-month-label" id="planner-month-label">
-        <!-- e.g., January 2026 -->
-      </div>
-      <!-- future: month navigation controls -->
-    </div>
-
-    <div id="day-grid" class="planner-grid">
-      <!-- Calendar days injected here -->
-    </div>
-  </section>
 
   <!-- SHOPPING + SEASONAL (TWO-COLUMN WRAP) -->
   <section class="section section-bottom">
