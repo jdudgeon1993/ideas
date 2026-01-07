@@ -164,7 +164,8 @@ function addShoppingItem({ name, qty, unit, category, source }) {
   shopping.push({
     id: uid(),
     name,
-    qty: Number(qty),
+    recommendedQty: Number(qty),
+    actualQty: Number(qty), // User can edit this
     unit,
     category,
     source, // "Threshold", "Planner", "Custom"
@@ -628,10 +629,40 @@ function saveRecipe(existing) {
   }
 
   saveRecipes();
+  createGhostPantryItems(ingredients);
   renderRecipes();
+  renderPantry();
   generateShoppingList();
   updateDashboard();
   closeModal();
+}
+
+function createGhostPantryItems(ingredients) {
+  // For each ingredient in the recipe, ensure it exists in pantry
+  // If not, create a "ghost" item at qty 0 with location "Unassigned"
+  ingredients.forEach(ing => {
+    const existing = pantry.find(p => p.name === ing.name && p.unit === ing.unit);
+
+    if (!existing && ing.name && ing.unit) {
+      pantry.push({
+        id: uid(),
+        name: ing.name,
+        unit: ing.unit,
+        category: "Other",
+        min: 0,
+        locations: [{
+          id: uid(),
+          location: "Unassigned",
+          qty: 0,
+          expiry: ""
+        }],
+        totalQty: 0,
+        notes: "Auto-created from recipe"
+      });
+    }
+  });
+
+  savePantry();
 }
 
 function renderRecipes() {
@@ -703,9 +734,41 @@ function openRecipeViewModal(recipe) {
         label: "Edit",
         class: "btn-secondary",
         onClick: () => openRecipeModal(recipe)
+      },
+      {
+        label: "Delete",
+        class: "btn-secondary btn-danger",
+        onClick: () => deleteRecipe(recipe)
       }
     ]
   });
+}
+
+function deleteRecipe(recipe) {
+  if (!confirm(`Delete "${recipe.name}"? This will also remove it from your meal plan.`)) {
+    return;
+  }
+
+  // Remove recipe from recipes array
+  recipes = recipes.filter(r => r.id !== recipe.id);
+  saveRecipes();
+
+  // Remove from all planned meals
+  Object.keys(planner).forEach(dateStr => {
+    planner[dateStr] = planner[dateStr].filter(meal => meal.recipeId !== recipe.id);
+
+    // Clean up empty dates
+    if (planner[dateStr].length === 0) {
+      delete planner[dateStr];
+    }
+  });
+  savePlanner();
+
+  // Update everything
+  renderRecipes();
+  generateShoppingList();
+  updateDashboard();
+  closeModal();
 }
 
 // Redirect to full Cook Now modal
@@ -1178,6 +1241,13 @@ function renderShoppingList() {
   let currentCategory = "";
 
   sorted.forEach(item => {
+    // Migrate old format to new format
+    if (item.qty !== undefined && item.recommendedQty === undefined) {
+      item.recommendedQty = item.qty;
+      item.actualQty = item.qty;
+      delete item.qty;
+    }
+
     if (item.category !== currentCategory) {
       currentCategory = item.category;
       const header = document.createElement("div");
@@ -1189,20 +1259,30 @@ function renderShoppingList() {
     const card = document.createElement("div");
     card.className = "shopping-item";
 
+    const isDifferent = item.actualQty !== item.recommendedQty;
+    const qtyDisplay = isDifferent
+      ? `<span class="qty-recommended">Rec: ${item.recommendedQty}</span> → <span class="qty-actual">${item.actualQty} ${item.unit}</span>`
+      : `${item.actualQty} ${item.unit}`;
+
     card.innerHTML = `
       <input type="checkbox" class="shopping-check" ${item.checked ? "checked" : ""}>
       <div class="shopping-info">
         <strong>${item.name}</strong>
         <div class="shopping-sub">
-          ${item.qty} ${item.unit} • ${item.source}
+          ${qtyDisplay} • ${item.source}
         </div>
       </div>
+      <button class="shopping-edit" title="Edit quantity">✎</button>
       <button class="shopping-remove">&times;</button>
     `;
 
     card.querySelector(".shopping-check").addEventListener("change", (e) => {
       item.checked = e.target.checked;
       saveShopping();
+    });
+
+    card.querySelector(".shopping-edit").addEventListener("click", () => {
+      openEditShoppingModal(item);
     });
 
     card.querySelector(".shopping-remove").addEventListener("click", () => {
@@ -1213,6 +1293,80 @@ function renderShoppingList() {
 
     container.appendChild(card);
   });
+}
+
+function openEditShoppingModal(item) {
+  const contentHTML = `
+    ${modalRow([
+      modalField({
+        label: "Item Name",
+        value: item.name
+      }),
+      modalField({
+        label: "Unit",
+        value: item.unit
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Recommended Qty",
+        type: "number",
+        value: item.recommendedQty,
+        placeholder: "System recommendation"
+      }),
+      modalField({
+        label: "Buying Qty",
+        type: "number",
+        value: item.actualQty,
+        placeholder: "How much you'll buy"
+      })
+    ])}
+
+    <p style="margin-top:1rem; font-size:0.9rem; opacity:0.8;">
+      Source: ${item.source}
+    </p>
+  `;
+
+  openCardModal({
+    title: "Edit Shopping Item",
+    subtitle: item.name,
+    contentHTML,
+    actions: [
+      {
+        label: "Save",
+        class: "btn-primary",
+        onClick: () => saveEditShoppingItem(item)
+      },
+      {
+        label: "Cancel",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+}
+
+function saveEditShoppingItem(item) {
+  const modal = document.querySelector(".modal-card");
+  const fields = modal.querySelectorAll(".modal-field input");
+  const values = Array.from(fields).map(f => f.value.trim());
+
+  const [name, unit, recommendedQty, actualQty] = values;
+
+  if (!name) {
+    alert("Item name is required.");
+    return;
+  }
+
+  item.name = name;
+  item.unit = unit;
+  item.recommendedQty = Number(recommendedQty || 0);
+  item.actualQty = Number(actualQty || 0);
+
+  saveShopping();
+  renderShoppingList();
+  closeModal();
 }
 
 function openCustomShoppingModal() {
@@ -1312,10 +1466,16 @@ function openCheckoutModal() {
     return;
   }
 
-  const rows = purchased.map(item => `
+  const rows = purchased.map(item => {
+    // Migrate old format
+    if (item.qty !== undefined && item.actualQty === undefined) {
+      item.actualQty = item.qty;
+    }
+
+    return `
     <div class="modal-ingredient-row">
       <input type="text" value="${item.name}" disabled>
-      <input type="number" value="${item.qty}" placeholder="Qty">
+      <input type="number" value="${item.actualQty}" placeholder="Qty">
       <input type="text" value="${item.unit}" placeholder="Unit">
       <select>
         <option ${item.category === "Produce" ? "selected" : ""}>Produce</option>
@@ -1335,7 +1495,8 @@ function openCheckoutModal() {
       </select>
       <input type="date">
     </div>
-  `).join("");
+    `;
+  }).join("");
 
   const contentHTML = `
     ${modalFull(`
@@ -1929,8 +2090,32 @@ function init() {
     btnCheckout.addEventListener("click", openCheckoutModal);
   }
 
+  // Reset button
+  const btnReset = document.getElementById("btn-reset");
+  if (btnReset) {
+    btnReset.addEventListener("click", resetAllData);
+  }
+
   // Setup smooth scroll
   setupSmoothScroll();
+}
+
+function resetAllData() {
+  if (!confirm("Are you sure you want to clear ALL data? This will delete your pantry, recipes, meal plan, and shopping list. This cannot be undone.")) {
+    return;
+  }
+
+  // Clear all localStorage
+  localStorage.clear();
+
+  // Reset arrays
+  pantry = [];
+  recipes = [];
+  planner = {};
+  shopping = [];
+
+  // Reload page
+  location.reload();
 }
 
 document.addEventListener("DOMContentLoaded", init);
