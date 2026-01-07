@@ -350,33 +350,8 @@ function saveIngredient(existing) {
 }
 
 function renderPantry() {
-  const container = document.getElementById("pantry-display");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  if (pantry.length === 0) {
-    container.innerHTML = `<p style="opacity:0.7;">Your pantry is empty. Add your first ingredient.</p>`;
-    return;
-  }
-
-  pantry.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "pantry-item";
-
-    card.innerHTML = `
-      <strong>${item.name}</strong><br>
-      <span>${item.qty} ${item.unit}</span><br>
-      <span>Category: ${item.category}</span><br>
-      <span>Location: ${item.location}</span><br>
-      <span>Min: ${item.min}</span><br>
-      <span>Expiry: ${item.expiry || "—"}</span>
-    `;
-
-    card.addEventListener("click", () => openIngredientModal(item));
-
-    container.appendChild(card);
-  });
+  // Use the filter function to respect any active filters
+  applyPantryFilter();
 }
 
 /* ---------------------------------------------------
@@ -1038,10 +1013,106 @@ function saveCheckoutItems() {
 }
 
 /* ---------------------------------------------------
+   HEADER DATE/TIME UPDATE
+--------------------------------------------------- */
+
+function updateDateTime() {
+  const now = new Date();
+
+  const dateEl = document.getElementById("header-date");
+  const timeEl = document.getElementById("header-time");
+
+  if (dateEl) {
+    const dateStr = now.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+    dateEl.textContent = dateStr;
+  }
+
+  if (timeEl) {
+    const timeStr = now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    });
+    timeEl.textContent = timeStr;
+  }
+}
+
+/* ---------------------------------------------------
+   PANTRY FILTER
+--------------------------------------------------- */
+
+function applyPantryFilter() {
+  const filterSelect = document.getElementById("filter-category");
+  const selectedCategory = filterSelect ? filterSelect.value : "";
+
+  const container = document.getElementById("pantry-display");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const filtered = selectedCategory
+    ? pantry.filter(item => item.category === selectedCategory)
+    : pantry;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<p style="opacity:0.7;">${selectedCategory ? "No items in this category." : "Your pantry is empty. Add your first ingredient."}</p>`;
+    return;
+  }
+
+  filtered.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "pantry-item";
+
+    card.innerHTML = `
+      <strong>${item.name}</strong><br>
+      <span>${item.qty} ${item.unit}</span><br>
+      <span>Category: ${item.category}</span><br>
+      <span>Location: ${item.location}</span><br>
+      <span>Min: ${item.min}</span><br>
+      <span>Expiry: ${item.expiry || "—"}</span>
+    `;
+
+    card.addEventListener("click", () => openIngredientModal(item));
+
+    container.appendChild(card);
+  });
+}
+
+/* ---------------------------------------------------
+   SMOOTH SCROLL
+--------------------------------------------------- */
+
+function setupSmoothScroll() {
+  const scrollButtons = document.querySelectorAll("[data-scroll-target]");
+
+  scrollButtons.forEach(button => {
+    button.addEventListener("click", (e) => {
+      const target = e.currentTarget.getAttribute("data-scroll-target");
+      const targetEl = document.querySelector(target);
+
+      if (targetEl) {
+        targetEl.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    });
+  });
+}
+
+/* ---------------------------------------------------
    INITIALIZATION
 --------------------------------------------------- */
 
 function init() {
+  // Update date/time immediately and every minute
+  updateDateTime();
+  setInterval(updateDateTime, 60000);
+
   // Render initial state
   renderPantry();
   renderRecipes();
@@ -1054,8 +1125,14 @@ function init() {
     btnAddIngredient.addEventListener("click", () => openIngredientModal(null));
   }
 
+  // Wire pantry filter
+  const filterCategory = document.getElementById("filter-category");
+  if (filterCategory) {
+    filterCategory.addEventListener("change", applyPantryFilter);
+  }
+
   // Wire recipe button
-  const btnAddRecipe = document.getElementById("btn-add-recipe");
+  const btnAddRecipe = document.getElementById("btn-new-recipe");
   if (btnAddRecipe) {
     btnAddRecipe.addEventListener("click", () => openRecipeModal(null));
   }
@@ -1075,6 +1152,9 @@ function init() {
   if (btnCheckout) {
     btnCheckout.addEventListener("click", openCheckoutModal);
   }
+
+  // Setup smooth scroll
+  setupSmoothScroll();
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -116,6 +116,12 @@ body {
   padding: 1rem;
   border: 1px solid rgba(0,0,0,0.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
 .dashboard-label {
@@ -146,6 +152,15 @@ body {
   cursor: pointer;
   font-weight: 600;
   border: none;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0);
 }
 
 .btn-primary {
@@ -153,10 +168,20 @@ body {
   color: #fff;
 }
 
+.btn-primary:hover {
+  background: linear-gradient(135deg, #7f8f54, #b88482);
+  box-shadow: 0 4px 12px rgba(138,154,91,0.3);
+}
+
 .btn-secondary {
   background: transparent;
   color: #8A9A5B;
   border: 2px solid #8A9A5B;
+}
+
+.btn-secondary:hover {
+  background: rgba(138,154,91,0.1);
+  border-color: #7f8f54;
 }
 
 /* ---------------------------------------------------
@@ -191,6 +216,27 @@ body {
   margin-bottom: 1rem;
 }
 
+.pantry-filters select {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.25);
+  background: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pantry-filters select:hover {
+  border-color: #8A9A5B;
+}
+
+.pantry-filters select:focus {
+  border-color: #8A9A5B;
+  box-shadow: 0 0 0 2px rgba(138,154,91,0.25);
+  outline: none;
+}
+
 .pantry-list {
   display: flex;
   flex-direction: column;
@@ -203,6 +249,13 @@ body {
   padding: 1rem;
   border: 1px solid rgba(0,0,0,0.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pantry-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
 /* ---------------------------------------------------
@@ -253,6 +306,55 @@ body {
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
+.planner-day {
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.75rem;
+  min-height: 80px;
+  border: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.planner-day:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.98);
+}
+
+.planner-day.empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+.planner-day.empty:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.planner-day-number {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: #6a4f35;
+}
+
+.planner-day-content {
+  font-size: 0.85rem;
+}
+
+.planner-recipe {
+  color: #8A9A5B;
+  font-weight: 600;
+}
+
+.planner-empty {
+  color: #999;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
 /* ---------------------------------------------------
    SHOPPING LIST
 --------------------------------------------------- */
@@ -267,6 +369,19 @@ body {
   padding: 0.6rem;
   border-radius: 8px;
   border: 1px solid rgba(0,0,0,0.2);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.shopping-add-inline input:hover {
+  border-color: #8A9A5B;
+}
+
+.shopping-add-inline input:focus {
+  border-color: #8A9A5B;
+  box-shadow: 0 0 0 2px rgba(138,154,91,0.25);
+  outline: none;
 }
 
 .shopping-list {
@@ -283,6 +398,17 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+  transition: box-shadow 0.15s ease;
+}
+
+.shopping-item:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.shopping-check {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
 }
 
 /* ---------------------------------------------------
@@ -685,4 +811,8 @@ body {
 
 .shopping-remove:hover {
   opacity: 1;
+}
+
+.shopping-actions {
+  margin-top: 1.5rem;
 }
