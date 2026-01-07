@@ -227,10 +227,34 @@ function openIngredientModal(existing = null) {
     : "Keep your pantry honest and human.";
 
   const contentHTML = `
+    ${modalFull(`
+      ${modalField({
+        label: "Ingredient Name",
+        value: existing ? existing.name : "",
+        placeholder: "e.g., Chicken Breast, Garlic, etc."
+      })}
+    `)}
+
     ${modalRow([
       modalField({
-        label: "Ingredient Name",
-        value: existing ? existing.name : ""
+        label: "Quantity On Hand",
+        type: "number",
+        value: existing ? existing.qty : "",
+        placeholder: "e.g., 5"
+      }),
+      modalField({
+        label: "Unit of Measure",
+        value: existing ? existing.unit : "",
+        placeholder: "e.g., lbs, cups, pieces"
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Minimum Threshold",
+        type: "number",
+        value: existing ? existing.min : "",
+        placeholder: "Restock when below this amount"
       }),
       modalField({
         label: "Category",
@@ -242,40 +266,15 @@ function openIngredientModal(existing = null) {
 
     ${modalRow([
       modalField({
-        label: "Quantity On Hand",
-        type: "number",
-        value: existing ? existing.qty : ""
-      }),
-      modalField({
-        label: "Unit of Measure",
-        value: existing ? existing.unit : ""
-      })
-    ])}
-
-    ${modalRow([
-      modalField({
-        label: "Minimum Threshold",
-        type: "number",
-        value: existing ? existing.min : ""
-      }),
-      modalField({
         label: "Storage Location",
         type: "select",
         options: ["Pantry", "Fridge", "Freezer", "Cellar", "Other"],
         value: existing ? existing.location : ""
-      })
-    ])}
-
-    ${modalRow([
+      }),
       modalField({
         label: "Expiration Date",
         type: "date",
         value: existing ? (existing.expiry || "") : ""
-      }),
-      modalField({
-        label: "Notes (optional)",
-        placeholder: "Optional notes...",
-        value: existing ? (existing.notes || "") : ""
       })
     ])}
   `;
@@ -306,13 +305,12 @@ function saveIngredient(existing) {
 
   const [
     name,
-    category,
     qty,
     unit,
     min,
+    category,
     location,
-    expiry,
-    notes
+    expiry
   ] = values;
 
   if (!name) {
@@ -322,30 +320,30 @@ function saveIngredient(existing) {
 
   if (existing) {
     existing.name = name;
-    existing.category = category;
     existing.qty = Number(qty);
     existing.unit = unit;
     existing.min = Number(min);
+    existing.category = category;
     existing.location = location;
     existing.expiry = expiry;
-    existing.notes = notes;
   } else {
     pantry.push({
       id: uid(),
       name,
-      category,
       qty: Number(qty || 0),
       unit,
       min: Number(min || 0),
+      category,
       location,
       expiry,
-      notes
+      notes: ""
     });
   }
 
   savePantry();
   renderPantry();
-  renderShoppingList();
+  generateShoppingList();
+  updateDashboard();
   closeModal();
 }
 
@@ -378,14 +376,24 @@ function openRecipeModal(existing = null) {
     ${modalRow([
       modalField({
         label: "Recipe Name",
-        value: existing ? existing.name : ""
+        value: existing ? existing.name : "",
+        placeholder: "e.g., Grandma's Chicken Soup"
       }),
       modalField({
         label: "Servings",
         type: "number",
-        value: existing ? existing.servings : ""
+        value: existing ? existing.servings : "",
+        placeholder: "e.g., 4"
       })
     ])}
+
+    ${modalFull(`
+      ${modalField({
+        label: "Photo URL (optional)",
+        value: existing ? (existing.photo || "") : "",
+        placeholder: "https://example.com/recipe-photo.jpg"
+      })}
+    `)}
 
     ${modalFull(`
       <label style="font-weight:600; margin-bottom:0.35rem;">Ingredients</label>
@@ -400,7 +408,8 @@ function openRecipeModal(existing = null) {
         label: "Instructions",
         type: "textarea",
         value: existing ? (existing.instructions || "") : "",
-        rows: 6
+        rows: 6,
+        placeholder: "Step-by-step cooking instructions..."
       })}
     `)}
   `;
@@ -442,6 +451,7 @@ function saveRecipe(existing) {
   const [
     name,
     servings,
+    photo,
     instructions
   ] = values;
 
@@ -463,6 +473,7 @@ function saveRecipe(existing) {
   if (existing) {
     existing.name = name;
     existing.servings = Number(servings || 0);
+    existing.photo = photo || "";
     existing.instructions = instructions;
     existing.ingredients = ingredients;
   } else {
@@ -470,6 +481,7 @@ function saveRecipe(existing) {
       id: uid(),
       name,
       servings: Number(servings || 0),
+      photo: photo || "",
       instructions,
       ingredients
     });
@@ -477,7 +489,8 @@ function saveRecipe(existing) {
 
   saveRecipes();
   renderRecipes();
-  renderShoppingList();
+  generateShoppingList();
+  updateDashboard();
   closeModal();
 }
 
@@ -496,10 +509,19 @@ function renderRecipes() {
     const card = document.createElement("div");
     card.className = "recipe-card";
 
+    const photoHTML = recipe.photo
+      ? `<div class="recipe-card-photo" style="background-image: url('${recipe.photo}');"></div>`
+      : `<div class="recipe-card-photo-placeholder">🍳</div>`;
+
     card.innerHTML = `
-      <strong>${recipe.name}</strong><br>
-      <span>${recipe.servings} servings</span><br>
-      <span>${recipe.ingredients.length} ingredients</span>
+      ${photoHTML}
+      <div class="recipe-card-content">
+        <div class="recipe-card-title">${recipe.name}</div>
+        <div class="recipe-card-meta">
+          <span>👥 ${recipe.servings} servings</span>
+          <span>🥘 ${recipe.ingredients.length} ingredients</span>
+        </div>
+      </div>
     `;
 
     card.addEventListener("click", () => openRecipeViewModal(recipe));
@@ -571,14 +593,10 @@ function openCookModal(recipe) {
 }
 
 /* ---------------------------------------------------
-   PLANNER: RENDER + DAY MODAL
+   PLANNER: MODAL + RENDER + DAY MODAL
 --------------------------------------------------- */
 
-function renderPlanner() {
-  const container = document.getElementById("day-grid");
-  const monthLabel = document.getElementById("planner-month-label");
-  if (!container || !monthLabel) return;
-
+function openPlannerModal() {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -587,39 +605,72 @@ function renderPlanner() {
   const lastDay = new Date(year, month + 1, 0);
 
   const monthName = firstDay.toLocaleString("default", { month: "long" });
-  monthLabel.textContent = `${monthName} ${year}`;
 
-  container.innerHTML = "";
+  let dayGridHTML = "";
 
+  // Empty cells before month starts
   for (let i = 0; i < firstDay.getDay(); i++) {
-    const empty = document.createElement("div");
-    empty.className = "planner-day empty";
-    container.appendChild(empty);
+    dayGridHTML += `<div class="planner-day empty"></div>`;
   }
 
+  // Days of the month
   for (let day = 1; day <= lastDay.getDate(); day++) {
     const date = new Date(year, month, day);
     const dateStr = date.toISOString().split("T")[0];
 
-    const cell = document.createElement("div");
-    cell.className = "planner-day";
-
     const plannedId = getPlannedRecipe(dateStr);
     const plannedRecipe = plannedId ? getRecipe(plannedId) : null;
 
-    cell.innerHTML = `
-      <div class="planner-day-number">${day}</div>
-      <div class="planner-day-content">
-        ${plannedRecipe
-          ? `<span class="planner-recipe">${plannedRecipe.name}</span>`
-          : `<span class="planner-empty">No meal</span>`}
+    dayGridHTML += `
+      <div class="planner-day" data-date="${dateStr}">
+        <div class="planner-day-number">${day}</div>
+        <div class="planner-day-content">
+          ${plannedRecipe
+            ? `<span class="planner-recipe">${plannedRecipe.name}</span>`
+            : `<span class="planner-empty">No meal</span>`}
+        </div>
       </div>
     `;
-
-    cell.addEventListener("click", () => openDayModal(dateStr));
-
-    container.appendChild(cell);
   }
+
+  const contentHTML = `
+    <div class="planner-modal-content">
+      <div class="planner-header-row">
+        <div class="planner-month-label">${monthName} ${year}</div>
+      </div>
+      <div class="planner-grid">
+        ${dayGridHTML}
+      </div>
+    </div>
+  `;
+
+  openCardModal({
+    title: "Meal Plan",
+    subtitle: "Plan your month like a handwritten kitchen calendar",
+    contentHTML,
+    actions: [
+      {
+        label: "Close",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+
+  // Add click listeners to day cells
+  const dayCells = document.querySelectorAll(".planner-day[data-date]");
+  dayCells.forEach(cell => {
+    cell.addEventListener("click", () => {
+      const dateStr = cell.getAttribute("data-date");
+      closeModal();
+      setTimeout(() => openDayModal(dateStr), 100);
+    });
+  });
+}
+
+function renderPlanner() {
+  // Planner is now in a modal, so this function just updates the modal if it's open
+  // For now, we'll keep this empty and planner will be opened via the button
 }
 
 function openDayModal(dateStr) {
@@ -666,9 +717,11 @@ function openDayModal(dateStr) {
         class: "btn-secondary",
         onClick: () => {
           clearPlannedRecipe(dateStr);
-          renderPlanner();
-          renderShoppingList();
+          generateShoppingList();
+          renderPantry();
+          updateDashboard();
           closeModal();
+          setTimeout(() => openPlannerModal(), 100);
         }
       }
     ]
@@ -698,9 +751,11 @@ function saveDayPlan(dateStr) {
     if (recipe) setPlannedRecipe(dateStr, recipe.id);
   }
 
-  renderPlanner();
-  renderShoppingList();
+  generateShoppingList();
+  renderPantry();
+  updateDashboard();
   closeModal();
+  setTimeout(() => openPlannerModal(), 100);
 }
 
 /* ---------------------------------------------------
@@ -1009,7 +1064,102 @@ function saveCheckoutItems() {
 
   renderPantry();
   renderShoppingList();
+  updateDashboard();
   closeModal();
+}
+
+/* ---------------------------------------------------
+   DASHBOARD CALCULATIONS
+--------------------------------------------------- */
+
+function calculateReservedIngredients() {
+  // Calculate how much of each ingredient is reserved for planned meals
+  const reserved = {};
+
+  Object.keys(planner).forEach(dateStr => {
+    const recipeId = planner[dateStr];
+    const recipe = getRecipe(recipeId);
+    if (!recipe) return;
+
+    recipe.ingredients.forEach(ing => {
+      const key = `${ing.name}|${ing.unit}`;
+      if (!reserved[key]) {
+        reserved[key] = 0;
+      }
+      reserved[key] += ing.qty;
+    });
+  });
+
+  return reserved;
+}
+
+function updateDashboard() {
+  // Today's meal
+  const today = new Date().toISOString().split("T")[0];
+  const todayRecipeId = getPlannedRecipe(today);
+  const todayRecipe = todayRecipeId ? getRecipe(todayRecipeId) : null;
+  const todayMealEl = document.getElementById("dash-today-meal");
+  if (todayMealEl) {
+    todayMealEl.textContent = todayRecipe ? todayRecipe.name : "Not planned";
+  }
+
+  // Ready-to-cook recipes (recipes where all ingredients are available)
+  const reserved = calculateReservedIngredients();
+  const readyRecipes = recipes.filter(recipe => {
+    return recipe.ingredients.every(ing => {
+      const pantryItem = pantry.find(p => p.name === ing.name && p.unit === ing.unit);
+      if (!pantryItem) return false;
+
+      const key = `${ing.name}|${ing.unit}`;
+      const reservedQty = reserved[key] || 0;
+      const available = pantryItem.qty - reservedQty;
+
+      return available >= ing.qty;
+    });
+  });
+
+  const readyEl = document.getElementById("dash-ready-recipes");
+  if (readyEl) {
+    readyEl.textContent = readyRecipes.length;
+  }
+
+  // Pantry count
+  const pantryCountEl = document.getElementById("dash-pantry-count");
+  if (pantryCountEl) {
+    pantryCountEl.textContent = pantry.length;
+  }
+
+  // Expired ingredients
+  const now = new Date();
+  const expired = pantry.filter(item => {
+    if (!item.expiry) return false;
+    const expiryDate = new Date(item.expiry);
+    return expiryDate < now;
+  });
+
+  const expiredEl = document.getElementById("dash-expired-count");
+  if (expiredEl) {
+    expiredEl.textContent = expired.length;
+  }
+
+  // Meals planned this week
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+
+  let weekPlanned = 0;
+  Object.keys(planner).forEach(dateStr => {
+    const date = new Date(dateStr);
+    if (date >= startOfWeek && date <= endOfWeek) {
+      weekPlanned++;
+    }
+  });
+
+  const weekPlannedEl = document.getElementById("dash-week-planned");
+  if (weekPlannedEl) {
+    weekPlannedEl.textContent = weekPlanned;
+  }
 }
 
 /* ---------------------------------------------------
@@ -1063,17 +1213,40 @@ function applyPantryFilter() {
     return;
   }
 
+  // Calculate reserved quantities
+  const reserved = calculateReservedIngredients();
+
   filtered.forEach(item => {
     const card = document.createElement("div");
     card.className = "pantry-item";
 
+    const key = `${item.name}|${item.unit}`;
+    const reservedQty = reserved[key] || 0;
+    const available = item.qty - reservedQty;
+
     card.innerHTML = `
-      <strong>${item.name}</strong><br>
-      <span>${item.qty} ${item.unit}</span><br>
-      <span>Category: ${item.category}</span><br>
-      <span>Location: ${item.location}</span><br>
-      <span>Min: ${item.min}</span><br>
-      <span>Expiry: ${item.expiry || "—"}</span>
+      <div class="pantry-item-header">
+        <strong>${item.name}</strong>
+        <span class="pantry-item-badge">${item.category}</span>
+      </div>
+      <div class="pantry-item-quantities">
+        <div class="pantry-qty">
+          <span class="pantry-qty-label">On Hand</span>
+          <span class="pantry-qty-value">${item.qty} ${item.unit}</span>
+        </div>
+        <div class="pantry-qty">
+          <span class="pantry-qty-label">Reserved</span>
+          <span class="pantry-qty-value">${reservedQty} ${item.unit}</span>
+        </div>
+        <div class="pantry-qty">
+          <span class="pantry-qty-label">Available</span>
+          <span class="pantry-qty-value ${available < item.min ? 'pantry-qty-low' : ''}">${available} ${item.unit}</span>
+        </div>
+      </div>
+      <div class="pantry-item-meta">
+        <span>📍 ${item.location}</span>
+        <span>📅 ${item.expiry || "No expiry"}</span>
+      </div>
     `;
 
     card.addEventListener("click", () => openIngredientModal(item));
@@ -1116,8 +1289,8 @@ function init() {
   // Render initial state
   renderPantry();
   renderRecipes();
-  renderPlanner();
   renderShoppingList();
+  updateDashboard();
 
   // Wire pantry button
   const btnAddIngredient = document.getElementById("btn-add-ingredient");
@@ -1137,10 +1310,30 @@ function init() {
     btnAddRecipe.addEventListener("click", () => openRecipeModal(null));
   }
 
+  // Wire planner buttons
+  const floatingPlannerBtn = document.getElementById("floating-planner-btn");
+  if (floatingPlannerBtn) {
+    floatingPlannerBtn.addEventListener("click", openPlannerModal);
+  }
+
+  const btnOpenPlanner = document.getElementById("btn-open-planner");
+  if (btnOpenPlanner) {
+    btnOpenPlanner.addEventListener("click", openPlannerModal);
+  }
+
+  const navPlanner = document.getElementById("nav-planner");
+  if (navPlanner) {
+    navPlanner.addEventListener("click", openPlannerModal);
+  }
+
   // Shopping buttons
   const btnGenerate = document.getElementById("btn-generate-shopping");
   if (btnGenerate) {
-    btnGenerate.addEventListener("click", generateShoppingList);
+    btnGenerate.addEventListener("click", () => {
+      generateShoppingList();
+      renderPantry();
+      updateDashboard();
+    });
   }
 
   const btnAddCustom = document.getElementById("btn-add-custom-item");

@@ -17,8 +17,9 @@ body {
 /* Utility spacing */
 .section {
   padding: 3rem 1.5rem;
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
+  width: 100%;
 }
 
 .section-header {
@@ -80,24 +81,67 @@ body {
 }
 
 /* ---------------------------------------------------
+   NAVIGATION
+--------------------------------------------------- */
+.site-nav {
+  width: 100%;
+  padding: 0 1.5rem;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.nav-link {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #6a4f35;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+  font-family: inherit;
+}
+
+.nav-link:hover {
+  color: #8A9A5B;
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: #8A9A5B;
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+  left: 0;
+}
+
+/* ---------------------------------------------------
    HERO
 --------------------------------------------------- */
 .hero {
   text-align: center;
-  padding: 4rem 1.5rem 3rem;
+  padding: 2rem 1.5rem 1.5rem;
 }
 
-.hero-inner h2 {
-  font-size: 2.2rem;
-  margin-bottom: 0.75rem;
-  color: #2F3E46;
-}
-
-.hero-subtext {
-  max-width: 700px;
-  margin: 0.5rem auto 0;
-  opacity: 0.8;
-  font-size: 1.1rem;
+.hero-tagline {
+  max-width: 600px;
+  margin: 0 auto;
+  opacity: 0.7;
+  font-size: 1rem;
+  font-style: italic;
+  color: #6a4f35;
 }
 
 /* ---------------------------------------------------
@@ -202,6 +246,47 @@ body {
   .two-column {
     grid-template-columns: 1fr;
   }
+
+  .site-nav {
+    padding: 0 0.5rem;
+    gap: 0.25rem;
+  }
+
+  .nav-link {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .floating-planner-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .planner-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+  }
+
+  .planner-day {
+    padding: 0.4rem;
+    min-height: 60px;
+  }
+
+  .planner-day-number {
+    font-size: 0.8rem;
+  }
+
+  .planner-day-content {
+    font-size: 0.75rem;
+  }
+
+  .pantry-item-quantities {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
 }
 
 /* ---------------------------------------------------
@@ -246,7 +331,7 @@ body {
 .pantry-item {
   background: #fff;
   border-radius: 12px;
-  padding: 1rem;
+  padding: 1.25rem;
   border: 1px solid rgba(0,0,0,0.05);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   cursor: pointer;
@@ -258,22 +343,85 @@ body {
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
+.pantry-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.pantry-item-header strong {
+  font-size: 1.1rem;
+  color: #2F3E46;
+}
+
+.pantry-item-badge {
+  background: rgba(138,154,91,0.15);
+  color: #6a4f35;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.pantry-item-quantities {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(248,244,235,0.4);
+  border-radius: 8px;
+}
+
+.pantry-qty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pantry-qty-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  opacity: 0.6;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.pantry-qty-value {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #2F3E46;
+}
+
+.pantry-qty-low {
+  color: #B36A5E;
+}
+
+.pantry-item-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
 /* ---------------------------------------------------
    RECIPES
 --------------------------------------------------- */
 .recipe-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.25rem;
 }
 
 .recipe-card {
   background: #fff;
   border-radius: 12px;
-  padding: 1rem;
+  overflow: hidden;
   border: 1px solid rgba(0,0,0,0.05);
   cursor: pointer;
-  transition: 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 .recipe-card:hover {
@@ -281,9 +429,83 @@ body {
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
+.recipe-card-photo {
+  width: 100%;
+  height: 140px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(248,244,235,0.5);
+}
+
+.recipe-card-photo-placeholder {
+  width: 100%;
+  height: 140px;
+  background: linear-gradient(135deg, rgba(138,154,91,0.1), rgba(194,145,140,0.1));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+}
+
+.recipe-card-content {
+  padding: 1rem;
+}
+
+.recipe-card-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #2F3E46;
+  margin-bottom: 0.5rem;
+  font-family: "Patrick Hand", cursive;
+}
+
+.recipe-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
 /* ---------------------------------------------------
-   PLANNER (Monthly Calendar)
+   FLOATING PLANNER BUTTON
 --------------------------------------------------- */
+.floating-planner-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8A9A5B, #C2918C);
+  border: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-planner-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.floating-planner-btn:active {
+  transform: translateY(-1px);
+}
+
+/* ---------------------------------------------------
+   PLANNER MODAL
+--------------------------------------------------- */
+.planner-modal-content {
+  width: 100%;
+  max-width: 900px;
+}
+
 .planner-header-row {
   display: flex;
   justify-content: space-between;
