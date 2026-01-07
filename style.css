@@ -176,10 +176,10 @@ body {
   display: block;
 }
 
-.btn-reset {
-  background: rgba(179,106,94,0.1);
-  border: 1px solid rgba(179,106,94,0.3);
-  color: #B36A5E;
+.btn-header-icon {
+  background: rgba(138,154,91,0.1);
+  border: 1px solid rgba(138,154,91,0.3);
+  color: #6a4f35;
   padding: 0.5rem;
   border-radius: 8px;
   font-size: 1.2rem;
@@ -190,6 +190,18 @@ body {
   justify-content: center;
   width: 36px;
   height: 36px;
+}
+
+.btn-header-icon:hover {
+  background: rgba(138,154,91,0.2);
+  border-color: rgba(138,154,91,0.5);
+  transform: translateY(-2px);
+}
+
+.btn-reset {
+  background: rgba(179,106,94,0.1);
+  border: 1px solid rgba(179,106,94,0.3);
+  color: #B36A5E;
 }
 
 .btn-reset:hover {
@@ -1540,4 +1552,85 @@ body {
   margin-top: 0;
   padding-top: 1rem;
   border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ---------------------------------------------------
+   SETTINGS MODAL STYLES
+--------------------------------------------------- */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.02);
+  border-radius: 8px;
+}
+
+.settings-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.settings-item span {
+  font-weight: 500;
+  color: #6a4f35;
+}
+
+.btn-settings-remove {
+  background: rgba(179,106,94,0.1);
+  border: 1px solid rgba(179,106,94,0.3);
+  color: #B36A5E;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-settings-remove:hover {
+  background: rgba(179,106,94,0.2);
+  border-color: rgba(179,106,94,0.5);
+}
+
+.settings-add-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.settings-add-row input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.settings-add-row input:focus {
+  outline: none;
+  border-color: #8A9A5B;
+  box-shadow: 0 0 0 3px rgba(138,154,91,0.1);
+}
+
+.settings-info p {
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.settings-info strong {
+  color: #6a4f35;
+  font-weight: 600;
 }

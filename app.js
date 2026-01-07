@@ -402,7 +402,12 @@ function openIngredientModal(existing = null) {
         label: "Cancel",
         class: "btn-secondary",
         onClick: closeModal
-      }
+      },
+      ...(isEdit ? [{
+        label: "Delete",
+        class: "btn-secondary btn-danger",
+        onClick: () => deleteIngredient(existing)
+      }] : [])
     ]
   });
 
@@ -461,6 +466,50 @@ function saveIngredient(existing) {
 
   const totalQty = locations.reduce((sum, loc) => sum + loc.qty, 0);
 
+  // Check for duplicates (same name + unit)
+  const duplicate = pantry.find(p =>
+    p.name.toLowerCase() === name.toLowerCase() &&
+    p.unit.toLowerCase() === unit.toLowerCase() &&
+    (!existing || p.id !== existing.id)
+  );
+
+  if (duplicate) {
+    if (confirm(`An item "${duplicate.name}" (${duplicate.unit}) already exists in your pantry. Do you want to merge these items together?`)) {
+      // Merge locations
+      locations.forEach(newLoc => {
+        const existingLoc = duplicate.locations.find(l => l.location === newLoc.location);
+        if (existingLoc) {
+          existingLoc.qty += newLoc.qty;
+          // Keep the earliest expiry date if both exist
+          if (newLoc.expiry && (!existingLoc.expiry || new Date(newLoc.expiry) < new Date(existingLoc.expiry))) {
+            existingLoc.expiry = newLoc.expiry;
+          }
+        } else {
+          duplicate.locations.push(newLoc);
+        }
+      });
+
+      // Update duplicate's totalQty and min (take max of the two)
+      duplicate.totalQty = duplicate.locations.reduce((sum, loc) => sum + loc.qty, 0);
+      duplicate.min = Math.max(duplicate.min, Number(min || 0));
+
+      // If we were editing an item, remove the old one
+      if (existing) {
+        pantry = pantry.filter(p => p.id !== existing.id);
+      }
+
+      savePantry();
+      renderPantry();
+      generateShoppingList();
+      updateDashboard();
+      closeModal();
+      return;
+    } else {
+      // User declined merge, don't save
+      return;
+    }
+  }
+
   if (existing) {
     existing.name = name;
     existing.unit = unit;
@@ -482,6 +531,22 @@ function saveIngredient(existing) {
   }
 
   savePantry();
+  renderPantry();
+  generateShoppingList();
+  updateDashboard();
+  closeModal();
+}
+
+function deleteIngredient(item) {
+  if (!confirm(`Delete "${item.name}"? This will remove it from your pantry.`)) {
+    return;
+  }
+
+  // Remove from pantry
+  pantry = pantry.filter(p => p.id !== item.id);
+  savePantry();
+
+  // Update everything
   renderPantry();
   generateShoppingList();
   updateDashboard();
@@ -2005,6 +2070,304 @@ function saveQuickDeplete(item) {
 }
 
 /* ---------------------------------------------------
+   SIGN-IN MODAL (UI skeleton for future Supabase integration)
+--------------------------------------------------- */
+
+function openSigninModal() {
+  const contentHTML = `
+    ${modalRow([
+      modalField({
+        label: "Email",
+        type: "email",
+        placeholder: "your@email.com"
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Password",
+        type: "password",
+        placeholder: "Enter your password"
+      })
+    ])}
+
+    <p style="margin-top:1.5rem; text-align:center; opacity:0.8;">
+      Don't have an account? <a href="#" id="create-account-link" style="color:#8a9a5b; font-weight:600; text-decoration:none;">Create one</a>
+    </p>
+  `;
+
+  openCardModal({
+    title: "Sign In",
+    subtitle: "Connect to your kitchen account",
+    contentHTML,
+    actions: [
+      {
+        label: "Sign In",
+        class: "btn-primary",
+        onClick: () => {
+          alert("Sign-in functionality will be available soon! This will connect to Supabase for user authentication.");
+          closeModal();
+        }
+      },
+      {
+        label: "Cancel",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+
+  // Wire up create account link
+  const createLink = document.getElementById("create-account-link");
+  if (createLink) {
+    createLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeModal();
+      setTimeout(() => openCreateAccountModal(), 100);
+    });
+  }
+}
+
+function openCreateAccountModal() {
+  const contentHTML = `
+    ${modalRow([
+      modalField({
+        label: "Email",
+        type: "email",
+        placeholder: "your@email.com"
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Password",
+        type: "password",
+        placeholder: "Create a password"
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Confirm Password",
+        type: "password",
+        placeholder: "Confirm your password"
+      })
+    ])}
+
+    <p style="margin-top:1.5rem; text-align:center; opacity:0.8;">
+      Already have an account? <a href="#" id="signin-link" style="color:#8a9a5b; font-weight:600; text-decoration:none;">Sign in</a>
+    </p>
+  `;
+
+  openCardModal({
+    title: "Create Account",
+    subtitle: "Join Chef's Kiss and sync your kitchen",
+    contentHTML,
+    actions: [
+      {
+        label: "Create Account",
+        class: "btn-primary",
+        onClick: () => {
+          alert("Account creation will be available soon! This will connect to Supabase for user registration.");
+          closeModal();
+        }
+      },
+      {
+        label: "Cancel",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+
+  // Wire up sign-in link
+  const signinLink = document.getElementById("signin-link");
+  if (signinLink) {
+    signinLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeModal();
+      setTimeout(() => openSigninModal(), 100);
+    });
+  }
+}
+
+/* ---------------------------------------------------
+   SETTINGS MODAL (UI skeleton with locations/categories management)
+--------------------------------------------------- */
+
+function openSettingsModal() {
+  // Get current locations and categories from usage
+  const usedLocations = new Set();
+  pantry.forEach(item => {
+    item.locations.forEach(loc => {
+      usedLocations.add(loc.location);
+    });
+  });
+
+  const usedCategories = new Set();
+  pantry.forEach(item => {
+    usedCategories.add(item.category);
+  });
+
+  const locationsList = Array.from(usedLocations).map(loc =>
+    `<div class="settings-item">
+      <span>${loc}</span>
+      <button class="btn-settings-remove" data-type="location" data-value="${loc}">&times;</button>
+    </div>`
+  ).join("") || '<p style="opacity:0.7;">No locations in use.</p>';
+
+  const categoriesList = Array.from(usedCategories).map(cat =>
+    `<div class="settings-item">
+      <span>${cat}</span>
+      <button class="btn-settings-remove" data-type="category" data-value="${cat}">&times;</button>
+    </div>`
+  ).join("") || '<p style="opacity:0.7;">No categories in use.</p>';
+
+  const contentHTML = `
+    ${modalFull(`
+      <h3 style="margin-bottom:0.75rem;">Storage Locations</h3>
+      <p style="opacity:0.8; font-size:0.9rem; margin-bottom:0.75rem;">
+        Manage where you store ingredients. Removing a location will reassign items to "Pantry".
+      </p>
+      <div class="settings-list" id="locations-list">
+        ${locationsList}
+      </div>
+      <div class="settings-add-row">
+        <input type="text" id="new-location-input" placeholder="Add new location...">
+        <button class="btn btn-secondary" id="add-location-btn">Add</button>
+      </div>
+    `)}
+
+    ${modalFull(`
+      <h3 style="margin:1.5rem 0 0.75rem 0;">Categories</h3>
+      <p style="opacity:0.8; font-size:0.9rem; margin-bottom:0.75rem;">
+        Manage ingredient categories. Removing a category will reassign items to "Other".
+      </p>
+      <div class="settings-list" id="categories-list">
+        ${categoriesList}
+      </div>
+      <div class="settings-add-row">
+        <input type="text" id="new-category-input" placeholder="Add new category...">
+        <button class="btn btn-secondary" id="add-category-btn">Add</button>
+      </div>
+    `)}
+
+    ${modalFull(`
+      <h3 style="margin:1.5rem 0 0.75rem 0;">Share Pantry</h3>
+      <p style="opacity:0.8; font-size:0.9rem; margin-bottom:0.75rem;">
+        Generate a code to share your pantry with family or roommates. (Coming soon!)
+      </p>
+      <button class="btn btn-secondary" id="generate-code-btn" disabled>
+        Generate Share Code
+      </button>
+    `)}
+
+    ${modalFull(`
+      <h3 style="margin:1.5rem 0 0.75rem 0;">App Info</h3>
+      <div class="settings-info">
+        <p><strong>Name:</strong> Chef's Kiss</p>
+        <p><strong>Version:</strong> 1.4.0</p>
+        <p><strong>Description:</strong> Cozy kitchen management for modern cooks</p>
+        <p style="opacity:0.7; font-size:0.85rem; margin-top:0.5rem;">
+          Track your pantry, plan meals, and build shopping lists—without the overwhelm.
+        </p>
+      </div>
+    `)}
+  `;
+
+  openCardModal({
+    title: "Settings",
+    subtitle: "Manage your kitchen preferences",
+    contentHTML,
+    actions: [
+      {
+        label: "Done",
+        class: "btn-primary",
+        onClick: closeModal
+      }
+    ]
+  });
+
+  // Wire up remove buttons
+  const removeBtns = document.querySelectorAll(".btn-settings-remove");
+  removeBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const type = btn.getAttribute("data-type");
+      const value = btn.getAttribute("data-value");
+
+      if (type === "location") {
+        removeLocation(value);
+      } else if (type === "category") {
+        removeCategory(value);
+      }
+
+      closeModal();
+      setTimeout(() => openSettingsModal(), 100);
+    });
+  });
+
+  // Wire up add location button
+  const addLocBtn = document.getElementById("add-location-btn");
+  const newLocInput = document.getElementById("new-location-input");
+  if (addLocBtn && newLocInput) {
+    addLocBtn.addEventListener("click", () => {
+      const newLocation = newLocInput.value.trim();
+      if (newLocation) {
+        alert(`Location "${newLocation}" will be available in location dropdowns from now on. Add it to an ingredient to start using it!`);
+        newLocInput.value = "";
+      }
+    });
+  }
+
+  // Wire up add category button
+  const addCatBtn = document.getElementById("add-category-btn");
+  const newCatInput = document.getElementById("new-category-input");
+  if (addCatBtn && newCatInput) {
+    addCatBtn.addEventListener("click", () => {
+      const newCategory = newCatInput.value.trim();
+      if (newCategory) {
+        alert(`Category "${newCategory}" will be available in category dropdowns from now on. Add it to an ingredient to start using it!`);
+        newCatInput.value = "";
+      }
+    });
+  }
+}
+
+function removeLocation(location) {
+  if (!confirm(`Remove location "${location}"? All items in this location will be moved to "Pantry".`)) {
+    return;
+  }
+
+  pantry.forEach(item => {
+    item.locations.forEach(loc => {
+      if (loc.location === location) {
+        loc.location = "Pantry";
+      }
+    });
+  });
+
+  savePantry();
+  renderPantry();
+  updateDashboard();
+}
+
+function removeCategory(category) {
+  if (!confirm(`Remove category "${category}"? All items in this category will be moved to "Other".`)) {
+    return;
+  }
+
+  pantry.forEach(item => {
+    if (item.category === category) {
+      item.category = "Other";
+    }
+  });
+
+  savePantry();
+  renderPantry();
+  updateDashboard();
+}
+
+/* ---------------------------------------------------
    SMOOTH SCROLL
 --------------------------------------------------- */
 
@@ -2094,6 +2457,18 @@ function init() {
   const btnReset = document.getElementById("btn-reset");
   if (btnReset) {
     btnReset.addEventListener("click", resetAllData);
+  }
+
+  // Sign-in button
+  const btnSignin = document.getElementById("btn-signin");
+  if (btnSignin) {
+    btnSignin.addEventListener("click", openSigninModal);
+  }
+
+  // Settings button
+  const btnSettings = document.getElementById("btn-settings");
+  if (btnSettings) {
+    btnSettings.addEventListener("click", openSettingsModal);
   }
 
   // Setup smooth scroll
