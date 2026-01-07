@@ -10,8 +10,6 @@
   --rose: #C2918C;
   --blush: #E8D4CE;
   --shadow: 0 10px 30px rgba(0,0,0,0.09);
-  --sidebar-bg: #F8F2E7;
-  --sidebar-border: rgba(0,0,0,0.04);
 }
 
 body {
@@ -20,226 +18,41 @@ body {
   background: radial-gradient(circle at top left, #ffffff 0, var(--oat) 55%);
   color: var(--ink);
   line-height: 1.6;
+  padding-bottom: 4rem;
 }
 
 /* ---------------------------------------------------
-   APP LAYOUT
+   HERO
 --------------------------------------------------- */
-.app-shell {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* ---------------------------------------------------
-   SIDEBAR
---------------------------------------------------- */
-.sidebar {
-  width: 230px;
-  background: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
-  box-shadow: 4px 0 18px rgba(0,0,0,0.06);
-  padding: 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.sidebar-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--sage), var(--rose));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-  font-size: 1.3rem;
-}
-
-.sidebar-title {
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-title span:first-child {
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.sidebar-title span:last-child {
-  font-size: 0.72rem;
-  opacity: 0.8;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.nav-section-label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0.7;
-  margin: 6px 4px;
-}
-
-.nav-item {
-  border-radius: 12px;
-  padding: 7px 9px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  border: 1px solid transparent;
-}
-
-.nav-item span.nav-icon {
-  width: 20px;
+.hero {
   text-align: center;
+  padding: 3rem 1rem 2rem;
 }
 
-.nav-item.active {
-  background: #fff;
-  border-color: rgba(0,0,0,0.08);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+.hero-logo {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
 }
 
-.nav-item:hover:not(.active) {
-  background: rgba(255,255,255,0.8);
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  font-size: 0.75rem;
+.hero-subtitle {
   opacity: 0.8;
-}
-
-.theme-toggle {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.theme-toggle button {
-  flex: 1;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.12);
-  padding: 4px 6px;
-  background: rgba(255,255,255,0.6);
-  cursor: pointer;
-  font-size: 0.7rem;
-}
-
-.theme-toggle button.active {
-  background: #fff;
-  border-color: var(--sage);
-  color: var(--sage);
+  margin-top: 0.25rem;
 }
 
 /* ---------------------------------------------------
-   MAIN CONTENT
+   SECTIONS (always visible)
 --------------------------------------------------- */
-.main {
-  flex: 1;
-  padding: 18px 22px 28px;
-  max-width: calc(100vw - 230px);
-}
-
 .section {
-  display: none;
-}
-
-.section.active {
   display: block;
+  padding: 1.5rem 1rem;
+  max-width: 900px;
+  margin: 0 auto 2.5rem;
 }
 
-.section-header {
-  margin-bottom: 12px;
-}
-
-.section-header h2 {
-  margin: 0;
-  font-size: 1.4rem;
-  color: var(--clay);
-}
-
-.section-header small {
-  opacity: 0.75;
-  font-size: 0.8rem;
-}
-
-/* ---------------------------------------------------
-   CARDS
---------------------------------------------------- */
-.card {
-  background: var(--cream);
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,0.03);
-  margin-bottom: 16px;
-}
-
-.card-title {
+.section h2 {
   margin-top: 0;
-  margin-bottom: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* ---------------------------------------------------
-   GRID
---------------------------------------------------- */
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 900px) {
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ---------------------------------------------------
-   BUTTONS
---------------------------------------------------- */
-.btn {
-  border-radius: 999px;
-  border: none;
-  padding: 7px 12px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  background: linear-gradient(135deg, var(--sage), var(--rose));
-  color: #fff;
-  font-weight: 600;
-}
-
-.btn-sm {
-  padding: 5px 10px;
-  font-size: 0.75rem;
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--sage);
-  border: 1px solid var(--sage);
+  font-size: 1.6rem;
+  color: var(--clay);
 }
 
 /* ---------------------------------------------------
@@ -253,30 +66,51 @@ body {
 
 .stat-pill {
   flex: 1;
-  min-width: 120px;
+  min-width: 140px;
   background: #fff;
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .stat-pill span:first-child {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   opacity: 0.7;
 }
 
 .stat-pill span:last-child {
-  font-size: 0.9rem;
+  font-size: 1rem;
+  font-weight: bold;
 }
 
 .dashboard-actions {
-  margin-top: 10px;
+  margin-top: 1rem;
   display: flex;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------
+   BUTTONS
+--------------------------------------------------- */
+.btn {
+  border-radius: 999px;
+  border: none;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--sage), var(--rose));
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--sage);
+  border: 1px solid var(--sage);
 }
 
 /* ---------------------------------------------------
@@ -288,55 +122,21 @@ body {
   align-items: center;
 }
 
-.pantry-filters {
-  display: flex;
-  gap: 6px;
-}
-
 .pantry-list {
-  margin-top: 12px;
+  margin-top: 1rem;
 }
 
 .pantry-item {
-  margin-bottom: 16px;
-}
-
-.pantry-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.pantry-label {
-  display: flex;
-  flex-direction: column;
-  font-weight: 600;
-}
-
-.pantry-meta {
-  font-size: 0.75rem;
-  opacity: 0.7;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 1rem;
 }
 
 .pantry-locations {
-  font-size: 0.8rem;
-  margin-top: 4px;
-}
-
-.pantry-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.pantry-actions button {
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.15);
-  background: #fff;
-  font-size: 0.7rem;
-  padding: 3px 8px;
-  cursor: pointer;
-  color: var(--sage);
+  font-size: 0.85rem;
+  opacity: 0.8;
 }
 
 .bar-container {
@@ -364,6 +164,7 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
+  margin-top: 1rem;
 }
 
 .recipe-card {
@@ -402,75 +203,8 @@ body {
 }
 
 /* ---------------------------------------------------
-   PLANNER
+   MONTHLY PLANNER — Cottagecore Calendar
 --------------------------------------------------- */
-.day-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-}
-
-.day-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 10px;
-  border: 1px solid rgba(0,0,0,0.05);
-}
-
-.day-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.badge {
-  background: var(--sage);
-  color: #fff;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-size: 0.7rem;
-}
-
-/* ---------------------------------------------------
-   SHOPPING
---------------------------------------------------- */
-.shopping-list {
-  margin-top: 10px;
-}
-
-.shopping-item {
-  display: flex;
-  gap: 10px;
-  padding: 8px;
-  background: #fff;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.05);
-  margin-bottom: 8px;
-  cursor: pointer;
-}
-
-.shopping-label {
-  flex: 1;
-}
-
-.shopping-meta {
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
-
-.shopping-source {
-  font-size: 0.7rem;
-  opacity: 0.6;
-}
-
-/* -----------------------------------
-   Planner — Cottagecore Monthly Calendar
------------------------------------ */
-
-.planner {
-  position: relative;
-}
-
 .planner-header {
   display: flex;
   justify-content: space-between;
@@ -478,30 +212,25 @@ body {
   margin-bottom: 0.75rem;
 }
 
-.planner-header h2,
 #planner-month-label {
   font-family: "Patrick Hand", system-ui, sans-serif;
   font-size: 1.4rem;
-  letter-spacing: 0.03em;
 }
 
-/* The grid itself */
-
+/* Calendar grid */
 #day-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-auto-rows: minmax(90px, auto);
   gap: 0.4rem;
   padding: 0.75rem;
-  background: rgba(248, 244, 235, 0.95); /* parchment wash */
+  background: rgba(248, 244, 235, 0.95);
   border-radius: 14px;
   box-shadow:
     0 10px 20px rgba(0, 0, 0, 0.04),
     inset 0 0 0 1px rgba(120, 94, 60, 0.08);
   position: relative;
 }
-
-/* Gentle hand-drawn frame illusion */
 
 #day-grid::before {
   content: "";
@@ -513,8 +242,6 @@ body {
   pointer-events: none;
 }
 
-/* Day cells */
-
 .calendar-day {
   position: relative;
 }
@@ -523,8 +250,6 @@ body {
   opacity: 0.2;
   pointer-events: none;
 }
-
-/* Inner card */
 
 .calendar-day-inner {
   height: 100%;
@@ -542,10 +267,7 @@ body {
   flex-direction: column;
   justify-content: space-between;
   gap: 0.35rem;
-  position: relative;
 }
-
-/* Today highlight */
 
 .calendar-day--today {
   box-shadow:
@@ -554,12 +276,9 @@ body {
     0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* Date badge with watercolor circle */
-
 .calendar-date-badge {
   position: relative;
   width: fit-content;
-  margin-bottom: 0.1rem;
 }
 
 .calendar-date-badge::before {
@@ -572,37 +291,21 @@ body {
     rgba(207, 191, 145, 0.25),
     rgba(207, 191, 145, 0)
   );
-  opacity: 0.9;
-  pointer-events: none;
 }
 
 .calendar-date {
-  position: relative;
   font-family: "Patrick Hand", system-ui, sans-serif;
   font-size: 1.05rem;
-  letter-spacing: 0.04em;
   color: #6a4f35;
 }
 
-/* Calendar content */
-
-.calendar-content {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-}
-
 .calendar-recipe-pill {
-  display: inline-block;
   padding: 0.15rem 0.4rem;
   border-radius: 999px;
   background: rgba(129, 161, 116, 0.1);
   border: 1px solid rgba(129, 161, 116, 0.25);
   font-size: 0.78rem;
-  line-height: 1.2;
   color: #415934;
-  max-height: 3.2em;
-  overflow: hidden;
 }
 
 .calendar-empty-note {
@@ -611,9 +314,7 @@ body {
   font-style: italic;
 }
 
-/* Plan/change button */
-
-.calendar-day-inner .btn-plan-day {
+.btn-plan-day {
   align-self: flex-end;
   font-size: 0.75rem;
   padding: 0.1rem 0.4rem;
@@ -621,74 +322,68 @@ body {
 }
 
 /* ---------------------------------------------------
+   SHOPPING
+--------------------------------------------------- */
+.shopping-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.shopping-list {
+  margin-top: 1rem;
+}
+
+.shopping-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 8px;
+}
+
+.shopping-label {
+  flex: 1;
+}
+
+.shopping-meta {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* ---------------------------------------------------
    SEASONAL
 --------------------------------------------------- */
 .seasonal-item {
   margin-bottom: 6px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 /* ---------------------------------------------------
    MODALS
 --------------------------------------------------- */
-.modal-backdrop {
+.modal-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.35);
-  display: none;
+  display: flex;
   justify-content: center;
   align-items: center;
   z-index: 50;
 }
 
-.modal {
+.modal-card {
   background: var(--cream);
   border-radius: 14px;
   padding: 16px;
   box-shadow: 0 10px 26px rgba(0,0,0,0.25);
   width: 92%;
   max-width: 420px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   max-height: 90vh;
   overflow-y: auto;
-  position: relative;
-}
-
-.close-btn {
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  border: none;
-  background: none;
-  font-size: 1.3rem;
-  cursor: pointer;
-  color: var(--clay);
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.form-row {
-  display: flex;
-  gap: 8px;
-}
-
-input, select, textarea {
-  border-radius: 8px;
-  border: 1px solid #d8d2c4;
-  padding: 6px 8px;
-  font-size: 0.85rem;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-textarea {
-  min-height: 60px;
-  resize: vertical;
 }
 
 /* ---------------------------------------------------
@@ -710,11 +405,7 @@ body.theme-garden {
    RESPONSIVE
 --------------------------------------------------- */
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
-  .main {
-    max-width: 100vw;
-    padding: 14px 12px 24px;
+  .section {
+    padding: 1rem;
   }
 }
