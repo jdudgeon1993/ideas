@@ -492,3 +492,156 @@ body {
   padding: 0.6rem 1.4rem;
   font-size: 1rem;
 }
+/* ---------------------------------------------------
+   MODAL FORM FIELDS + BUTTON POLISH (PHASE 3C)
+--------------------------------------------------- */
+
+/* Field wrapper */
+.modal-field {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Labels */
+.modal-field label {
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #2F3E46;
+  font-weight: 600;
+}
+
+/* Inputs, selects, textareas */
+.modal-field input,
+.modal-field select,
+.modal-field textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.25);
+  background: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus state */
+.modal-field input:focus,
+.modal-field select:focus,
+.modal-field textarea:focus {
+  border-color: #8A9A5B;
+  box-shadow: 0 0 0 2px rgba(138,154,91,0.25);
+  outline: none;
+}
+
+/* Textarea specifics */
+.modal-field textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.4;
+}
+
+/* Ingredient row inside recipe modal */
+.modal-ingredient-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Add ingredient row button */
+.modal-add-row {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #8A9A5B;
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0;
+  text-align: left;
+}
+
+.modal-add-row:hover {
+  text-decoration: underline;
+}
+
+/* Error state */
+.modal-field-error input,
+.modal-field-error select,
+.modal-field-error textarea {
+  border-color: #B36A5E;
+  box-shadow: 0 0 0 2px rgba(179,106,94,0.25);
+}
+
+.modal-field-error label {
+  color: #B36A5E;
+}
+
+/* ---------------------------------------------------
+   MODAL ACTION BUTTONS
+--------------------------------------------------- */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.modal-actions .btn {
+  padding: 0.65rem 1.6rem;
+  font-size: 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+/* Primary button */
+.modal-actions .btn-primary {
+  background: linear-gradient(135deg, #8A9A5B, #C2918C);
+  color: #fff;
+  border: none;
+}
+
+.modal-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #7f8f54, #b88482);
+}
+
+/* Secondary button */
+.modal-actions .btn-secondary {
+  background: transparent;
+  color: #8A9A5B;
+  border: 2px solid #8A9A5B;
+}
+
+.modal-actions .btn-secondary:hover {
+  background: rgba(138,154,91,0.1);
+  transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------
+   MOBILE POLISH
+--------------------------------------------------- */
+@media (max-width: 600px) {
+  .modal-fields {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .modal-ingredient-row {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "name name"
+      "qty unit";
+  }
+
+  .modal-ingredient-row input:nth-child(1) {
+    grid-area: name;
+  }
+  .modal-ingredient-row input:nth-child(2) {
+    grid-area: qty;
+  }
+  .modal-ingredient-row input:nth-child(3) {
+    grid-area: unit;
+  }
+}
