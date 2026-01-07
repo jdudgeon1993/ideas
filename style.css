@@ -388,3 +388,107 @@ body {
     animation: slideUp 0.25s ease-out;
   }
 }
+
+/* ---------------------------------------------------
+   MODAL CARD — HORIZONTAL RECIPE CARD (PHASE 3B)
+--------------------------------------------------- */
+
+/* Title row */
+.modal-card-title {
+  font-family: "Patrick Hand", cursive;
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+  color: #6a4f35;
+}
+
+.modal-card-subtitle {
+  font-size: 1rem;
+  opacity: 0.75;
+  margin-bottom: 1rem;
+}
+
+/* Divider line */
+.modal-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(120, 94, 60, 0.25);
+  margin: 1rem 0;
+}
+
+/* Two-column field layout */
+.modal-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem 2rem;
+  margin-top: 1rem;
+}
+
+/* Single-column override for long content (instructions, lists) */
+.modal-fields-full {
+  display: block;
+  margin-top: 1rem;
+}
+
+/* Field label */
+.modal-field label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #2F3E46;
+}
+
+/* Inputs, selects, textareas */
+.modal-field input,
+.modal-field select,
+.modal-field textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.25);
+  font-size: 0.95rem;
+  background: #fff;
+  font-family: inherit;
+}
+
+.modal-field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+/* Ingredient rows inside recipe modal */
+.modal-ingredient-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* Add ingredient button inside modal */
+.modal-add-row {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #8A9A5B;
+  border: none;
+  background: transparent;
+  padding: 0.25rem 0;
+  text-align: left;
+}
+
+.modal-add-row:hover {
+  text-decoration: underline;
+}
+
+/* Action buttons row */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Buttons inside modal */
+.modal-actions .btn {
+  padding: 0.6rem 1.4rem;
+  font-size: 1rem;
+}
