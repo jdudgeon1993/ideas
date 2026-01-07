@@ -1776,6 +1776,232 @@ function generateShoppingList() {
 }
 
 /* ---------------------------------------------------
+   PHASE 5D‑4 — ADD CUSTOM SHOPPING ITEM MODAL
+--------------------------------------------------- */
+
+function openCustomShoppingModal() {
+  const contentHTML = `
+    ${modalRow([
+      modalField({
+        label: "Item Name",
+        placeholder: "e.g., Lemons"
+      }),
+      modalField({
+        label: "Category",
+        type: "select",
+        options: ["Produce", "Dairy", "Meat", "Pantry", "Frozen", "Spices", "Other"]
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Quantity",
+        type: "number",
+        placeholder: "e.g., 3"
+      }),
+      modalField({
+        label: "Unit",
+        placeholder: "e.g., pcs, lbs, bags"
+      })
+    ])}
+
+    ${modalRow([
+      modalField({
+        label: "Storage (optional)",
+        type: "select",
+        options: ["Pantry", "Fridge", "Freezer", "Cellar", "Other"]
+      }),
+      modalField({
+        label: "Notes (optional)",
+        placeholder: "Optional notes..."
+      })
+    ])}
+  `;
+
+  openCardModal({
+    title: "Add Shopping Item",
+    subtitle: "What do you need to pick up?",
+    contentHTML,
+    actions: [
+      {
+        label: "Add Item",
+        class: "btn-primary",
+        onClick: saveCustomShoppingItem
+      },
+      {
+        label: "Cancel",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+}
+
+/* ---------------------------------------------------
+   SAVE CUSTOM SHOPPING ITEM
+--------------------------------------------------- */
+
+function saveCustomShoppingItem() {
+  const modal = document.querySelector(".modal-card");
+
+  const fields = modal.querySelectorAll(".modal-field input, .modal-field select");
+  const values = Array.from(fields).map(f => f.value.trim());
+
+  const [
+    name,
+    category,
+    qty,
+    unit,
+    storage,
+    notes
+  ] = values;
+
+  if (!name) {
+    alert("Item name is required.");
+    return;
+  }
+
+  addShoppingItem({
+    name,
+    qty: qty || 1,
+    unit: unit || "",
+    category: category || "Other",
+    source: "Custom"
+  });
+
+  saveShopping();
+  renderShoppingList();
+  closeModal();
+}
+
+/* ---------------------------------------------------
+   PHASE 5D‑5 — CHECKOUT MODAL
+--------------------------------------------------- */
+
+function openCheckoutModal() {
+  const purchased = shopping.filter(i => i.checked);
+
+  if (purchased.length === 0) {
+    alert("Please check off at least one item before checking out.");
+    return;
+  }
+
+  // Build rows for each purchased item
+  const rows = purchased.map(item => `
+    <div class="modal-ingredient-row">
+      <input type="text" value="${item.name}" disabled>
+
+      <input type="number" value="${item.qty}" placeholder="Qty">
+
+      <input type="text" value="${item.unit}" placeholder="Unit">
+
+      <select>
+        <option ${item.category === "Produce" ? "selected" : ""}>Produce</option>
+        <option ${item.category === "Dairy" ? "selected" : ""}>Dairy</option>
+        <option ${item.category === "Meat" ? "selected" : ""}>Meat</option>
+        <option ${item.category === "Pantry" ? "selected" : ""}>Pantry</option>
+        <option ${item.category === "Frozen" ? "selected" : ""}>Frozen</option>
+        <option ${item.category === "Spices" ? "selected" : ""}>Spices</option>
+        <option ${item.category === "Other" ? "selected" : ""}>Other</option>
+      </select>
+
+      <select>
+        <option>Pantry</option>
+        <option>Fridge</option>
+        <option>Freezer</option>
+        <option>Cellar</option>
+        <option>Other</option>
+      </select>
+
+      <input type="date">
+    </div>
+  `).join("");
+
+  const contentHTML = `
+    ${modalFull(`
+      <p style="margin-bottom:1rem; opacity:0.8;">
+        Confirm details for the items you purchased. These will be added to your pantry.
+      </p>
+      <div id="checkout-item-list">
+        ${rows}
+      </div>
+    `)}
+  `;
+
+  openCardModal({
+    title: "Checkout",
+    subtitle: "Add purchased items to your pantry",
+    contentHTML,
+    actions: [
+      {
+        label: "Add to Pantry",
+        class: "btn-primary",
+        onClick: saveCheckoutItems
+      },
+      {
+        label: "Cancel",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+}
+
+/* ---------------------------------------------------
+   SAVE CHECKOUT ITEMS → ADD TO PANTRY
+--------------------------------------------------- */
+
+function saveCheckoutItems() {
+  const modal = document.querySelector(".modal-card");
+  const rows = modal.querySelectorAll(".modal-ingredient-row");
+
+  rows.forEach((row, index) => {
+    const inputs = row.querySelectorAll("input, select");
+
+    const name = inputs[0].value.trim();
+    const qty = Number(inputs[1].value.trim());
+    const unit = inputs[2].value.trim();
+    const category = inputs[3].value.trim();
+    const storage = inputs[4].value.trim();
+    const expiry = inputs[5].value.trim();
+
+    // Find matching pantry item
+    let pantryItem = pantry.find(p => p.name === name && p.unit === unit);
+
+    if (pantryItem) {
+      // Increase quantity
+      pantryItem.qty += qty;
+      pantryItem.category = category;
+      pantryItem.location = storage;
+      pantryItem.expiry = expiry;
+    } else {
+      // Add new pantry item
+      pantry.push({
+        id: uid(),
+        name,
+        qty,
+        unit,
+        category,
+        location: storage,
+        min: 0,
+        expiry,
+        notes: ""
+      });
+    }
+  });
+
+  savePantry();
+
+  // Clear shopping list
+  shopping = shopping.filter(i => !i.checked);
+  saveShopping();
+
+  renderPantry();
+  renderShoppingList();
+  closeModal();
+}
+
+/* ---------------------------------------------------
    PHASE 5D‑3 — RENDER SHOPPING LIST (SORTED BY CATEGORY)
 --------------------------------------------------- */
 
