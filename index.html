@@ -1,508 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Chef's Cove 2.0</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Styles -->
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Chef's Cove — Cottagecore Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="app.js"></script>
 </head>
 <body class="theme-daylight">
-  <div class="app-shell">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo">🍲</div>
-        <div class="sidebar-title">
-          <span>Chef's Cove</span>
-          <span>Kitchen command center</span>
-        </div>
+  <header class="hero">
+    <div class="hero-logo">🍲</div>
+    <h1>Chef's Cove</h1>
+    <p class="hero-subtitle">A cozy kitchen companion for seasonal living</p>
+  </header>
+
+  <section class="section dashboard">
+    <h2>Today & Week</h2>
+    <div class="stat-row">
+      <div class="stat-pill">
+        <span>Today’s meal</span>
+        <span id="dash-today-meal">Not planned</span>
       </div>
-
-      <div class="sidebar-nav">
-        <div class="nav-section-label">Overview</div>
-        <div class="nav-item active" data-section="dashboard">
-          <span class="nav-icon">🏠</span><span>Dashboard</span>
-        </div>
-
-        <div class="nav-section-label">Core</div>
-        <div class="nav-item" data-section="pantry">
-          <span class="nav-icon">🧺</span><span>Pantry</span>
-        </div>
-        <div class="nav-item" data-section="recipes">
-          <span class="nav-icon">🍲</span><span>Recipes</span>
-        </div>
-        <div class="nav-item" data-section="planner">
-          <span class="nav-icon">📅</span><span>Planner</span>
-        </div>
-        <div class="nav-item" data-section="shopping">
-          <span class="nav-icon">🛒</span><span>Shopping</span>
-        </div>
-        <div class="nav-item" data-section="seasonal">
-          <span class="nav-icon">🌱</span><span>Seasonal</span>
-        </div>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="theme-toggle">
-          <button id="theme-daylight" class="active">Day</button>
-          <button id="theme-hearth">Hearth</button>
-          <button id="theme-garden">Garden</button>
-        </div>
-        <div>v2.0 · Pantry‑first. Made with care.</div>
-      </div>
-    </aside>
-
-    <!-- MAIN -->
-    <main class="main">
-      <!-- DASHBOARD -->
-      <section id="section-dashboard" class="section active">
-        <div class="section-header">
-          <h2>Dashboard</h2>
-          <small>A calm overview of your kitchen.</small>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <h3 class="card-title">Today & week</h3>
-            <div class="dashboard-stat-row">
-              <div class="stat-pill">
-                <span>Today’s meal</span>
-                <span id="dash-today-meal">Not planned</span>
-              </div>
-              <div class="stat-pill">
-                <span>Ready recipes</span>
-                <span id="dash-ready-recipes">–</span>
-              </div>
-            </div>
-            <div class="dashboard-actions">
-              <button class="btn btn-sm" data-nav="planner">Open planner</button>
-              <button class="btn btn-sm btn-ghost" data-nav="recipes">Browse recipes</button>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3 class="card-title">Pantry health</h3>
-            <div class="dashboard-stat-row">
-              <div class="stat-pill">
-                <span>Low stock items</span>
-                <span id="dash-low-count">–</span>
-              </div>
-              <div class="stat-pill">
-                <span>Expiring soon</span>
-                <span id="dash-expiring-count">–</span>
-              </div>
-            </div>
-            <div class="dashboard-actions">
-              <button class="btn btn-sm" data-nav="pantry">View pantry</button>
-              <button class="btn btn-sm btn-ghost" data-nav="shopping">Review shopping</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card dashboard-seasonal">
-          <h3 class="card-title">Seasonal & gentle nudges</h3>
-          <div id="dash-seasonal"></div>
-        </div>
-      </section>
-
-      <!-- PANTRY -->
-      <section id="section-pantry" class="section">
-        <div class="section-header">
-          <h2>Pantry</h2>
-          <small>Your source of truth. Multi‑location, soft units.</small>
-        </div>
-
-        <div class="card">
-          <div class="pantry-header-controls">
-            <div class="pantry-filters">
-              <select id="filter-category">
-                <option value="">All categories</option>
-                <option value="Meat">Meat</option>
-                <option value="Dairy">Dairy</option>
-                <option value="Produce">Produce</option>
-                <option value="Pantry">Pantry Staples</option>
-                <option value="Frozen">Frozen</option>
-                <option value="Spices">Spices</option>
-                <option value="Other">Other</option>
-              </select>
-
-              <select id="filter-location">
-                <option value="">All locations</option>
-                <option value="Pantry">Pantry</option>
-                <option value="Fridge">Fridge</option>
-                <option value="Freezer">Freezer</option>
-                <option value="Counter">Counter</option>
-              </select>
-            </div>
-
-            <button class="btn btn-sm" id="btn-add-ingredient">Add / stock ingredient</button>
-          </div>
-
-          <div class="pantry-list" id="pantry-display"></div>
-        </div>
-      </section>
-
-      <!-- RECIPES -->
-      <section id="section-recipes" class="section">
-        <div class="section-header">
-          <h2>Recipes</h2>
-          <small>Pantry-aware recipes in a cozy card view.</small>
-        </div>
-
-        <div class="card">
-          <div class="recipes-header-row">
-            <span class="helper-text">Click a recipe to view. Everything is editable via modals.</span>
-            <button class="btn btn-sm" id="btn-new-recipe">New recipe</button>
-          </div>
-          <div class="recipe-grid" id="recipe-list"></div>
-        </div>
-      </section>
-
-      <!-- PLANNER -->
-      <section id="section-planner" class="section">
-        <div class="section-header">
-          <h2>Planner</h2>
-          <small>Plan your week and let Chef's Cove handle the logistics.</small>
-        </div>
-
-        <div class="card">
-          <div class="planner-today-row">
-            <span class="label">Today:</span> <span id="today-meal">Not planned</span>
-          </div>
-          <div class="day-grid" id="day-grid"></div>
-        </div>
-      </section>
-
-      <!-- SHOPPING -->
-      <section id="section-shopping" class="section">
-        <div class="section-header">
-          <h2>Shopping</h2>
-          <small>Generated from plans + pantry, with your personal additions.</small>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <h3 class="card-title">Shopping list</h3>
-            <small class="helper-text">Tap an item to confirm purchase and add to pantry.</small>
-
-            <div class="form-group shopping-add-row">
-              <input type="text" id="user-item-name" placeholder="Add custom item" />
-              <button class="btn btn-sm" id="btn-add-custom-item">Add</button>
-            </div>
-
-            <div class="shopping-list" id="shopping-list"></div>
-          </div>
-
-          <div class="card">
-            <h3 class="card-title">Why items appear</h3>
-            <small class="helper-text">Planner shortages, low stock, expiring items, and your own additions.</small>
-
-            <ul class="shopping-explainer">
-              <li><strong>From meal plan:</strong> items needed for assigned recipes.</li>
-              <li><strong>Low stock:</strong> items below your threshold.</li>
-              <li><strong>Expiring soon:</strong> items within a few days of expiry.</li>
-              <li><strong>New recipe ingredient:</strong> ingredients created from new recipes.</li>
-              <li><strong>Custom item:</strong> anything you add manually.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- SEASONAL -->
-      <section id="section-seasonal" class="section">
-        <div class="section-header">
-          <h2>Seasonal & Inspiration</h2>
-          <small>Gentle nudges based on time of year and your pantry.</small>
-        </div>
-
-        <div class="card">
-          <div class="seasonal-list" id="seasonal-list"></div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- MODALS -->
-
-  <!-- ADD INGREDIENT -->
-  <div class="modal-backdrop" id="addIngModal">
-    <div class="modal">
-      <button class="close-btn" data-close="addIngModal">×</button>
-      <h3>➕ Add ingredient</h3>
-      <small>Pantry is your source of truth. Everything else depends on it.</small>
-
-      <div class="form-group">
-        <input type="text" id="modal-ing-name" placeholder="Name (e.g., Chicken breast)" />
-        <div class="form-row">
-          <input type="number" id="modal-ing-qty" placeholder="Quantity" min="0" step="0.1" />
-          <input type="text" id="modal-ing-unit" placeholder="Unit (e.g., lb, g, pcs, bag)" />
-        </div>
-
-        <div class="form-row">
-          <select id="modal-ing-category">
-            <option value="">Category</option>
-            <option value="Meat">Meat</option>
-            <option value="Dairy">Dairy</option>
-            <option value="Produce">Produce</option>
-            <option value="Pantry">Pantry Staples</option>
-            <option value="Frozen">Frozen</option>
-            <option value="Spices">Spices</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <select id="modal-ing-location">
-            <option value="">Location</option>
-            <option value="Pantry">Pantry</option>
-            <option value="Fridge">Fridge</option>
-            <option value="Freezer">Freezer</option>
-            <option value="Counter">Counter</option>
-          </select>
-        </div>
-
-        <input type="number" id="modal-ing-threshold" placeholder="Low stock threshold (total, optional)" min="0" step="0.1" />
-        <input type="date" id="modal-ing-expiry" />
-        <input type="text" id="modal-ing-notes" placeholder="Notes (optional)" />
-
-        <button class="btn" id="btn-save-ingredient">Save to pantry</button>
+      <div class="stat-pill">
+        <span>Ready recipes</span>
+        <span id="dash-ready-recipes">–</span>
       </div>
     </div>
-  </div>
-
-  <!-- EDIT INGREDIENT -->
-  <div class="modal-backdrop" id="editIngModal">
-    <div class="modal">
-      <button class="close-btn" data-close="editIngModal">×</button>
-      <h3 id="edit-ing-title">Edit ingredient</h3>
-
-      <div id="edit-ing-locations" class="modal-locations"></div>
-
-      <div class="form-group">
-        <div class="form-row">
-          <input type="text" id="edit-ing-unit" placeholder="Unit label" />
-          <input type="number" id="edit-ing-threshold" placeholder="Low stock threshold (total)" min="0" step="0.1" />
-        </div>
-
-        <div class="form-row">
-          <select id="edit-ing-category">
-            <option value="">Category</option>
-            <option value="Meat">Meat</option>
-            <option value="Dairy">Dairy</option>
-            <option value="Produce">Produce</option>
-            <option value="Pantry">Pantry Staples</option>
-            <option value="Frozen">Frozen</option>
-            <option value="Spices">Spices</option>
-            <option value="Other">Other</option>
-          </select>
-
-          <input type="text" id="edit-ing-notes" placeholder="Notes (optional)" />
-        </div>
-
-        <button class="btn" id="btn-update-ingredient">Update</button>
-        <button class="btn btn-ghost" id="btn-delete-ingredient">Remove from pantry</button>
-      </div>
+    <div class="dashboard-actions">
+      <button class="btn" data-nav="planner">Open planner</button>
+      <button class="btn btn-ghost" data-nav="recipes">Browse recipes</button>
     </div>
-  </div>
+  </section>
 
-  <!-- TRANSFER MODAL -->
-  <div class="modal-backdrop" id="transferModal">
-    <div class="modal">
-      <button class="close-btn" data-close="transferModal">×</button>
-      <h3 id="transfer-title">Transfer ingredient</h3>
-      <small>Move quantity between locations (e.g., Freezer → Fridge).</small>
-
-      <div class="form-group">
-        <div class="form-row">
-          <select id="transfer-from">
-            <option value="">From location</option>
-          </select>
-
-          <select id="transfer-to">
-            <option value="">To location</option>
-            <option value="Pantry">Pantry</option>
-            <option value="Fridge">Fridge</option>
-            <option value="Freezer">Freezer</option>
-            <option value="Counter">Counter</option>
-          </select>
-        </div>
-
-        <input type="number" id="transfer-qty" placeholder="Quantity to move" min="0" step="0.1" />
-        <input type="date" id="transfer-expiry" />
-
-        <button class="btn" id="btn-confirm-transfer">Transfer</button>
-      </div>
+  <section class="section pantry">
+    <h2>Pantry</h2>
+    <p>Your source of truth. Multi-location, soft units.</p>
+    <div class="pantry-controls">
+      <select id="filter-category">
+        <option value="">All categories</option>
+        <option value="Meat">Meat</option>
+        <option value="Dairy">Dairy</option>
+        <option value="Produce">Produce</option>
+        <option value="Pantry">Pantry Staples</option>
+        <option value="Frozen">Frozen</option>
+        <option value="Spices">Spices</option>
+        <option value="Other">Other</option>
+      </select>
+      <button class="btn" id="btn-add-ingredient">Add / stock ingredient</button>
     </div>
-  </div>
+    <div id="pantry-display" class="pantry-list"></div>
+  </section>
 
-  <!-- RECIPE VIEW MODAL -->
-  <div class="modal-backdrop" id="recipeViewModal">
-    <div class="modal recipe-card-modal">
-      <button class="close-btn" data-close="recipeViewModal">×</button>
+  <section class="section recipes">
+    <h2>Recipes</h2>
+    <p>Pantry-aware, cozy cards with seasonal flair.</p>
+    <button class="btn" id="btn-new-recipe">New recipe</button>
+    <div id="recipe-list" class="recipe-grid"></div>
+  </section>
 
-      <div class="recipe-card-tab" id="recipe-card-tab">Recipe</div>
-
-      <div class="recipe-card-header">
-        <div class="recipe-card-title" id="recipe-title">Recipe</div>
-        <div class="recipe-card-meta">
-          <div id="recipe-tags"></div>
-          <div id="recipe-meta-right"></div>
-        </div>
-      </div>
-
-      <div class="recipe-card-body">
-        <div>
-          <div class="recipe-card-section-title">Ingredients</div>
-          <div class="recipe-card-ingredients" id="recipe-ingredients"></div>
-        </div>
-
-        <div>
-          <div class="recipe-card-section-title">Steps</div>
-          <ol class="recipe-card-steps" id="recipe-steps"></ol>
-        </div>
-      </div>
-
-      <div class="recipe-card-footer">
-        <div class="scale-control">
-          <span>Scale:</span>
-          <select id="scale-select">
-            <option value="1">1x</option>
-            <option value="0.5">0.5x</option>
-            <option value="2">2x</option>
-          </select>
-        </div>
-
-        <div class="recipe-footer-actions">
-          <button class="btn btn-sm" id="btn-cook-now">Cook now</button>
-          <button class="btn btn-sm btn-ghost" id="btn-edit-recipe">Edit</button>
-        </div>
-      </div>
+  <section class="section planner">
+    <h2>Planner</h2>
+    <p>Plan your week like a handwritten journal.</p>
+    <div class="planner-today">
+      <strong>Today:</strong> <span id="today-meal">Not planned</span>
     </div>
-  </div>
+    <div id="day-grid" class="day-grid"></div>
+  </section>
 
-  <!-- NEW RECIPE MODAL -->
-  <div class="modal-backdrop" id="newRecipeModal">
-    <div class="modal">
-      <button class="close-btn" data-close="newRecipeModal">×</button>
-      <h3>➕ New recipe</h3>
-      <small>Saved recipes become cards in your library and connect to your pantry.</small>
+  <section class="section shopping">
+    <h2>Shopping List</h2>
+    <p>Generated from plans + pantry, with your personal additions.</p>
+    <input type="text" id="user-item-name" placeholder="Add custom item">
+    <button class="btn" id="btn-add-custom-item">Add</button>
+    <div id="shopping-list" class="shopping-list"></div>
+  </section>
 
-      <div class="form-group">
-        <input type="text" id="nr-name" placeholder="Recipe name" />
-        <input type="text" id="nr-tags" placeholder="Tags (comma-separated, optional)" />
+  <section class="section seasonal">
+    <h2>Seasonal & Gentle Nudges</h2>
+    <p>January whispers soup and sourdough. Let the seasons guide your meals.</p>
+    <div id="seasonal-list" class="seasonal-list"></div>
+  </section>
 
-        <div class="form-row">
-          <input type="number" id="nr-servings" placeholder="Serves (optional)" min="1" step="1" />
-          <input type="text" id="nr-time" placeholder="Total time (e.g. 30 min)" />
-        </div>
-
-        <textarea id="nr-ings" placeholder="Ingredients (one per line, e.g. '200 g Pasta', '2 pcs Tomato')"></textarea>
-        <textarea id="nr-steps" placeholder="Steps (each on a new line)"></textarea>
-        <textarea id="nr-notes" placeholder="Personal notes (optional)"></textarea>
-
-        <button class="btn" id="btn-save-new-recipe">Save recipe</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- EDIT RECIPE MODAL -->
-  <div class="modal-backdrop" id="editRecipeModal">
-    <div class="modal">
-      <button class="close-btn" data-close="editRecipeModal">×</button>
-      <h3>Edit recipe</h3>
-      <small>Update your recipe. Pantry + planner will adapt.</small>
-
-      <div class="form-group">
-        <input type="text" id="er-name" placeholder="Recipe name" />
-        <input type="text" id="er-tags" placeholder="Tags (comma-separated)" />
-
-        <div class="form-row">
-          <input type="number" id="er-servings" placeholder="Serves" min="1" step="1" />
-          <input type="text" id="er-time" placeholder="Total time" />
-        </div>
-
-        <textarea id="er-ings" placeholder="Ingredients (one per line, e.g. '200 g Pasta')"></textarea>
-        <textarea id="er-steps" placeholder="Steps (each on a new line)"></textarea>
-        <textarea id="er-notes" placeholder="Personal notes (optional)"></textarea>
-
-        <button class="btn" id="btn-save-edited-recipe">Save changes</button>
-        <button class="btn btn-ghost" id="btn-delete-recipe">Delete recipe</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- COOK CONFIRM MODAL -->
-  <div class="modal-backdrop" id="cookConfirmModal">
-    <div class="modal">
-      <button class="close-btn" data-close="cookConfirmModal">×</button>
-      <h3>Confirm cooking</h3>
-      <small>Review what will be used from your pantry. Units are as you entered them.</small>
-
-      <div class="form-group">
-        <div class="form-row">
-          <span class="inline-label">Servings multiplier:</span>
-          <select id="cook-servings">
-            <option value="1">1x</option>
-            <option value="0.5">0.5x</option>
-            <option value="2">2x</option>
-            <option value="3">3x</option>
-          </select>
-        </div>
-
-        <div class="confirm-list" id="cook-confirm-list"></div>
-
-        <small class="helper-text">
-          If units differ between pantry and recipe, you may need to eyeball amounts.
-        </small>
-
-        <button class="btn" id="btn-confirm-cook">Confirm & update pantry</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SHOPPING CHECKOUT MODAL -->
-  <div class="modal-backdrop" id="checkoutModal">
-    <div class="modal">
-      <button class="close-btn" data-close="checkoutModal">×</button>
-      <h3 id="checkout-title">Add to pantry</h3>
-      <small>Confirm what you purchased and where you stored it.</small>
-
-      <div class="form-group">
-        <input type="text" id="checkout-name" disabled />
-
-        <div class="form-row">
-          <input type="number" id="checkout-qty" placeholder="Quantity bought" min="0" step="0.1" />
-          <input type="text" id="checkout-unit" placeholder="Unit label (e.g. g, pcs, bag)" />
-        </div>
-
-        <select id="checkout-location">
-          <option value="">Location</option>
-          <option value="Pantry">Pantry</option>
-          <option value="Fridge">Fridge</option>
-          <option value="Freezer">Freezer</option>
-          <option value="Counter">Counter</option>
-        </select>
-
-        <select id="checkout-category">
-          <option value="">Category</option>
-          <option value="Meat">Meat</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Produce">Produce</option>
-          <option value="Pantry">Pantry Staples</option>
-          <option value="Frozen">Frozen</option>
-          <option value="Spices">Spices</option>
-          <option value="Other">Other</option>
-        </select>
-
-        <input type="number" id="checkout-threshold" placeholder="Low stock threshold (total, optional)" min="0" step="0.1" />
-        <input type="date" id="checkout-expiry" />
-        <input type="text" id="checkout-notes" placeholder="Notes (optional)" />
-
-        <button class="btn" id="btn-confirm-checkout">Add to pantry</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="app.js"></script>
+  <!-- Modals will be injected here -->
 </body>
 </html>
