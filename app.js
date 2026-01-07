@@ -544,4 +544,728 @@ document.getElementById("scale-select").addEventListener("change", e => {
 --------------------------------------------------- */
 document.getElementById("btn-new-recipe").onclick = () => {
   document.getElementById("nr-name").value = "";
-  document.getElementById("nr-tags
+  document.getElementById("nr-tags").value = "";
+  document.getElementById("nr-servings").value = "";
+  document.getElementById("nr-time").value = "";
+  document.getElementById("nr-ings").value = "";
+  document.getElementById("nr-steps").value = "";
+  document.getElementById("nr-notes").value = "";
+  openModal("newRecipeModal");
+};
+
+function parseIngredientLine(line) {
+  const parts = line.trim().split(/\s+/);
+  if (parts.length < 2) return null;
+
+  const amount = parseFloat(parts[0].replace(",", "."));
+  if (isNaN(amount)) return null;
+
+  const unit = parts[1];
+  const name = parts.slice(2).join(" ");
+  if (!name) return null;
+
+  return { name, amount, unit };
+}
+
+document.getElementById("btn-save-new-recipe").onclick = () => {
+  const name = document.getElementById("nr-name").value.trim();
+  const tagStr = document.getElementById("nr-tags").value;
+  const ingsStr = document.getElementById("nr-ings").value;
+  const stepsStr = document.getElementById("nr-steps").value;
+  const notesStr = document.getElementById("nr-notes").value;
+  const servingsVal = parseInt(document.getElementById("nr-servings").value, 10);
+  const timeStr = document.getElementById("nr-time").value.trim();
+
+  if (!name || !ingsStr.trim()) return;
+
+  const tags = tagStr.split(",").map(t => t.trim()).filter(Boolean);
+  const ingLines = ingsStr.split("\n").map(l => l.trim()).filter(Boolean);
+
+  const ingredients = [];
+  const missingForShopping = [];
+
+  ingLines.forEach(line => {
+    const ing = parseIngredientLine(line);
+    if (!ing) return;
+    ingredients.push(ing);
+
+    if (!pantry[ing.name]) {
+      pantry[ing.name] = {
+        unit: ing.unit,
+        category: "",
+        threshold: ing.amount,
+        notes: "",
+        locations: { Pantry: { qty: 0, expires: "" } }
+      };
+      missingForShopping.push(ing);
+    }
+  });
+
+  const steps = stepsStr.split("\n").map(s => s.trim()).filter(Boolean);
+
+  const recipe = {
+    name,
+    tags,
+    steps,
+    totalTime: timeStr || "",
+    servings: !isNaN(servingsVal) && servingsVal > 0 ? servingsVal : null,
+    notes: notesStr || "",
+    ingredients
+  };
+
+  recipes.push(recipe);
+
+  missingForShopping.forEach(ing => {
+    shoppingExtras.push({
+      id: "missing-" + ing.name + "-" + Date.now() + Math.random(),
+      name: ing.name,
+      amount: ing.amount,
+      unit: ing.unit,
+      source: "missing"
+    });
+  });
+
+  closeModal("newRecipeModal");
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonal();
+  updateDashboard();
+  saveState();
+};
+
+/* ---------------------------------------------------
+   EDIT RECIPE
+--------------------------------------------------- */
+document.getElementById("btn-edit-recipe").onclick = () => {
+  if (selectedRecipeIndex == null) return;
+  const r = recipes[selectedRecipeIndex];
+
+  document.getElementById("er-name").value = r.name;
+  document.getElementById("er-tags").value = (r.tags || []).join(", ");
+  document.getElementById("er-servings").value = r.servings || "";
+  document.getElementById("er-time").value = r.totalTime || "";
+  document.getElementById("er-notes").value = r.notes || "";
+
+  document.getElementById("er-ings").value = (r.ingredients || [])
+    .map(ing => `${ing.amount} ${ing.unit || ""} ${ing.name}`.trim())
+    .join("\n");
+
+  document.getElementById("er-steps").value = (r.steps || []).join("\n");
+
+  openModal("editRecipeModal");
+};
+
+document.getElementById("btn-save-edited-recipe").onclick = () => {
+  if (selectedRecipeIndex == null) return;
+
+  const r = recipes[selectedRecipeIndex];
+
+  const newName = document.getElementById("er-name").value.trim();
+  const tagStr = document.getElementById("er-tags").value;
+  const ingsStr = document.getElementById("er-ings").value;
+  const stepsStr = document.getElementById("er-steps").value;
+  const notesStr = document.getElementById("er-notes").value;
+  const servingsVal = parseInt(document.getElementById("er-servings").value, 10);
+  const timeStr = document.getElementById("er-time").value.trim();
+
+  if (!newName || !ingsStr.trim()) return;
+
+  const tags = tagStr.split(",").map(t => t.trim()).filter(Boolean);
+  const ingLines = ingsStr.split("\n").map(l => l.trim()).filter(Boolean);
+
+  const ingredients = [];
+  const missingForShopping = [];
+
+  ingLines.forEach(line => {
+    const ing = parseIngredientLine(line);
+    if (!ing) return;
+    ingredients.push(ing);
+
+    if (!pantry[ing.name]) {
+      pantry[ing.name] = {
+        unit: ing.unit,
+        category: "",
+        threshold: ing.amount,
+        notes: "",
+        locations: { Pantry: { qty: 0, expires: "" } }
+      };
+      missingForShopping.push(ing);
+    }
+  });
+
+  const steps = stepsStr.split("\n").map(s => s.trim()).filter(Boolean);
+
+  const oldName = r.name;
+  if (oldName !== newName) {
+    Object.keys(planner).forEach(day => {
+      if (planner[day] === oldName) planner[day] = newName;
+    });
+  }
+
+  r.name = newName;
+  r.tags = tags;
+  r.servings = !isNaN(servingsVal) && servingsVal > 0 ? servingsVal : null;
+  r.totalTime = timeStr || "";
+  r.notes = notesStr || "";
+  r.ingredients = ingredients;
+  r.steps = steps;
+
+  missingForShopping.forEach(ing => {
+    shoppingExtras.push({
+      id: "missing-" + ing.name + "-" + Date.now() + Math.random(),
+      name: ing.name,
+      amount: ing.amount,
+      unit: ing.unit,
+      source: "missing"
+    });
+  });
+
+  closeModal("editRecipeModal");
+  closeModal("recipeViewModal");
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonal();
+  updateDashboard();
+  saveState();
+};
+
+document.getElementById("btn-delete-recipe").onclick = () => {
+  if (selectedRecipeIndex == null) return;
+
+  const r = recipes[selectedRecipeIndex];
+  const name = r.name;
+
+  Object.keys(planner).forEach(day => {
+    if (planner[day] === name) planner[day] = null;
+  });
+
+  recipes.splice(selectedRecipeIndex, 1);
+
+  selectedRecipeIndex = null;
+  pendingCook = null;
+
+  closeModal("editRecipeModal");
+  closeModal("recipeViewModal");
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateDashboard();
+  saveState();
+};
+
+/* ---------------------------------------------------
+   COOK FLOW
+--------------------------------------------------- */
+document.getElementById("btn-cook-now").onclick = () => {
+  if (!pendingCook) return;
+  document.getElementById("cook-servings").value = String(pendingCook.scale || 1);
+  renderCookConfirmList();
+  openModal("cookConfirmModal");
+};
+
+document.getElementById("cook-servings").addEventListener("change", () => {
+  renderCookConfirmList();
+});
+
+function renderCookConfirmList() {
+  if (!pendingCook) return;
+
+  const scale = parseFloat(document.getElementById("cook-servings").value) || 1;
+  const r = pendingCook.recipe;
+  const listDiv = document.getElementById("cook-confirm-list");
+  listDiv.innerHTML = "";
+
+  r.ingredients.forEach(ing => {
+    const needed = ing.amount * scale;
+    const item = pantry[ing.name];
+    const total = totalQty(item);
+    const pUnit = item ? (item.unit || "") : "";
+    const unitsMatch = item && item.unit && ing.unit && item.unit === ing.unit;
+
+    const row = document.createElement("div");
+    let text = `• ${ing.name}: need ${needed} ${ing.unit || ""}, pantry total ${total} ${pUnit}`;
+
+    if (!item) {
+      text += " — not in pantry.";
+    } else if (!unitsMatch && ing.unit) {
+      text += " — units differ.";
+    } else if (total < needed) {
+      text += " — low.";
+    } else {
+      text += " — OK.";
+    }
+
+    row.textContent = text;
+    listDiv.appendChild(row);
+  });
+}
+
+document.getElementById("btn-confirm-cook").onclick = () => {
+  if (!pendingCook) return;
+
+  const scale = parseFloat(document.getElementById("cook-servings").value) || 1;
+  const r = pendingCook.recipe;
+
+  r.ingredients.forEach(ing => {
+    const item = pantry[ing.name];
+    if (!item) return;
+
+    let remaining = ing.amount * scale;
+
+    const locEntries = Object.entries(item.locations || {}).sort((a, b) => {
+      const expA = a[1].expires || "9999-12-31";
+      const expB = b[1].expires || "9999-12-31";
+      return expA.localeCompare(expB);
+    });
+
+    for (const [loc, data] of locEntries) {
+      if (remaining <= 0) break;
+      const usable = Math.min(data.qty, remaining);
+      data.qty -= usable;
+      remaining -= usable;
+      if (data.qty <= 0.0001) delete item.locations[loc];
+    }
+  });
+
+  const today = todayKey();
+  planner[today] = r.name;
+
+  closeModal("cookConfirmModal");
+  closeModal("recipeViewModal");
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonal();
+  updateDashboard();
+  saveState();
+};
+
+/* ---------------------------------------------------
+   PLANNER
+--------------------------------------------------- */
+function renderPlanner() {
+  const grid = document.getElementById("day-grid");
+  grid.innerHTML = "";
+  const today = todayKey();
+  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+  days.forEach(day => {
+    const card = document.createElement("div");
+    card.className = "day-card";
+
+    const head = document.createElement("div");
+    head.className = "day-head";
+
+    const left = document.createElement("div");
+    left.innerHTML = `<strong>${day}</strong>${day === today ? ' <span class="badge">Today</span>' : ""}`;
+
+    const select = document.createElement("select");
+    select.style.fontSize = "0.78rem";
+
+    const optNone = document.createElement("option");
+    optNone.value = "";
+    optNone.textContent = "— choose recipe —";
+    select.appendChild(optNone);
+
+    recipes.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.name;
+      opt.textContent = r.name;
+      select.appendChild(opt);
+    });
+
+    select.value = planner[day] || "";
+    select.onchange = () => {
+      planner[day] = select.value || null;
+      updatePlannerToday();
+      updateShoppingList();
+      renderPlanner();
+      updateDashboard();
+      saveState();
+    };
+
+    head.appendChild(left);
+    head.appendChild(select);
+
+    const body = document.createElement("div");
+    body.style.fontSize = "0.78rem";
+    const recipeName = planner[day];
+
+    if (!recipeName) {
+      body.textContent = "No recipe assigned.";
+    } else {
+      const recipe = recipes.find(r => r.name === recipeName);
+      if (!recipe) {
+        body.textContent = "Recipe not found.";
+      } else {
+        const readiness = recipeReadiness(recipe);
+        body.textContent =
+          readiness === "ready"
+            ? "✔️ Pantry ready."
+            : readiness === "low"
+            ? "⚠️ Pantry low / partial."
+            : "❌ Missing ingredients.";
+      }
+    }
+
+    card.appendChild(head);
+    card.appendChild(body);
+    grid.appendChild(card);
+  });
+
+  updatePlannerToday();
+}
+
+function updatePlannerToday() {
+  const today = todayKey();
+  const meal = planner[today];
+  const text = meal || "Not planned";
+  const plannerToday = document.getElementById("today-meal");
+  const dashToday = document.getElementById("dash-today-meal");
+  if (plannerToday) plannerToday.textContent = text;
+  if (dashToday) dashToday.textContent = text;
+}
+
+/* ---------------------------------------------------
+   SHOPPING LIST
+--------------------------------------------------- */
+document.getElementById("btn-add-custom-item").onclick = () => {
+  const name = document.getElementById("user-item-name").value.trim();
+  if (!name) return;
+
+  shoppingExtras.push({
+    id: "user-" + Date.now() + Math.random(),
+    name,
+    amount: null,
+    unit: "",
+    source: "user"
+  });
+
+  document.getElementById("user-item-name").value = "";
+  updateShoppingList();
+  saveState();
+};
+
+function buildShoppingItems() {
+  const items = [];
+  const days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  const now = new Date();
+  const soonDays = 3;
+
+  // from planner
+  days.forEach(day => {
+    const recipeName = planner[day];
+    if (!recipeName) return;
+    const recipe = recipes.find(r => r.name === recipeName);
+    if (!recipe) return;
+
+    recipe.ingredients.forEach(ing => {
+      const total = totalQty(pantry[ing.name]);
+      if (total < ing.amount) {
+        const diff = ing.amount - total;
+        items.push({
+          key: `planner-${day}-${ing.name}`,
+          name: ing.name,
+          amount: diff,
+          unit: ing.unit,
+          reason: `Planned for ${day}`,
+          source: "planner"
+        });
+      }
+    });
+  });
+
+  // low stock
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    const total = totalQty(item);
+    const th = item.threshold || 0;
+    if (th > 0 && total <= th) {
+      items.push({
+        key: `low-${name}`,
+        name,
+        amount: Math.max(th * 2 - total, th),
+        unit: item.unit || "",
+        reason: "Low stock (total)",
+        source: "low"
+      });
+    }
+  });
+
+  // expiring soon
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    if (!item.locations) return;
+    Object.keys(item.locations).forEach(loc => {
+      const e = item.locations[loc];
+      if (!e.expires) return;
+      const expDate = new Date(e.expires + "T00:00:00");
+      const diffDays = (expDate - now) / (1000*60*60*24);
+      if (diffDays >= 0 && diffDays <= soonDays) {
+        items.push({
+          key: `expiring-${name}-${loc}`,
+          name,
+          amount: 0,
+          unit: item.unit || "",
+          reason: `Expiring in ${Math.round(diffDays)} day(s) in ${loc}`,
+          source: "expiring"
+        });
+      }
+    });
+  });
+
+  // extras
+  shoppingExtras.forEach(extra => {
+    items.push({
+      key: extra.id,
+      name: extra.name,
+      amount: extra.amount || 0,
+      unit: extra.unit || "",
+      reason: extra.source === "missing" ? "New recipe ingredient" : "Custom item",
+      source: extra.source
+    });
+  });
+
+  return items;
+}
+
+function updateShoppingList() {
+  const listDiv = document.getElementById("shopping-list");
+  const items = buildShoppingItems();
+
+  if (!items.length) {
+    listDiv.innerHTML = "<small>No current needs. You're beautifully stocked.</small>";
+    return;
+  }
+
+  listDiv.innerHTML = "";
+
+  items.forEach(item => {
+    const row = document.createElement("div");
+    row.className = "shopping-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+
+    checkbox.onchange = () => {
+      checkbox.checked = false;
+      openCheckoutFromShopping(item);
+    };
+
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "shopping-label";
+
+    const amtStr =
+      item.amount && item.amount > 0
+        ? `— need ${item.amount.toFixed(2)} ${item.unit || ""}`
+        : "";
+
+    labelDiv.innerHTML = `<strong>${item.name}</strong> ${amtStr}`;
+
+    const meta = document.createElement("div");
+    meta.className = "shopping-meta";
+    meta.textContent = item.reason;
+
+    const source = document.createElement("div");
+    source.className = "shopping-source";
+
+    const srcLabel =
+      item.source === "planner"
+        ? "From meal plan"
+        : item.source === "low"
+        ? "Low stock"
+        : item.source === "expiring"
+        ? "Expiring soon"
+        : item.source === "missing"
+        ? "New recipe ingredient"
+        : "Added by you";
+
+    source.textContent = srcLabel;
+
+    labelDiv.appendChild(meta);
+    labelDiv.appendChild(source);
+
+    row.appendChild(checkbox);
+    row.appendChild(labelDiv);
+    listDiv.appendChild(row);
+  });
+}
+
+function openCheckoutFromShopping(item) {
+  checkoutItem = item;
+
+  document.getElementById("checkout-title").innerText =
+    `Add ${item.name} to pantry`;
+
+  document.getElementById("checkout-name").value = item.name;
+  document.getElementById("checkout-qty").value =
+    item.amount && item.amount > 0 ? item.amount.toFixed(2) : "";
+  document.getElementById("checkout-unit").value =
+    item.unit || (pantry[item.name]?.unit || "");
+  document.getElementById("checkout-location").value = "";
+  document.getElementById("checkout-category").value =
+    pantry[item.name]?.category || "";
+  document.getElementById("checkout-threshold").value =
+    pantry[item.name]?.threshold || "";
+  document.getElementById("checkout-expiry").value = "";
+  document.getElementById("checkout-notes").value =
+    pantry[item.name]?.notes || "";
+
+  openModal("checkoutModal");
+}
+
+document.getElementById("btn-confirm-checkout").onclick = () => {
+  if (!checkoutItem) return;
+
+  const name = document.getElementById("checkout-name").value.trim();
+  const qty = parseFloat(document.getElementById("checkout-qty").value);
+  const unit = document.getElementById("checkout-unit").value.trim();
+  const location = document.getElementById("checkout-location").value;
+  const category = document.getElementById("checkout-category").value;
+  const threshold = parseFloat(document.getElementById("checkout-threshold").value);
+  const expiry = document.getElementById("checkout-expiry").value;
+  const notes = document.getElementById("checkout-notes").value;
+
+  if (!name || isNaN(qty) || !location) return;
+
+  if (!pantry[name]) {
+    pantry[name] = {
+      unit,
+      category,
+      threshold: isNaN(threshold) ? 0 : threshold,
+      notes,
+      locations: {}
+    };
+  } else {
+    const p = pantry[name];
+    if (unit) p.unit = unit;
+    if (category) p.category = category;
+    if (!isNaN(threshold)) p.threshold = threshold;
+    if (notes) p.notes = notes;
+  }
+
+  if (!pantry[name].locations[location])
+    pantry[name].locations[location] = { qty: 0, expires: "" };
+
+  pantry[name].locations[location].qty += qty;
+  if (expiry) pantry[name].locations[location].expires = expiry;
+
+  shoppingExtras = shoppingExtras.filter(
+    extra => extra.id !== checkoutItem.key && extra.id !== checkoutItem.id
+  );
+
+  checkoutItem = null;
+
+  closeModal("checkoutModal");
+  updatePantryUI();
+  renderRecipes();
+  renderPlanner();
+  updateShoppingList();
+  updateSeasonal();
+  updateDashboard();
+  saveState();
+};
+
+/* ---------------------------------------------------
+   SEASONAL + DASHBOARD
+--------------------------------------------------- */
+function updateSeasonal() {
+  const now = new Date();
+  const month = now.getMonth();
+  const notes = [];
+
+  if (month === 11 || month <= 1) {
+    notes.push("Cold months invite soups, stews, and slow roasts.");
+  } else if (month >= 5 && month <= 8) {
+    notes.push("Warm months lean toward grills, salads, and fresh herbs.");
+  } else {
+    notes.push("Transitional seasons love bakes, gratins, and one‑pan meals.");
+  }
+
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    if (!item.locations) return;
+    Object.keys(item.locations).forEach(loc => {
+      const e = item.locations[loc];
+      if (!e.expires) return;
+      const d = new Date(e.expires + "T00:00:00");
+      const diffDays = (d - now) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 0 && diffDays <= 3) {
+        notes.push(
+          `Use soon: ${name} in ${loc} (expiring in ${Math.round(diffDays)} day(s)).`
+        );
+      }
+    });
+  });
+
+  const seasonalDiv = document.getElementById("seasonal-list");
+  seasonalDiv.innerHTML = "";
+  notes.forEach(text => {
+    const d = document.createElement("div");
+    d.className = "seasonal-item";
+    d.textContent = "• " + text;
+    seasonalDiv.appendChild(d);
+  });
+
+  const dashSeasonal = document.getElementById("dash-seasonal");
+  if (dashSeasonal) {
+    dashSeasonal.innerHTML = "";
+    notes.slice(0, 3).forEach(text => {
+      const d = document.createElement("div");
+      d.className = "seasonal-item";
+      d.textContent = "• " + text;
+      dashSeasonal.appendChild(d);
+    });
+  }
+
+  updateDashboardCounts();
+}
+
+function updateDashboardCounts() {
+  const now = new Date();
+  let lowCount = 0;
+  let expiringCount = 0;
+
+  Object.keys(pantry).forEach(name => {
+    const item = pantry[name];
+    const total = totalQty(item);
+    const th = item.threshold || 0;
+    if (th > 0 && total <= th) lowCount++;
+
+    if (!item.locations) return;
+    Object.keys(item.locations).forEach(loc => {
+      const e = item.locations[loc];
+      if (!e.expires) return;
+      const d = new Date(e.expires + "T00:00:00");
+      const diffDays = (d - now) / (1000 * 60 * 60 * 24);
+      if (diffDays >= 0 && diffDays <= 3) expiringCount++;
+    });
+  });
+
+  const lowEl = document.getElementById("dash-low-count");
+  const expEl = document.getElementById("dash-expiring-count");
+  if (lowEl) lowEl.textContent = lowCount;
+  if (expEl) expEl.textContent = expiringCount;
+}
+
+function updateDashboard() {
+  updatePlannerToday();
+}
+
+/* ---------------------------------------------------
+   INIT
+--------------------------------------------------- */
+loadState();
+ensureDefaults();
+updatePantryUI();
+renderRecipes();
+renderPlanner();
+updateShoppingList();
+updateSeasonal();
+updateDashboard();
+setTheme(currentTheme);
