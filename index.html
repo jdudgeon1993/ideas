@@ -11,37 +11,68 @@
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="site-header">
-    <div class="header-left">
-      <div class="header-logo">🍽️</div>
-      <div class="header-title">
-        <h1>Chef's Kiss</h1>
-        <p class="header-tagline">Kitchen companion</p>
-      </div>
+  <!-- STICKY SIDEBAR (Shopping List) -->
+  <aside class="shopping-sidebar" id="shopping-sidebar">
+    <div class="sidebar-header">
+      <h2>Shopping</h2>
+      <p class="sidebar-subtitle">Auto-updated</p>
     </div>
-    <div class="header-right">
-      <div class="header-datetime">
-        <span id="header-date">Jan 7, 2026</span>
-        <span id="header-time">9:41 AM</span>
-      </div>
+
+    <div class="shopping-add-inline">
+      <input
+        type="text"
+        id="user-item-name"
+        placeholder="Add item..."
+      >
+      <button class="btn-add-icon" id="btn-add-custom-item" title="Add custom item">
+        +
+      </button>
     </div>
-  </header>
 
-  <!-- NAVIGATION -->
-  <nav class="site-nav">
-    <button class="nav-link" data-scroll-target="#pantry-section">Pantry</button>
-    <button class="nav-link" data-scroll-target="#recipes-section">Recipes</button>
-    <button class="nav-link" id="nav-planner">Meal Plan</button>
-    <button class="nav-link" data-scroll-target="#shopping-section">Shopping List</button>
-  </nav>
+    <div id="shopping-list" class="shopping-list">
+      <!-- Shopping items injected here -->
+    </div>
 
-  <!-- HERO -->
-  <section class="hero">
-    <p class="hero-tagline">
-      Track your pantry, plan meals, and build your shopping list—without the overwhelm.
-    </p>
-  </section>
+    <div class="shopping-actions">
+      <button class="btn btn-primary btn-block" id="btn-checkout">
+        Checkout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <div class="main-content">
+
+    <!-- HEADER -->
+    <header class="site-header">
+      <div class="header-left">
+        <div class="header-logo">🍽️</div>
+        <div class="header-title">
+          <h1>Chef's Kiss</h1>
+          <p class="header-tagline">Kitchen companion</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="header-datetime">
+          <span id="header-date">Jan 7, 2026</span>
+          <span id="header-time">9:41 AM</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- NAVIGATION -->
+    <nav class="site-nav">
+      <button class="nav-link" data-scroll-target="#pantry-section">Pantry</button>
+      <button class="nav-link" data-scroll-target="#recipes-section">Recipes</button>
+      <button class="nav-link" id="nav-planner">Meal Plan</button>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+      <p class="hero-tagline">
+        Track your pantry, plan meals, and build your shopping list—without the overwhelm.
+      </p>
+    </section>
 
   <!-- TODAY & WEEK DASHBOARD -->
   <section class="section section-dashboard">
@@ -151,37 +182,7 @@
     </div>
   </section>
 
-
-  <!-- SHOPPING LIST -->
-  <section class="section section-shopping" id="shopping-section">
-    <header class="section-header">
-      <h2>Shopping list</h2>
-      <p class="section-subtitle">
-        Auto-updated from meal plans and pantry thresholds.
-      </p>
-    </header>
-
-    <div class="shopping-add-inline">
-      <input
-        type="text"
-        id="user-item-name"
-        placeholder="Add custom item (e.g., 'Lemons')"
-      >
-      <button class="btn btn-secondary" id="btn-add-custom-item">
-        Add
-      </button>
-    </div>
-
-    <div id="shopping-list" class="shopping-list">
-      <!-- Shopping items injected here -->
-    </div>
-
-    <div class="shopping-actions">
-      <button class="btn btn-primary" id="btn-checkout">
-        Checkout & stock pantry
-      </button>
-    </div>
-  </section>
+  </div> <!-- end main-content -->
 
   <!-- MODAL ROOT (unified recipe-card style modals injected here) -->
   <div id="modal-root">

@@ -12,6 +12,99 @@ body {
   background: radial-gradient(circle at top left, #ffffff 0, #F1E9D2 55%);
   color: #2F3E46;
   line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------------------------------------------------
+   STICKY SIDEBAR LAYOUT
+--------------------------------------------------- */
+.shopping-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 320px;
+  height: 100vh;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 2px 0 12px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-header {
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-header h2 {
+  font-size: 1.6rem;
+  color: #6a4f35;
+  margin-bottom: 0.25rem;
+  font-family: "Patrick Hand", cursive;
+}
+
+.sidebar-subtitle {
+  font-size: 0.85rem;
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.main-content {
+  margin-left: 320px;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-add-icon {
+  background: linear-gradient(135deg, #8A9A5B, #C2918C);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  font-weight: 300;
+}
+
+.btn-add-icon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(138,154,91,0.3);
+}
+
+/* Mobile: sidebar becomes bottom section */
+@media (max-width: 1024px) {
+  body {
+    flex-direction: column;
+  }
+
+  .shopping-sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,0.08);
+    order: 2;
+  }
+
+  .main-content {
+    margin-left: 0;
+    order: 1;
+  }
 }
 
 /* Utility spacing */
@@ -662,20 +755,20 @@ body {
 }
 
 /* ---------------------------------------------------
-   SHOPPING LIST
+   SHOPPING LIST (Sidebar)
 --------------------------------------------------- */
 .shopping-add-inline {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
 .shopping-add-inline input {
   flex: 1;
-  padding: 0.6rem;
+  padding: 0.65rem 0.75rem;
   border-radius: 8px;
   border: 1px solid rgba(0,0,0,0.2);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-family: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -693,28 +786,33 @@ body {
 .shopping-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 1rem;
 }
 
 .shopping-item {
-  background: #fff;
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
+  background: rgba(248,244,235,0.4);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
   border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   align-items: center;
-  gap: 1rem;
-  transition: box-shadow 0.15s ease;
+  gap: 0.75rem;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .shopping-item:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  background: rgba(248,244,235,0.7);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .shopping-check {
   cursor: pointer;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 /* ---------------------------------------------------
@@ -1119,11 +1217,14 @@ body {
 
 /* Category header */
 .shopping-category-header {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
   margin-bottom: 0.5rem;
-  font-weight: bold;
+  font-weight: 600;
   color: #6a4f35;
-  font-size: 1.1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
 /* Shopping item layout */
@@ -1139,19 +1240,37 @@ body {
 
 .shopping-info {
   flex: 1;
+  min-width: 0;
+}
+
+.shopping-info strong {
+  font-size: 0.9rem;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .shopping-sub {
-  font-size: 0.85rem;
-  opacity: 0.7;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.15rem;
 }
 
 .shopping-remove {
-  background: transparent;
+  background: none;
   border: none;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .shopping-remove:hover {
@@ -1159,5 +1278,7 @@ body {
 }
 
 .shopping-actions {
-  margin-top: 1.5rem;
+  margin-top: 0;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0,0,0,0.08);
 }
