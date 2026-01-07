@@ -1252,32 +1252,35 @@ function generateShoppingList() {
 
   const reserved = calculateReservedIngredients();
 
-  // For each pantry item, calculate combined threshold + meal needs
+  // For each pantry item, calculate if we need to buy more
   pantry.forEach(item => {
     const key = `${item.name}|${item.unit}`;
     const reservedQty = reserved[key] || 0;
 
-    // Threshold deficit: how much below minimum we are
-    const thresholdDeficit = Math.max(0, (item.min || 0) - item.totalQty);
+    // Total amount we need to have = meals we're cooking + minimum threshold
+    const totalRequired = reservedQty + (item.min || 0);
 
-    // Total needed: threshold deficit + all planned meal needs
-    // This ensures we buy enough to cover meals AND get back to minimum threshold
-    const totalNeeded = thresholdDeficit + reservedQty;
+    // How much we actually have
+    const totalAvailable = item.totalQty;
 
-    if (totalNeeded > 0) {
-      const hasThreshold = thresholdDeficit > 0;
-      const hasMeals = reservedQty > 0;
+    // Calculate deficit - only add to shopping if we don't have enough
+    const deficit = Math.max(0, totalRequired - totalAvailable);
+
+    if (deficit > 0) {
+      // Determine source of shortage
+      const needsForThreshold = Math.max(0, (item.min || 0) - totalAvailable);
+      const needsForMeals = deficit - needsForThreshold;
 
       let source = "Threshold";
-      if (hasThreshold && hasMeals) {
+      if (needsForThreshold > 0 && needsForMeals > 0) {
         source = "Threshold + Meals";
-      } else if (hasMeals) {
+      } else if (needsForMeals > 0) {
         source = "Meals";
       }
 
       addShoppingItem({
         name: item.name,
-        qty: totalNeeded,
+        qty: deficit,
         unit: item.unit,
         category: item.category,
         source
@@ -1319,7 +1322,8 @@ function generateShoppingList() {
       const existing = findShoppingItem(item.name, item.unit);
       if (existing) {
         // Add expired quantity to existing item
-        existing.qty += totalExpiredQty;
+        existing.recommendedQty += totalExpiredQty;
+        existing.actualQty += totalExpiredQty;
         if (existing.source.indexOf("Expired") === -1) {
           existing.source = existing.source + " + Expired";
         }
