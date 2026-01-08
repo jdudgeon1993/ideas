@@ -190,14 +190,14 @@ function closeModal() {
   if (overlay) overlay.remove();
 }
 
-function openCardModal({ title, subtitle = "", contentHTML = "", actions = [] }) {
+function openCardModal({ title, subtitle = "", contentHTML = "", actions = [], slideout = false }) {
   closeModal();
 
   const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+  overlay.className = slideout ? "modal-overlay modal-overlay-slideout" : "modal-overlay";
 
   const card = document.createElement("div");
-  card.className = "modal-card";
+  card.className = slideout ? "modal-card modal-card-slideout" : "modal-card";
 
   const closeBtn = document.createElement("div");
   closeBtn.className = "modal-close";
@@ -396,6 +396,7 @@ function openIngredientModal(existing = null) {
     title,
     subtitle,
     contentHTML,
+    slideout: true,
     actions: [
       {
         label: isEdit ? "Save Changes" : "Add Ingredient",
@@ -1484,6 +1485,7 @@ function openEditShoppingModal(item) {
     title: "Edit Shopping Item",
     subtitle: item.name,
     contentHTML,
+    slideout: true,
     actions: [
       {
         label: "Save",
@@ -1625,6 +1627,7 @@ function openCustomShoppingModal(prefillName = '') {
     title: "Add Shopping Item",
     subtitle: "What do you need to pick up?",
     contentHTML,
+    slideout: true,
     actions: [
       {
         label: "Add Item",
@@ -2324,6 +2327,7 @@ function openQuickDepleteModal(item) {
     title: "Quick Use",
     subtitle: `${item.name} - Snacking or quick consumption`,
     contentHTML,
+    slideout: true,
     actions: [
       {
         label: "Use",
@@ -2756,6 +2760,54 @@ function init() {
   }
 
   // Wire planner buttons
+  // Floating Action Button
+  const floatingActionBtn = document.getElementById("floating-action-btn");
+  const floatingActionOptions = document.getElementById("floating-action-options");
+
+  if (floatingActionBtn && floatingActionOptions) {
+    floatingActionBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      floatingActionBtn.classList.toggle("active");
+      floatingActionOptions.classList.toggle("active");
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".floating-action-menu")) {
+        floatingActionBtn.classList.remove("active");
+        floatingActionOptions.classList.remove("active");
+      }
+    });
+  }
+
+  // FAB option clicks
+  const fabAddIngredient = document.getElementById("fab-add-ingredient");
+  if (fabAddIngredient) {
+    fabAddIngredient.addEventListener("click", () => {
+      openIngredientModal(null);
+      floatingActionBtn.classList.remove("active");
+      floatingActionOptions.classList.remove("active");
+    });
+  }
+
+  const fabAddRecipe = document.getElementById("fab-add-recipe");
+  if (fabAddRecipe) {
+    fabAddRecipe.addEventListener("click", () => {
+      openRecipeModal(null);
+      floatingActionBtn.classList.remove("active");
+      floatingActionOptions.classList.remove("active");
+    });
+  }
+
+  const fabAddMeal = document.getElementById("fab-add-meal");
+  if (fabAddMeal) {
+    fabAddMeal.addEventListener("click", () => {
+      openPlannerModal();
+      floatingActionBtn.classList.remove("active");
+      floatingActionOptions.classList.remove("active");
+    });
+  }
+
   const floatingPlannerBtn = document.getElementById("floating-planner-btn");
   if (floatingPlannerBtn) {
     floatingPlannerBtn.addEventListener("click", openPlannerModal);
