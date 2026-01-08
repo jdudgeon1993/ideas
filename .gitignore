@@ -1,0 +1,19 @@
+# Note: supabase-config.js is tracked with placeholder values
+# Users should update it with their own credentials locally
+
+# Node modules (if we add them later)
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
