@@ -17,9 +17,8 @@
 const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';  // e.g., 'https://xxxxx.supabase.co'
 const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';  // Your anon/public key
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-window.supabase = supabase;
+// Initialize Supabase client (using window.supabaseClient to avoid conflicts)
+window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Helper to check if Supabase is configured
 window.isSupabaseConfigured = function() {
