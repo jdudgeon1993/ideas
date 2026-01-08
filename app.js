@@ -1254,7 +1254,8 @@ function generateShoppingList() {
 
   // For each pantry item, calculate if we need to buy more
   pantry.forEach(item => {
-    const key = `${item.name}|${item.unit}`;
+    // Normalize to lowercase for case-insensitive matching
+    const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
     const reservedQty = reserved[key] || 0;
 
     // Total amount we need to have = meals we're cooking + minimum threshold
@@ -1267,13 +1268,13 @@ function generateShoppingList() {
     const deficit = Math.max(0, totalRequired - totalAvailable);
 
     if (deficit > 0) {
-      // Determine source of shortage
-      const needsForThreshold = Math.max(0, (item.min || 0) - totalAvailable);
-      const needsForMeals = deficit - needsForThreshold;
+      // Determine source of shortage - check meals first, then threshold
+      const needsForMeals = Math.max(0, reservedQty - totalAvailable);
+      const needsForThreshold = deficit - needsForMeals;
 
       let source = "Threshold";
-      if (needsForThreshold > 0 && needsForMeals > 0) {
-        source = "Threshold + Meals";
+      if (needsForMeals > 0 && needsForThreshold > 0) {
+        source = "Meals + Threshold";
       } else if (needsForMeals > 0) {
         source = "Meals";
       }
@@ -1735,7 +1736,8 @@ function calculateReservedIngredients() {
       if (!recipe) return;
 
       recipe.ingredients.forEach(ing => {
-        const key = `${ing.name}|${ing.unit}`;
+        // Normalize to lowercase for case-insensitive matching
+        const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`;
         if (!reserved[key]) {
           reserved[key] = 0;
         }
@@ -1783,7 +1785,8 @@ function updateDashboard() {
       );
       if (!pantryItem) return false;
 
-      const key = `${ing.name}|${ing.unit}`;
+      // Normalize to lowercase for case-insensitive matching
+      const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`;
       const reservedQty = reserved[key] || 0;
       const available = pantryItem.totalQty - reservedQty;
 
@@ -1955,7 +1958,8 @@ function applyPantryFilter() {
     const card = document.createElement("div");
     card.className = "pantry-item";
 
-    const key = `${item.name}|${item.unit}`;
+    // Normalize to lowercase for case-insensitive matching
+    const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
     const reservedQty = reserved[key] || 0;
     const available = item.totalQty - reservedQty;
 
