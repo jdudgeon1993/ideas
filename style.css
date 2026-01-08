@@ -1738,6 +1738,15 @@ body::before {
   }
 }
 
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 
 /* ---------------------------------------------------
    MODAL CARD — HORIZONTAL RECIPE CARD (PHASE 3B)
