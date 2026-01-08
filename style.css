@@ -48,7 +48,7 @@ body::before {
   left: 0;
   top: 0;
   width: 340px;
-  height: 320px;
+  height: 660px;
  
   background: linear-gradient(180deg, rgba(255,253,250,0.98) 0%, rgba(250,246,240,0.98) 100%);
   backdrop-filter: blur(20px);
