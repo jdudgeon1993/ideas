@@ -3055,7 +3055,12 @@ function clearLocalData() {
   savePantry();
   saveRecipes();
   savePlanner();
-  renderAll();
+
+  // Re-render all UI sections
+  renderPantry();
+  renderRecipes();
+  generateShoppingList();
+  updateDashboard();
 }
 
 async function loadUserData() {
