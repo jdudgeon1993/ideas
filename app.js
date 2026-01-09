@@ -286,12 +286,13 @@ function openCardModal({ title, subtitle = "", contentHTML = "", actions = [], s
    MODAL CONTENT HELPERS
 --------------------------------------------------- */
 
-function modalField({ label, type = "text", value = "", options = [], placeholder = "", rows = 3 }) {
+function modalField({ label, type = "text", value = "", options = [], placeholder = "", rows = 3, id = "" }) {
   let inputHTML = "";
+  const idAttr = id ? `id="${id}"` : "";
 
   if (type === "select") {
     inputHTML = `
-      <select>
+      <select ${idAttr}>
         ${options.map(opt => {
           const selected = opt === value ? "selected" : "";
           return `<option ${selected}>${opt}</option>`;
@@ -300,11 +301,11 @@ function modalField({ label, type = "text", value = "", options = [], placeholde
     `;
   } else if (type === "textarea") {
     inputHTML = `
-      <textarea rows="${rows}" placeholder="${placeholder}">${value}</textarea>
+      <textarea ${idAttr} rows="${rows}" placeholder="${placeholder}">${value}</textarea>
     `;
   } else {
     inputHTML = `
-      <input type="${type}" value="${value}" placeholder="${placeholder}">
+      <input ${idAttr} type="${type}" value="${value}" placeholder="${placeholder}">
     `;
   }
 
