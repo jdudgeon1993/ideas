@@ -9,6 +9,11 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&family=Pacifico&display=swap');
 
+/* Smooth scrolling for the entire page */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: "Quicksand", "Georgia", serif;
   background: #98A869;
@@ -111,9 +116,9 @@ body {
 .shopping-sidebar {
   position: fixed;
   left: 0;
-  top: 45px; /* Start below utility bar */
+  top: 165px; /* Start below utility bar (45px) + header (~120px) */
   width: 340px;
-  height: calc(100vh - 45px); /* Full height minus utility bar */
+  height: calc(100vh - 165px); /* Full height minus utility bar + header */
 
   background: #FAF0E6;
   border-right: 2px solid rgba(156,175,136,0.2);
@@ -307,6 +312,7 @@ body {
   box-shadow: 0 4px 16px rgba(156,175,136,0.08);
   position: relative;
   z-index: 50;
+  min-height: 120px; /* Set minimum height for consistency */
 }
 
 .header-title {
@@ -327,41 +333,6 @@ body {
   color: #9CAF88;
   font-style: italic;
   font-weight: 500;
-}
-
-/* ---------------------------------------------------
-   NAVIGATION - Cottagecore
---------------------------------------------------- */
-.site-nav {
-  width: 100%;
-  padding: 0.5rem 1.5rem;
-  background: #FAF0E6;
-  border-bottom: 2px solid rgba(156,175,136,0.15);
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  box-shadow: 0 2px 12px rgba(156,175,136,0.08);
-}
-
-.nav-link {
-  background: rgba(255,255,255,0.5);
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 0.85rem 1.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #8b6f47;
-  cursor: pointer;
-  position: relative;
-  font-family: "Quicksand", sans-serif;
-  box-shadow: 0 2px 6px rgba(156,175,136,0.08);
-}
-
-.nav-link:hover {
-  color: white;
-  background: #F1C338;
-  border-color: rgba(156,175,136,0.2);
-  box-shadow: 0 4px 12px rgba(156,175,136,0.15);
 }
 
 /* ---------------------------------------------------
@@ -633,10 +604,12 @@ body {
   box-shadow: 0 3px 12px rgba(156,175,136,0.15);
   position: relative;
   overflow: hidden;
+  transition: all 0.2s ease;
 }
 
 .btn:hover {
   box-shadow: 0 6px 20px rgba(156,175,136,0.3);
+  transform: translateY(-1px);
 }
 
 .btn:active {
@@ -694,16 +667,6 @@ body {
 @media (max-width: 900px) {
   .two-column {
     grid-template-columns: 1fr;
-  }
-
-  .site-nav {
-    padding: 0 0.5rem;
-    gap: 0.25rem;
-  }
-
-  .nav-link {
-    padding: 0.65rem 0.75rem;
-    font-size: 0.85rem;
   }
 
   .floating-planner-btn {
