@@ -1318,7 +1318,9 @@ function openCookNowModal(recipe, dateStr = null, mealId = null) {
   });
 }
 
-function executeCook(recipe, dateStr, mealId) {
+async function executeCook(recipe, dateStr, mealId) {
+  const itemsToSync = []; // Track items to sync to database
+
   // Deplete pantry ingredients
   recipe.ingredients.forEach(ing => {
     // Case-insensitive matching
@@ -1353,15 +1355,28 @@ function executeCook(recipe, dateStr, mealId) {
 
       // Update total quantity
       pantryItem.totalQty = getTotalQty(pantryItem);
+
+      // Track for database sync
+      itemsToSync.push(pantryItem);
     }
   });
 
   // Mark meal as cooked if from planner
   if (dateStr && mealId) {
-    markMealCooked(dateStr, mealId);
+    await markMealCooked(dateStr, mealId);
   }
 
   savePantry();
+
+  // Sync depleted items to database
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    for (const item of itemsToSync) {
+      await window.db.savePantryItem(item).catch(err => {
+        console.error('Error syncing pantry item after cooking:', err);
+      });
+    }
+  }
+
   renderPantry();
   generateShoppingList();
   updateDashboard();
@@ -2128,6 +2143,9 @@ function updateDashboard() {
 
   // Render today's meals section
   renderTodaysMeals();
+
+  // Render ready to cook recipes section
+  renderReadyToCookRecipes();
 }
 
 function renderTodaysMeals() {
@@ -2182,6 +2200,81 @@ function renderTodaysMeals() {
       const recipe = getRecipe(recipeId);
       if (recipe) {
         openCookNowModal(recipe, today, mealId);
+      }
+    });
+  });
+}
+
+function renderReadyToCookRecipes() {
+  const container = document.getElementById("ready-recipes-section");
+  if (!container) return;
+
+  // Calculate ready recipes
+  const reserved = calculateReservedIngredients();
+  const readyRecipes = recipes.filter(recipe => {
+    return recipe.ingredients.every(ing => {
+      if (ing.qty <= 0) return false;
+      const pantryItem = pantry.find(p =>
+        p.name.toLowerCase() === ing.name.toLowerCase() &&
+        p.unit.toLowerCase() === ing.unit.toLowerCase()
+      );
+      if (!pantryItem || pantryItem.totalQty <= 0) return false;
+      const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`;
+      const reservedQty = reserved[key] || 0;
+      const available = pantryItem.totalQty - reservedQty;
+      return available >= ing.qty;
+    });
+  });
+
+  // Only show if there are ready recipes (limit to 3)
+  if (readyRecipes.length === 0) {
+    container.innerHTML = "";
+    container.style.display = "none";
+    return;
+  }
+
+  container.style.display = "block";
+
+  const recipesToShow = readyRecipes.slice(0, 3);
+
+  const recipesHTML = recipesToShow.map(recipe => {
+    const photoHTML = recipe.photo
+      ? `<div class="ready-recipe-photo" style="background-image: url('${recipe.photo}');"></div>`
+      : `<div class="ready-recipe-photo-placeholder">🍳</div>`;
+
+    return `
+      <div class="ready-recipe-card">
+        ${photoHTML}
+        <div class="ready-recipe-content">
+          <h4>${recipe.name}</h4>
+          <div class="ready-recipe-meta">
+            <span>👥 ${recipe.servings || 1} servings</span>
+            <span>🥘 ${recipe.ingredients.length} ingredients</span>
+          </div>
+          <button class="btn btn-primary btn-cook-ready" data-recipe-id="${recipe.id}">
+            Cook Now
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.innerHTML = `
+    <h3 style="margin-bottom:1rem; color:#6a4f35;">Ready to Cook</h3>
+    <div class="ready-recipes-grid">
+      ${recipesHTML}
+    </div>
+    ${readyRecipes.length > 3 ? `<p style="text-align:center; opacity:0.7; margin-top:0.5rem;">+ ${readyRecipes.length - 3} more ready to cook</p>` : ''}
+  `;
+
+  // Wire up Cook Now buttons
+  const cookBtns = container.querySelectorAll(".btn-cook-ready");
+  cookBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const recipeId = btn.getAttribute("data-recipe-id");
+      const recipe = getRecipe(recipeId);
+      if (recipe) {
+        openCookNowModal(recipe);
       }
     });
   });
