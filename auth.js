@@ -43,19 +43,29 @@ async function initAuth() {
   }
 
   // Listen for auth state changes
-  window.supabaseClient.auth.onAuthStateChange((event, session) => {
+  window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
     console.log('Auth state changed:', event);
 
     if (event === 'SIGNED_IN') {
       currentSession = session;
       currentUser = session.user;
-      loadUserHousehold();
+      await loadUserHousehold();
       updateAuthUI(currentUser);
+
+      // Update household name in utility bar
+      if (window.loadHouseholdName) {
+        await window.loadHouseholdName();
+      }
     } else if (event === 'SIGNED_OUT') {
       currentSession = null;
       currentUser = null;
       currentHouseholdId = null;
       updateAuthUI(null);
+
+      // Update household name in utility bar
+      if (window.loadHouseholdName) {
+        await window.loadHouseholdName();
+      }
     }
   });
 }

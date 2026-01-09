@@ -2504,8 +2504,8 @@ function renderReadyToCookRecipes() {
 function updateDateTime() {
   const now = new Date();
 
-  const dateEl = document.getElementById("header-date");
-  const timeEl = document.getElementById("header-time");
+  const dateEl = document.getElementById("utility-date");
+  const timeEl = document.getElementById("utility-time");
 
   if (dateEl) {
     const dateStr = now.toLocaleDateString("en-US", {
@@ -2525,6 +2525,153 @@ function updateDateTime() {
     timeEl.textContent = timeStr;
   }
 }
+
+/* ---------------------------------------------------
+   HOUSEHOLD NAME MANAGEMENT
+--------------------------------------------------- */
+
+async function loadHouseholdName() {
+  const welcomeEl = document.getElementById("utility-welcome");
+  if (!welcomeEl) return;
+
+  // Check if user is authenticated
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    welcomeEl.textContent = "Welcome to Chef's Kiss";
+    return;
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    // No household - show user's name if available
+    const user = window.auth.getCurrentUser();
+    if (user && user.email) {
+      const userName = user.email.split('@')[0];
+      welcomeEl.textContent = `Welcome, ${userName}`;
+    } else {
+      welcomeEl.textContent = "Welcome to Chef's Kiss";
+    }
+    return;
+  }
+
+  // Fetch household name from database
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('households')
+      .select('name')
+      .eq('id', householdId)
+      .single();
+
+    if (error) {
+      console.error('Error loading household name:', error);
+      welcomeEl.textContent = "Welcome to Your Household";
+      return;
+    }
+
+    if (data && data.name) {
+      welcomeEl.textContent = `Welcome to ${data.name}`;
+    } else {
+      welcomeEl.textContent = "Welcome to Your Household";
+    }
+  } catch (err) {
+    console.error('Error in loadHouseholdName:', err);
+    welcomeEl.textContent = "Welcome to Your Household";
+  }
+}
+
+async function editHouseholdName() {
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    showToast("⚠️ You need to be in a household to change its name");
+    return;
+  }
+
+  // Fetch current household name
+  let currentName = "Your Household";
+  try {
+    const { data } = await window.supabaseClient
+      .from('households')
+      .select('name')
+      .eq('id', householdId)
+      .single();
+
+    if (data && data.name) {
+      currentName = data.name;
+    }
+  } catch (err) {
+    console.error('Error fetching household name:', err);
+  }
+
+  // Show modal to edit household name
+  openCardModal({
+    title: "Edit Household Name",
+    subtitle: "Give your household a personalized name",
+    contentHTML: `
+      ${modalFull(`
+        <div class="modal-field">
+          <label for="household-name-input">Household Name</label>
+          <input
+            type="text"
+            id="household-name-input"
+            value="${currentName}"
+            placeholder="e.g., The Smith Family, Our Kitchen, etc."
+          />
+        </div>
+      `)}
+    `,
+    buttons: [
+      {
+        label: "Save",
+        class: "btn-primary",
+        onClick: async (closeModal) => {
+          const input = document.getElementById("household-name-input");
+          const newName = input.value.trim();
+
+          if (!newName) {
+            showToast("⚠️ Please enter a household name");
+            return;
+          }
+
+          try {
+            const { error } = await window.supabaseClient
+              .from('households')
+              .update({ name: newName })
+              .eq('id', householdId);
+
+            if (error) {
+              console.error('Error updating household name:', error);
+              showToast("❌ Failed to update household name");
+              return;
+            }
+
+            showToast("✅ Household name updated!");
+            await loadHouseholdName(); // Reload the displayed name
+            closeModal();
+          } catch (err) {
+            console.error('Error in editHouseholdName:', err);
+            showToast("❌ Failed to update household name");
+          }
+        }
+      },
+      {
+        label: "Cancel",
+        class: "btn-secondary",
+        onClick: closeModal
+      }
+    ]
+  });
+}
+
+// Add click listener to welcome text
+document.addEventListener('DOMContentLoaded', () => {
+  const welcomeEl = document.getElementById("utility-welcome");
+  if (welcomeEl) {
+    welcomeEl.addEventListener('click', editHouseholdName);
+  }
+});
+
+// Expose household name functions globally
+window.loadHouseholdName = loadHouseholdName;
+window.editHouseholdName = editHouseholdName;
 
 /* ---------------------------------------------------
    PANTRY FILTER
@@ -4177,6 +4324,9 @@ async function init() {
   // Update date/time immediately and every minute
   updateDateTime();
   setInterval(updateDateTime, 60000);
+
+  // Load and display household name
+  await loadHouseholdName();
 
   // Wire pantry filter
   const filterCategory = document.getElementById("filter-category");

@@ -20,6 +20,89 @@ body {
   display: flex;
   min-height: 100vh;
   position: relative;
+  padding-top: 45px; /* Space for utility bar */
+}
+
+/* ---------------------------------------------------
+   UTILITY BAR - Slim professional top bar
+--------------------------------------------------- */
+.utility-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 45px;
+  background: #FAF0E6;
+  border-bottom: 1px solid rgba(156,175,136,0.2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  z-index: 200;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.utility-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.utility-welcome {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #5a4a3a;
+  cursor: pointer;
+}
+
+.utility-welcome:hover {
+  color: #A47DAB;
+  text-decoration: underline;
+}
+
+.utility-datetime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #8b6f47;
+  opacity: 0.8;
+}
+
+.utility-separator {
+  opacity: 0.5;
+}
+
+.utility-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-utility-icon {
+  background: transparent;
+  border: none;
+  color: #8b6f47;
+  padding: 0.35rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.btn-utility-icon:hover {
+  background: rgba(164,125,171,0.15);
+  color: #A47DAB;
+}
+
+.btn-utility-reset:hover {
+  background: rgba(241,195,56,0.15);
+  color: #F1C338;
 }
 
 /* ---------------------------------------------------
@@ -28,9 +111,9 @@ body {
 .shopping-sidebar {
   position: fixed;
   left: 0;
-  top: 0;
+  top: 45px; /* Start below utility bar */
   width: 340px;
-  height: 100vh;
+  height: calc(100vh - 45px); /* Full height minus utility bar */
 
   background: #FAF0E6;
   border-right: 2px solid rgba(156,175,136,0.2);
@@ -130,8 +213,26 @@ body {
     flex-direction: column;
   }
 
+  .utility-bar {
+    padding: 0 1rem;
+  }
+
+  .utility-left {
+    gap: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .utility-welcome {
+    font-size: 0.8rem;
+  }
+
+  .utility-datetime {
+    font-size: 0.75rem;
+  }
+
   .shopping-sidebar {
     position: relative;
+    top: 0;
     width: 100%;
     height: auto;
     border-right: none;
@@ -201,23 +302,11 @@ body {
   background: #FAF0E6;
   border-bottom: 3px solid #B8E3E9;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
   box-shadow: 0 4px 16px rgba(156,175,136,0.08);
   position: relative;
   z-index: 50;
-}
-
-.header-left {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.header-logo {
-  display: none; /* Remove icon as requested */
 }
 
 .header-title {
@@ -238,64 +327,6 @@ body {
   color: #9CAF88;
   font-style: italic;
   font-weight: 500;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  text-align: center;
-  font-size: 0.95rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.header-datetime {
-  padding: 0.5rem 1rem;
-  background: rgba(255,255,255,0.5);
-  border-radius: 12px;
-  border: 1px solid rgba(156,175,136,0.15);
-  order: 10; /* Move to end, below icons */
-}
-
-.header-datetime span {
-  display: block;
-  color: #8b6f47;
-  font-weight: 500;
-}
-
-.btn-header-icon {
-  background: #B8E3E9;
-  border: 2px solid rgba(156,175,136,0.25);
-  color: white;
-  padding: 0.5rem;
-  border-radius: 12px;
-  font-size: 1.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  box-shadow: 0 2px 8px rgba(156,175,136,0.15);
-  position: relative;
-}
-
-.btn-header-icon:hover {
-  background: #a0d1d9;
-  border-color: rgba(156,175,136,0.4);
-  box-shadow: 0 4px 12px rgba(156,175,136,0.25);
-}
-
-.btn-reset {
-  background: #F1C338;
-  border-color: rgba(212,165,165,0.3);
-  color: white;
-}
-
-.btn-reset:hover {
-  background: #e0b530;
-  border-color: rgba(212,165,165,0.45);
 }
 
 /* ---------------------------------------------------
