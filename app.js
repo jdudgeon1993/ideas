@@ -696,11 +696,28 @@ function openRecipeModal(existing = null) {
     ])}
 
     ${modalFull(`
-      ${modalField({
-        label: "Photo URL (optional)",
-        value: existing ? (existing.photo || "") : "",
-        placeholder: "https://example.com/recipe-photo.jpg"
-      })}
+      <div id="recipe-photo-upload">
+        <label style="font-weight:600; margin-bottom:0.35rem; display:block;">Recipe Photo (optional)</label>
+        <div id="photo-preview-container" style="margin-bottom:0.75rem;">
+          ${existing && existing.photo ? `
+            <div id="photo-preview" style="position:relative; display:inline-block;">
+              <img src="${existing.photo}" style="max-width:100%; max-height:200px; border-radius:8px; display:block;">
+              <button type="button" id="remove-photo-btn" style="position:absolute; top:0.5rem; right:0.5rem; background:#B36A5E; color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:18px; line-height:1;">&times;</button>
+            </div>
+          ` : ''}
+        </div>
+        <div id="photo-upload-area" style="border:2px dashed #E8D5C4; border-radius:8px; padding:1.5rem; text-align:center; cursor:pointer; transition:all 0.2s; ${existing && existing.photo ? 'display:none;' : ''}"
+             ondragover="event.preventDefault(); this.style.borderColor='#C9A582'; this.style.backgroundColor='#FAF7F2';"
+             ondragleave="this.style.borderColor='#E8D5C4'; this.style.backgroundColor='transparent';"
+             ondrop="handlePhotoDropOrSelect(event)">
+          <p style="margin:0; opacity:0.7; font-size:0.9rem;">📷 Click to upload or drag & drop</p>
+          <p style="margin:0.25rem 0 0 0; opacity:0.5; font-size:0.8rem;">JPG, PNG (max 10MB)</p>
+          <input type="file" id="recipe-photo-input" accept="image/*" style="display:none;">
+        </div>
+        <div id="photo-upload-progress" style="display:none; margin-top:0.5rem;">
+          <p style="margin:0; opacity:0.7; font-size:0.85rem;">📦 Compressing and uploading...</p>
+        </div>
+      </div>
     `)}
 
     ${modalFull(`
@@ -741,6 +758,9 @@ function openRecipeModal(existing = null) {
     ]
   });
 
+  // Setup photo upload handlers
+  setupPhotoUploadHandlers(existing);
+
   const addBtn = document.getElementById("add-ingredient-row");
   if (addBtn) {
     addBtn.addEventListener("click", () => {
@@ -767,15 +787,160 @@ function attachIngredientRowListeners() {
   });
 }
 
+// Store uploaded photo URL temporarily during modal editing
+let tempRecipePhotoUrl = null;
+
+function setupPhotoUploadHandlers(existing) {
+  // Initialize temp photo URL
+  tempRecipePhotoUrl = existing && existing.photo ? existing.photo : null;
+
+  const uploadArea = document.getElementById("photo-upload-area");
+  const photoInput = document.getElementById("recipe-photo-input");
+  const removeBtn = document.getElementById("remove-photo-btn");
+
+  // Click upload area to trigger file input
+  if (uploadArea) {
+    uploadArea.addEventListener("click", () => {
+      photoInput?.click();
+    });
+  }
+
+  // Handle file selection
+  if (photoInput) {
+    photoInput.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        await handlePhotoFile(file, existing);
+      }
+    });
+  }
+
+  // Handle remove photo button
+  if (removeBtn) {
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      removeRecipePhoto();
+    });
+  }
+}
+
+async function handlePhotoDropOrSelect(event) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  // Reset border style
+  event.target.style.borderColor = '#E8D5C4';
+  event.target.style.backgroundColor = 'transparent';
+
+  // Get file from drop or click
+  const file = event.dataTransfer?.files?.[0];
+  if (file) {
+    // Get existing recipe from modal state if available
+    const modal = document.querySelector(".modal-card");
+    const recipeNameInput = modal?.querySelector('input[placeholder*="Grandma"]');
+    const existingRecipe = recipeNameInput ? getRecipe(recipeNameInput.dataset.recipeId) : null;
+
+    await handlePhotoFile(file, existingRecipe);
+  }
+}
+
+async function handlePhotoFile(file, existingRecipe) {
+  // Validate file type
+  if (!file.type.startsWith('image/')) {
+    alert('Please select an image file (JPG, PNG, etc.)');
+    return;
+  }
+
+  // Validate file size (10MB max)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('Image must be less than 10MB');
+    return;
+  }
+
+  // Show upload progress
+  const uploadArea = document.getElementById("photo-upload-area");
+  const progressDiv = document.getElementById("photo-upload-progress");
+  if (uploadArea) uploadArea.style.display = 'none';
+  if (progressDiv) progressDiv.style.display = 'block';
+
+  try {
+    // Generate temporary ID if new recipe
+    const recipeId = existingRecipe?.id || uid();
+
+    // Upload to Supabase Storage
+    const photoUrl = await window.storage.uploadRecipePhoto(file, recipeId);
+
+    if (photoUrl) {
+      // Store URL temporarily
+      tempRecipePhotoUrl = photoUrl;
+
+      // Show preview
+      showPhotoPreview(photoUrl);
+    } else {
+      throw new Error('Upload failed');
+    }
+  } catch (err) {
+    console.error('Photo upload error:', err);
+    alert('Failed to upload photo. Please try again.');
+
+    // Reset UI
+    if (uploadArea) uploadArea.style.display = 'block';
+  } finally {
+    if (progressDiv) progressDiv.style.display = 'none';
+  }
+}
+
+function showPhotoPreview(photoUrl) {
+  const previewContainer = document.getElementById("photo-preview-container");
+  const uploadArea = document.getElementById("photo-upload-area");
+
+  if (previewContainer) {
+    previewContainer.innerHTML = `
+      <div id="photo-preview" style="position:relative; display:inline-block;">
+        <img src="${photoUrl}" style="max-width:100%; max-height:200px; border-radius:8px; display:block;">
+        <button type="button" id="remove-photo-btn" style="position:absolute; top:0.5rem; right:0.5rem; background:#B36A5E; color:white; border:none; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:18px; line-height:1;">&times;</button>
+      </div>
+    `;
+
+    // Re-attach remove button handler
+    const removeBtn = document.getElementById("remove-photo-btn");
+    if (removeBtn) {
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeRecipePhoto();
+      });
+    }
+  }
+
+  if (uploadArea) {
+    uploadArea.style.display = 'none';
+  }
+}
+
+function removeRecipePhoto() {
+  tempRecipePhotoUrl = null;
+
+  const previewContainer = document.getElementById("photo-preview-container");
+  const uploadArea = document.getElementById("photo-upload-area");
+
+  if (previewContainer) {
+    previewContainer.innerHTML = '';
+  }
+
+  if (uploadArea) {
+    uploadArea.style.display = 'block';
+  }
+}
+
 async function saveRecipe(existing) {
   const modal = document.querySelector(".modal-card");
   const fields = modal.querySelectorAll(".modal-field input, .modal-field textarea");
   const values = Array.from(fields).map(f => f.value.trim());
 
+  // Note: Photo is no longer in form fields, using tempRecipePhotoUrl instead
   const [
     name,
     servings,
-    photo,
     instructions
   ] = values;
 
@@ -802,7 +967,7 @@ async function saveRecipe(existing) {
   if (existing) {
     existing.name = name;
     existing.servings = Number(servings || 0);
-    existing.photo = photo || "";
+    existing.photo = tempRecipePhotoUrl || "";
     existing.instructions = instructions;
     existing.ingredients = ingredients;
     existing.notes = existing.notes || "";  // Preserve existing notes
@@ -813,7 +978,7 @@ async function saveRecipe(existing) {
       id: uid(),
       name,
       servings: Number(servings || 0),
-      photo: photo || "",
+      photo: tempRecipePhotoUrl || "",
       instructions,
       ingredients,
       notes: "",   // Add notes field
@@ -838,6 +1003,9 @@ async function saveRecipe(existing) {
   generateShoppingList();
   updateDashboard();
   closeModal();
+
+  // Reset temp photo URL
+  tempRecipePhotoUrl = null;
 }
 
 function createGhostPantryItems(ingredients) {
@@ -2953,7 +3121,7 @@ async function handleSignUp() {
   }
 }
 
-function openAccountModal() {
+async function openAccountModal() {
   const user = window.auth.getCurrentUser();
 
   if (!user) {
@@ -2961,33 +3129,89 @@ function openAccountModal() {
     return;
   }
 
+  // Load household info and members
+  const householdName = await window.db.getHouseholdName() || 'No Household';
+  const members = await window.db.loadHouseholdMembers();
+  const currentUserId = user.id;
+
+  const membersList = members.length > 0
+    ? members.map(member => {
+        const isCurrentUser = member.user_id === currentUserId;
+        const roleLabel = member.role === 'owner' ? '👑 Owner' : member.role === 'admin' ? '⭐ Admin' : 'Member';
+        const canRemove = !isCurrentUser && member.role !== 'owner';
+
+        return `
+          <div class="settings-item">
+            <span>
+              ${member.email || 'Member'}
+              <small style="opacity:0.6; margin-left:0.5rem;">${roleLabel}</small>
+              ${isCurrentUser ? '<small style="opacity:0.6; margin-left:0.5rem;">(you)</small>' : ''}
+            </span>
+            ${canRemove ? `
+              <button class="btn-settings-remove" data-member-id="${member.user_id}">&times;</button>
+            ` : ''}
+          </div>
+        `;
+      }).join('')
+    : '<p style="opacity:0.6; text-align:center; padding:1rem;">Only you in this household</p>';
+
   const contentHTML = `
-    <div style="padding:1rem 0;">
-      <div style="margin-bottom:1rem;">
-        <strong style="opacity:0.7;">Email:</strong><br>
-        ${user.email}
+    ${modalFull(`
+      <h3 style="margin-bottom:0.5rem;">Account Info</h3>
+      <div style="margin-bottom:1.5rem;">
+        <p style="margin:0.5rem 0;"><strong style="opacity:0.7;">Email:</strong> ${user.email}</p>
+        <p style="margin:0.5rem 0;"><strong style="opacity:0.7;">Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</p>
       </div>
-      <div style="margin-bottom:1rem;">
-        <strong style="opacity:0.7;">Account created:</strong><br>
-        ${new Date(user.created_at).toLocaleDateString()}
+    `)}
+
+    ${modalFull(`
+      <h3 style="margin-bottom:0.5rem;">Household</h3>
+      <p style="margin:0.5rem 0; opacity:0.8;"><strong>${householdName}</strong> (${members.length} member${members.length !== 1 ? 's' : ''})</p>
+    `)}
+
+    ${modalFull(`
+      <h3 style="margin:0.75rem 0 0.5rem;">Members</h3>
+      <div class="settings-list" id="members-list" style="margin-bottom:1rem; max-height:200px;">
+        ${membersList}
       </div>
-    </div>
+      <button class="btn btn-secondary" id="invite-member-btn" style="width:100%;">Invite Member</button>
+    `)}
   `;
 
+  const isOwner = members.find(m => m.user_id === currentUserId)?.role === 'owner';
+  const hasMultipleMembers = members.length > 1;
+
   openCardModal({
-    title: "Account",
-    subtitle: "Your Chef's Kiss account",
+    title: "Account & Household",
+    subtitle: "Manage your account and household",
     contentHTML,
     slideout: true,
     actions: [
       {
-        label: "Join Household",
+        label: "Join Another Household",
         class: "btn-secondary",
         onClick: () => {
           closeModal();
           openJoinHouseholdModal();
         }
       },
+      ...(isOwner && hasMultipleMembers ? [] : [{
+        label: "Leave Household",
+        class: "btn-secondary",
+        onClick: async () => {
+          if (confirm('Are you sure you want to leave this household? You will lose access to all shared data.')) {
+            const success = await window.db.leaveHousehold();
+            if (success) {
+              showToast('✅ Left household');
+              closeModal();
+              await window.auth.signOut();
+              setTimeout(() => window.location.reload(), 1000);
+            } else {
+              showToast('❌ Failed to leave household');
+            }
+          }
+        }
+      }]),
       {
         label: "Sign Out",
         class: "btn-secondary",
@@ -2996,7 +3220,6 @@ function openAccountModal() {
           if (result.success) {
             closeModal();
             showToast("✅ Signed out");
-            // Clear local data
             clearLocalData();
           }
         }
@@ -3008,6 +3231,32 @@ function openAccountModal() {
       }
     ]
   });
+
+  // Wire up remove member buttons
+  const removeMemberBtns = document.querySelectorAll('.btn-settings-remove[data-member-id]');
+  removeMemberBtns.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const memberId = btn.getAttribute('data-member-id');
+      if (confirm('Remove this member from your household?')) {
+        const success = await window.db.removeHouseholdMember(memberId);
+        if (success) {
+          showToast('✅ Member removed');
+          closeModal();
+          setTimeout(() => openAccountModal(), 100);
+        } else {
+          showToast('❌ Failed to remove member');
+        }
+      }
+    });
+  });
+
+  // Wire up invite button
+  const inviteBtn = document.getElementById('invite-member-btn');
+  if (inviteBtn) {
+    inviteBtn.addEventListener('click', () => {
+      openInviteMemberModal();
+    });
+  }
 }
 
 function openJoinHouseholdModal() {
@@ -3329,20 +3578,6 @@ async function openSettingsModal() {
     `)}
 
     ${modalFull(`
-      <h3 style="margin:1.5rem 0 0.75rem 0;">Household Members</h3>
-      <p style="opacity:0.8; font-size:0.9rem; margin-bottom:0.75rem;">
-        Invite family or roommates to share your pantry. They'll see real-time updates!
-      </p>
-      <div class="settings-list" id="members-list" style="margin-bottom: 1rem;">
-        <p style="opacity:0.6; text-align:center; padding:1rem;">Loading members...</p>
-      </div>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn btn-secondary" id="invite-member-btn">Invite Member</button>
-        <button class="btn btn-secondary" id="leave-household-btn" style="background:rgba(179,106,94,0.1); border-color:rgba(179,106,94,0.3); color:#B36A5E;">Leave Household</button>
-      </div>
-    `)}
-
-    ${modalFull(`
       <h3 style="margin:1.5rem 0 0.75rem 0;">App Info</h3>
       <div class="settings-info">
         <p><strong>Name:</strong> Chef's Kiss</p>
@@ -3514,81 +3749,6 @@ async function openSettingsModal() {
         setTimeout(() => openSettingsModal(), 100);
       } else {
         showToast("❌ Failed to add category");
-      }
-    });
-  }
-
-  // Load and display household members
-  const membersList = document.getElementById("members-list");
-  if (membersList && window.db && window.auth && window.auth.isAuthenticated()) {
-    const members = await window.db.loadHouseholdMembers();
-    const currentUserId = window.auth.getCurrentUser()?.id;
-
-    if (members.length > 0) {
-      membersList.innerHTML = members.map(member => {
-        const isCurrentUser = member.user_id === currentUserId;
-        const roleLabel = member.role === 'owner' ? '👑 Owner' : member.role === 'admin' ? '⭐ Admin' : 'Member';
-        const canRemove = !isCurrentUser && member.role !== 'owner';
-
-        return `
-          <div class="settings-item">
-            <span>
-              ${member.email || 'Member'}
-              <small style="opacity:0.6; margin-left:0.5rem;">${roleLabel}</small>
-              ${isCurrentUser ? '<small style="opacity:0.6; margin-left:0.5rem;">(you)</small>' : ''}
-            </span>
-            ${canRemove ? `
-              <button class="btn-settings-remove" data-member-id="${member.user_id}">&times;</button>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
-
-      // Wire up remove member buttons
-      const removeMemberBtns = document.querySelectorAll('.btn-settings-remove[data-member-id]');
-      removeMemberBtns.forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const memberId = btn.getAttribute('data-member-id');
-          if (confirm('Remove this member from your household?')) {
-            const success = await window.db.removeHouseholdMember(memberId);
-            if (success) {
-              showToast('✅ Member removed');
-              closeModal();
-              setTimeout(() => openSettingsModal(), 100);
-            } else {
-              showToast('❌ Failed to remove member');
-            }
-          }
-        });
-      });
-    } else {
-      membersList.innerHTML = '<p style="opacity:0.6; text-align:center; padding:1rem;">Only you in this household</p>';
-    }
-  }
-
-  // Wire up invite member button
-  const inviteBtn = document.getElementById('invite-member-btn');
-  if (inviteBtn) {
-    inviteBtn.addEventListener('click', () => {
-      openInviteMemberModal();
-    });
-  }
-
-  // Wire up leave household button
-  const leaveBtn = document.getElementById('leave-household-btn');
-  if (leaveBtn) {
-    leaveBtn.addEventListener('click', async () => {
-      if (confirm('Are you sure you want to leave this household? You will lose access to all shared data.')) {
-        const success = await window.db.leaveHousehold();
-        if (success) {
-          showToast('✅ Left household');
-          closeModal();
-          // Reload auth to clear household
-          await window.auth.signOut();
-          setTimeout(() => window.location.reload(), 1000);
-        } else {
-          showToast('❌ Failed to leave household');
-        }
       }
     });
   }
