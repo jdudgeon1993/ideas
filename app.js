@@ -51,18 +51,10 @@ function migratePantryData() {
   }
 }
 
-async function savePantry() {
+function savePantry() {
   // Save to localStorage (for offline mode)
   localStorage.setItem("pantry", JSON.stringify(pantry));
-
-  // Save to database if authenticated
-  if (window.db && window.auth && window.auth.isAuthenticated()) {
-    // Note: We don't await here to avoid blocking the UI
-    // Database sync happens in background
-    window.db.syncAllData(pantry, recipes, planner, []).catch(err => {
-      console.error('Background sync failed:', err);
-    });
-  }
+  // Note: Individual items are synced to database when modified (see saveIngredient function)
 }
 
 function getIngredient(id) {
@@ -77,16 +69,10 @@ function getTotalQty(ingredient) {
 // Recipes
 let recipes = JSON.parse(localStorage.getItem("recipes") || "[]");
 
-async function saveRecipes() {
+function saveRecipes() {
   // Save to localStorage (for offline mode)
   localStorage.setItem("recipes", JSON.stringify(recipes));
-
-  // Save to database if authenticated
-  if (window.db && window.auth && window.auth.isAuthenticated()) {
-    window.db.syncAllData(pantry, recipes, planner, []).catch(err => {
-      console.error('Background sync failed:', err);
-    });
-  }
+  // Note: Individual recipes are synced to database when modified (see saveRecipe functions)
 }
 
 function getRecipe(id) {
@@ -118,23 +104,17 @@ function migratePlannerData() {
   }
 }
 
-async function savePlanner() {
+function savePlanner() {
   // Save to localStorage (for offline mode)
   localStorage.setItem("planner", JSON.stringify(planner));
-
-  // Save to database if authenticated
-  if (window.db && window.auth && window.auth.isAuthenticated()) {
-    window.db.syncAllData(pantry, recipes, planner, []).catch(err => {
-      console.error('Background sync failed:', err);
-    });
-  }
+  // Note: Individual meal plans are synced to database when modified
 }
 
 function getPlannedMeals(date) {
   return planner[date] || [];
 }
 
-function addPlannedMeal(date, recipeId, mealType = "Dinner") {
+async function addPlannedMeal(date, recipeId, mealType = "Dinner") {
   if (!planner[date]) {
     planner[date] = [];
   }
@@ -147,9 +127,16 @@ function addPlannedMeal(date, recipeId, mealType = "Dinner") {
   });
 
   savePlanner();
+
+  // Sync to database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.saveMealPlansForDate(date, planner[date]).catch(err => {
+      console.error('Error syncing meal plans to database:', err);
+    });
+  }
 }
 
-function removePlannedMeal(date, mealId) {
+async function removePlannedMeal(date, mealId) {
   if (!planner[date]) return;
 
   planner[date] = planner[date].filter(meal => meal.id !== mealId);
@@ -160,20 +147,41 @@ function removePlannedMeal(date, mealId) {
   }
 
   savePlanner();
+
+  // Sync to database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.saveMealPlansForDate(date, planner[date] || []).catch(err => {
+      console.error('Error syncing meal plans to database:', err);
+    });
+  }
 }
 
-function clearPlannedDay(date) {
+async function clearPlannedDay(date) {
   delete planner[date];
   savePlanner();
+
+  // Sync to database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.saveMealPlansForDate(date, []).catch(err => {
+      console.error('Error syncing meal plans to database:', err);
+    });
+  }
 }
 
-function markMealCooked(date, mealId) {
+async function markMealCooked(date, mealId) {
   if (!planner[date]) return;
 
   const meal = planner[date].find(m => m.id === mealId);
   if (meal) {
     meal.cooked = true;
     savePlanner();
+
+    // Sync to database if authenticated
+    if (window.db && window.auth && window.auth.isAuthenticated()) {
+      await window.db.saveMealPlansForDate(date, planner[date]).catch(err => {
+        console.error('Error syncing meal plans to database:', err);
+      });
+    }
   }
 }
 
@@ -467,7 +475,7 @@ function attachLocationRowListeners() {
   });
 }
 
-function saveIngredient(existing) {
+async function saveIngredient(existing) {
   const modal = document.querySelector(".modal-card");
   const fields = modal.querySelectorAll(".modal-field input, .modal-field select");
   const values = Array.from(fields).map(f => f.value.trim());
@@ -531,6 +539,14 @@ function saveIngredient(existing) {
       }
 
       savePantry();
+
+      // Sync merged item to database
+      if (window.db && window.auth && window.auth.isAuthenticated()) {
+        await window.db.savePantryItem(duplicate).catch(err => {
+          console.error('Error syncing pantry item to database:', err);
+        });
+      }
+
       renderPantry();
       generateShoppingList();
       updateDashboard();
@@ -542,6 +558,8 @@ function saveIngredient(existing) {
     }
   }
 
+  let itemToSync;
+
   if (existing) {
     existing.name = name;
     existing.unit = unit;
@@ -549,8 +567,9 @@ function saveIngredient(existing) {
     existing.category = category;
     existing.locations = locations;
     existing.totalQty = totalQty;
+    itemToSync = existing;
   } else {
-    pantry.push({
+    const newItem = {
       id: uid(),
       name,
       unit,
@@ -559,17 +578,27 @@ function saveIngredient(existing) {
       locations,
       totalQty,
       notes: ""
-    });
+    };
+    pantry.push(newItem);
+    itemToSync = newItem;
   }
 
   savePantry();
+
+  // Sync to database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.savePantryItem(itemToSync).catch(err => {
+      console.error('Error syncing pantry item to database:', err);
+    });
+  }
+
   renderPantry();
   generateShoppingList();
   updateDashboard();
   closeModal();
 }
 
-function deleteIngredient(item) {
+async function deleteIngredient(item) {
   if (!confirm(`Delete "${item.name}"? This will remove it from your pantry.`)) {
     return;
   }
@@ -577,6 +606,13 @@ function deleteIngredient(item) {
   // Remove from pantry
   pantry = pantry.filter(p => p.id !== item.id);
   savePantry();
+
+  // Delete from database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.deletePantryItem(item.id).catch(err => {
+      console.error('Error deleting pantry item from database:', err);
+    });
+  }
 
   // Update everything
   renderPantry();
@@ -697,7 +733,7 @@ function attachIngredientRowListeners() {
   });
 }
 
-function saveRecipe(existing) {
+async function saveRecipe(existing) {
   const modal = document.querySelector(".modal-card");
   const fields = modal.querySelectorAll(".modal-field input, .modal-field textarea");
   const values = Array.from(fields).map(f => f.value.trim());
@@ -727,24 +763,37 @@ function saveRecipe(existing) {
     return { name, qty, unit };
   }).filter(ing => ing.name && ing.unit); // Must have both name AND unit
 
+  let recipeToSync;
+
   if (existing) {
     existing.name = name;
     existing.servings = Number(servings || 0);
     existing.photo = photo || "";
     existing.instructions = instructions;
     existing.ingredients = ingredients;
+    recipeToSync = existing;
   } else {
-    recipes.push({
+    const newRecipe = {
       id: uid(),
       name,
       servings: Number(servings || 0),
       photo: photo || "",
       instructions,
       ingredients
-    });
+    };
+    recipes.push(newRecipe);
+    recipeToSync = newRecipe;
   }
 
   saveRecipes();
+
+  // Sync to database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.saveRecipe(recipeToSync).catch(err => {
+      console.error('Error syncing recipe to database:', err);
+    });
+  }
+
   createGhostPantryItems(ingredients);
   renderRecipes();
   renderPantry();
@@ -913,7 +962,7 @@ function openRecipeViewModal(recipe) {
   });
 }
 
-function deleteRecipe(recipe) {
+async function deleteRecipe(recipe) {
   if (!confirm(`Delete "${recipe.name}"? This will also remove it from your meal plan.`)) {
     return;
   }
@@ -921,6 +970,13 @@ function deleteRecipe(recipe) {
   // Remove recipe from recipes array
   recipes = recipes.filter(r => r.id !== recipe.id);
   saveRecipes();
+
+  // Delete from database if authenticated
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    await window.db.deleteRecipe(recipe.id).catch(err => {
+      console.error('Error deleting recipe from database:', err);
+    });
+  }
 
   // Remove from all planned meals
   Object.keys(planner).forEach(dateStr => {
