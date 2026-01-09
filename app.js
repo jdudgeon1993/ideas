@@ -1891,9 +1891,11 @@ function openCheckoutModal() {
   });
 }
 
-function saveCheckoutItems() {
+async function saveCheckoutItems() {
   const modal = document.querySelector(".modal-card");
   const rows = modal.querySelectorAll(".modal-ingredient-row");
+
+  const itemsToSync = []; // Track items to sync to database
 
   rows.forEach((row) => {
     const inputs = row.querySelectorAll("input, select");
@@ -1925,9 +1927,10 @@ function saveCheckoutItems() {
       }
       pantryItem.totalQty = getTotalQty(pantryItem);
       pantryItem.category = category;
+      itemsToSync.push(pantryItem);
     } else {
       // Create new ingredient
-      pantry.push({
+      const newItem = {
         id: uid(),
         name,
         unit,
@@ -1941,11 +1944,22 @@ function saveCheckoutItems() {
         }],
         totalQty: qty,
         notes: ""
-      });
+      };
+      pantry.push(newItem);
+      itemsToSync.push(newItem);
     }
   });
 
   savePantry();
+
+  // Sync each updated/created item to database
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    for (const item of itemsToSync) {
+      await window.db.savePantryItem(item).catch(err => {
+        console.error('Error syncing pantry item during checkout:', err);
+      });
+    }
+  }
 
   shopping = shopping.filter(i => !i.checked);
   saveShopping();
