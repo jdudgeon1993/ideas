@@ -575,6 +575,269 @@ async function syncAllData(pantry, recipes, planner, customShoppingItems) {
 }
 
 /* ---------------------------------------------------
+   STORAGE LOCATIONS OPERATIONS
+--------------------------------------------------- */
+
+/**
+ * Load all storage locations for current household
+ */
+async function loadStorageLocations() {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    console.log('Not authenticated - returning default locations');
+    return ['Pantry', 'Fridge', 'Freezer', 'Cellar', 'Other'];
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    console.warn('No household ID found');
+    return ['Pantry', 'Fridge', 'Freezer', 'Cellar', 'Other'];
+  }
+
+  try {
+    const { data: locations, error } = await window.supabaseClient
+      .from('storage_locations')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('name');
+
+    if (error) throw error;
+
+    console.log(`📥 Loaded ${locations.length} storage locations from database`);
+    return locations.map(loc => loc.name);
+
+  } catch (err) {
+    console.error('Error loading storage locations:', err);
+    return ['Pantry', 'Fridge', 'Freezer', 'Cellar', 'Other'];
+  }
+}
+
+/**
+ * Load all storage location objects (with IDs and is_default flag)
+ */
+async function loadStorageLocationObjects() {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return [];
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    return [];
+  }
+
+  try {
+    const { data: locations, error } = await window.supabaseClient
+      .from('storage_locations')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('name');
+
+    if (error) throw error;
+
+    return locations;
+
+  } catch (err) {
+    console.error('Error loading storage location objects:', err);
+    return [];
+  }
+}
+
+/**
+ * Add a new storage location
+ */
+async function addStorageLocation(name) {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return false;
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    console.warn('No household ID found');
+    return false;
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('storage_locations')
+      .insert({
+        household_id: householdId,
+        name: name,
+        is_default: false
+      });
+
+    if (error) throw error;
+
+    console.log('✅ Added storage location:', name);
+    return true;
+
+  } catch (err) {
+    console.error('Error adding storage location:', err);
+    return false;
+  }
+}
+
+/**
+ * Remove a storage location (only if not default)
+ */
+async function removeStorageLocation(locationId, isDefault) {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return false;
+  }
+
+  if (isDefault) {
+    console.warn('Cannot remove default storage location');
+    return false;
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('storage_locations')
+      .delete()
+      .eq('id', locationId);
+
+    if (error) throw error;
+
+    console.log('✅ Removed storage location:', locationId);
+    return true;
+
+  } catch (err) {
+    console.error('Error removing storage location:', err);
+    return false;
+  }
+}
+
+/* ---------------------------------------------------
+   CATEGORIES OPERATIONS
+--------------------------------------------------- */
+
+/**
+ * Load all categories for current household
+ */
+async function loadCategories() {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    console.log('Not authenticated - returning default categories');
+    return ['Produce', 'Dairy', 'Meat', 'Pantry', 'Frozen', 'Spices', 'Bakery', 'Beverages', 'Other'];
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    console.warn('No household ID found');
+    return ['Produce', 'Dairy', 'Meat', 'Pantry', 'Frozen', 'Spices', 'Bakery', 'Beverages', 'Other'];
+  }
+
+  try {
+    const { data: categories, error } = await window.supabaseClient
+      .from('categories')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('name');
+
+    if (error) throw error;
+
+    console.log(`📥 Loaded ${categories.length} categories from database`);
+    return categories.map(cat => cat.name);
+
+  } catch (err) {
+    console.error('Error loading categories:', err);
+    return ['Produce', 'Dairy', 'Meat', 'Pantry', 'Frozen', 'Spices', 'Bakery', 'Beverages', 'Other'];
+  }
+}
+
+/**
+ * Load all category objects (with IDs, emojis, and is_default flag)
+ */
+async function loadCategoryObjects() {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return [];
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    return [];
+  }
+
+  try {
+    const { data: categories, error } = await window.supabaseClient
+      .from('categories')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('name');
+
+    if (error) throw error;
+
+    return categories;
+
+  } catch (err) {
+    console.error('Error loading category objects:', err);
+    return [];
+  }
+}
+
+/**
+ * Add a new category
+ */
+async function addCategory(name, emoji = '📦') {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return false;
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    console.warn('No household ID found');
+    return false;
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('categories')
+      .insert({
+        household_id: householdId,
+        name: name,
+        emoji: emoji,
+        is_default: false
+      });
+
+    if (error) throw error;
+
+    console.log('✅ Added category:', name);
+    return true;
+
+  } catch (err) {
+    console.error('Error adding category:', err);
+    return false;
+  }
+}
+
+/**
+ * Remove a category (only if not default)
+ */
+async function removeCategory(categoryId, isDefault) {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return false;
+  }
+
+  if (isDefault) {
+    console.warn('Cannot remove default category');
+    return false;
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('categories')
+      .delete()
+      .eq('id', categoryId);
+
+    if (error) throw error;
+
+    console.log('✅ Removed category:', categoryId);
+    return true;
+
+  } catch (err) {
+    console.error('Error removing category:', err);
+    return false;
+  }
+}
+
+/* ---------------------------------------------------
    EXPORTS (attached to window for global access)
 --------------------------------------------------- */
 
@@ -598,6 +861,18 @@ window.db = {
   loadShoppingList,
   saveShoppingItem,
   deleteCheckedShoppingItems,
+
+  // Storage Locations
+  loadStorageLocations,
+  loadStorageLocationObjects,
+  addStorageLocation,
+  removeStorageLocation,
+
+  // Categories
+  loadCategories,
+  loadCategoryObjects,
+  addCategory,
+  removeCategory,
 
   // Sync
   syncAllData

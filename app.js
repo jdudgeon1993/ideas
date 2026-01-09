@@ -366,15 +366,20 @@ function modalIngredientRow({ ingredient = "", qty = "", unit = "" }) {
    PANTRY: MODAL + SAVE + RENDER
 --------------------------------------------------- */
 
-function modalLocationRow({ location = "", qty = "", expiry = "" }) {
+function modalLocationRow({ location = "", qty = "", expiry = "", availableLocations = [] }) {
+  // Use provided locations or fall back to defaults
+  const locations = availableLocations.length > 0
+    ? availableLocations
+    : ["Pantry", "Fridge", "Freezer", "Cellar", "Other"];
+
+  const options = locations.map(loc =>
+    `<option ${location === loc ? "selected" : ""}>${loc}</option>`
+  ).join("");
+
   return `
     <div class="modal-location-row">
       <select class="location-select">
-        <option ${location === "Pantry" ? "selected" : ""}>Pantry</option>
-        <option ${location === "Fridge" ? "selected" : ""}>Fridge</option>
-        <option ${location === "Freezer" ? "selected" : ""}>Freezer</option>
-        <option ${location === "Cellar" ? "selected" : ""}>Cellar</option>
-        <option ${location === "Other" ? "selected" : ""}>Other</option>
+        ${options}
       </select>
       <input type="number" value="${qty}" placeholder="Qty" step="0.01">
       <input type="date" value="${expiry}" placeholder="Expiry">
@@ -383,7 +388,7 @@ function modalLocationRow({ location = "", qty = "", expiry = "" }) {
   `;
 }
 
-function openIngredientModal(existing = null) {
+async function openIngredientModal(existing = null) {
   const isEdit = !!existing;
 
   const title = isEdit ? "Edit Ingredient" : "Add Ingredient";
@@ -391,11 +396,28 @@ function openIngredientModal(existing = null) {
     ? "Update your pantry item."
     : "Keep your pantry honest and human.";
 
+  // Load locations and categories from database
+  let availableLocations = [];
+  let availableCategories = [];
+
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    availableLocations = await window.db.loadStorageLocations();
+    availableCategories = await window.db.loadCategories();
+  } else {
+    // Fallback defaults if not authenticated
+    availableLocations = ["Pantry", "Fridge", "Freezer", "Cellar", "Other"];
+    availableCategories = ["Produce", "Dairy", "Meat", "Pantry", "Frozen", "Spices", "Bakery", "Beverages", "Other"];
+  }
+
+  // Store for later use when adding new location rows
+  window._currentAvailableLocations = availableLocations;
+
   const locationRows = (existing && existing.locations ? existing.locations : [{location: "Pantry", qty: "", expiry: ""}])
     .map(loc => modalLocationRow({
       location: loc.location,
       qty: loc.qty,
-      expiry: loc.expiry || ""
+      expiry: loc.expiry || "",
+      availableLocations: availableLocations
     }))
     .join("");
 
@@ -423,7 +445,7 @@ function openIngredientModal(existing = null) {
       modalField({
         label: "Category",
         type: "select",
-        options: ["Meat", "Dairy", "Produce", "Pantry", "Frozen", "Spices", "Other"],
+        options: availableCategories,
         value: existing ? existing.category : ""
       })
     ])}
@@ -467,7 +489,9 @@ function openIngredientModal(existing = null) {
     addBtn.addEventListener("click", () => {
       const list = document.getElementById("modal-location-list");
       if (list) {
-        list.insertAdjacentHTML("beforeend", modalLocationRow({}));
+        list.insertAdjacentHTML("beforeend", modalLocationRow({
+          availableLocations: window._currentAvailableLocations
+        }));
         attachLocationRowListeners();
       }
     });
@@ -1733,7 +1757,20 @@ function handleQuickAddShopping() {
   }
 }
 
-function openCustomShoppingModal(prefillName = '') {
+async function openCustomShoppingModal(prefillName = '') {
+  // Load locations and categories from database
+  let availableLocations = [];
+  let availableCategories = [];
+
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    availableLocations = await window.db.loadStorageLocations();
+    availableCategories = await window.db.loadCategories();
+  } else {
+    // Fallback defaults if not authenticated
+    availableLocations = ["Pantry", "Fridge", "Freezer", "Cellar", "Other"];
+    availableCategories = ["Produce", "Dairy", "Meat", "Pantry", "Frozen", "Spices", "Bakery", "Beverages", "Other"];
+  }
+
   const contentHTML = `
     ${modalRow([
       modalField({
@@ -1743,7 +1780,7 @@ function openCustomShoppingModal(prefillName = '') {
       modalField({
         label: "Category",
         type: "select",
-        options: ["Produce", "Dairy", "Meat", "Pantry", "Frozen", "Spices", "Other"]
+        options: availableCategories
       })
     ])}
 
@@ -1763,7 +1800,7 @@ function openCustomShoppingModal(prefillName = '') {
       modalField({
         label: "Storage (optional)",
         type: "select",
-        options: ["Pantry", "Fridge", "Freezer", "Cellar", "Other"]
+        options: availableLocations
       }),
       modalField({
         label: "Notes (optional)",
@@ -3085,39 +3122,51 @@ async function loadUserData() {
    SETTINGS MODAL (UI skeleton with locations/categories management)
 --------------------------------------------------- */
 
-function openSettingsModal() {
-  // Get current locations and categories from usage
-  const usedLocations = new Set();
-  pantry.forEach(item => {
-    item.locations.forEach(loc => {
-      usedLocations.add(loc.location);
-    });
-  });
+async function openSettingsModal() {
+  // Load locations and categories from database
+  let locationObjects = [];
+  let categoryObjects = [];
 
-  const usedCategories = new Set();
-  pantry.forEach(item => {
-    usedCategories.add(item.category);
-  });
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    locationObjects = await window.db.loadStorageLocationObjects();
+    categoryObjects = await window.db.loadCategoryObjects();
+  }
 
-  const locationsList = Array.from(usedLocations).map(loc =>
-    `<div class="settings-item">
-      <span>${loc}</span>
-      <button class="btn-settings-remove" data-type="location" data-value="${loc}">&times;</button>
-    </div>`
-  ).join("") || '<p style="opacity:0.7;">No locations in use.</p>';
+  // Build locations list with default indicator
+  const locationsList = locationObjects.length > 0
+    ? locationObjects.map(loc =>
+        `<div class="settings-item">
+          <span>${loc.name}${loc.is_default ? ' <small style="opacity:0.6;">(default)</small>' : ''}</span>
+          <button class="btn-settings-remove"
+                  data-type="location"
+                  data-id="${loc.id}"
+                  data-name="${loc.name}"
+                  data-default="${loc.is_default}"
+                  ${loc.is_default ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>&times;</button>
+        </div>`
+      ).join("")
+    : '<p style="opacity:0.7;">No locations available. Add one below!</p>';
 
-  const categoriesList = Array.from(usedCategories).map(cat =>
-    `<div class="settings-item">
-      <span>${cat}</span>
-      <button class="btn-settings-remove" data-type="category" data-value="${cat}">&times;</button>
-    </div>`
-  ).join("") || '<p style="opacity:0.7;">No categories in use.</p>';
+  // Build categories list with default indicator
+  const categoriesList = categoryObjects.length > 0
+    ? categoryObjects.map(cat =>
+        `<div class="settings-item">
+          <span>${cat.emoji ? cat.emoji + ' ' : ''}${cat.name}${cat.is_default ? ' <small style="opacity:0.6;">(default)</small>' : ''}</span>
+          <button class="btn-settings-remove"
+                  data-type="category"
+                  data-id="${cat.id}"
+                  data-name="${cat.name}"
+                  data-default="${cat.is_default}"
+                  ${cat.is_default ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : ''}>&times;</button>
+        </div>`
+      ).join("")
+    : '<p style="opacity:0.7;">No categories available. Add one below!</p>';
 
   const contentHTML = `
     ${modalFull(`
       <h3 style="margin-bottom:0.75rem;">Storage Locations</h3>
       <p style="opacity:0.8; font-size:0.9rem; margin-bottom:0.75rem;">
-        Manage where you store ingredients. Removing a location will reassign items to "Pantry".
+        Manage where you store ingredients. Default locations cannot be removed.
       </p>
       <div class="settings-list" id="locations-list">
         ${locationsList}
@@ -3131,13 +3180,14 @@ function openSettingsModal() {
     ${modalFull(`
       <h3 style="margin:1.5rem 0 0.75rem 0;">Categories</h3>
       <p style="opacity:0.8; font-size:0.9rem; margin-bottom:0.75rem;">
-        Manage ingredient categories. Removing a category will reassign items to "Other".
+        Manage ingredient categories. Default categories cannot be removed.
       </p>
       <div class="settings-list" id="categories-list">
         ${categoriesList}
       </div>
       <div class="settings-add-row">
         <input type="text" id="new-category-input" placeholder="Add new category...">
+        <input type="text" id="new-category-emoji" placeholder="📦" maxlength="2" style="width:60px; text-align:center;">
         <button class="btn btn-secondary" id="add-category-btn">Add</button>
       </div>
     `)}
@@ -3156,7 +3206,7 @@ function openSettingsModal() {
       <h3 style="margin:1.5rem 0 0.75rem 0;">App Info</h3>
       <div class="settings-info">
         <p><strong>Name:</strong> Chef's Kiss</p>
-        <p><strong>Version:</strong> 1.4.0</p>
+        <p><strong>Version:</strong> 1.5.0</p>
         <p><strong>Description:</strong> Cozy kitchen management for modern cooks</p>
         <p style="opacity:0.7; font-size:0.85rem; margin-top:0.5rem;">
           Track your pantry, plan meals, and build shopping lists—without the overwhelm.
@@ -3180,16 +3230,23 @@ function openSettingsModal() {
   });
 
   // Wire up remove buttons
-  const removeBtns = document.querySelectorAll(".btn-settings-remove");
+  const removeBtns = document.querySelectorAll(".btn-settings-remove:not([disabled])");
   removeBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const type = btn.getAttribute("data-type");
-      const value = btn.getAttribute("data-value");
+      const id = btn.getAttribute("data-id");
+      const name = btn.getAttribute("data-name");
+      const isDefault = btn.getAttribute("data-default") === "true";
+
+      if (isDefault) {
+        showToast("⚠️ Cannot remove default items");
+        return;
+      }
 
       if (type === "location") {
-        removeLocation(value);
+        await removeLocation(id, name);
       } else if (type === "category") {
-        removeCategory(value);
+        await removeCategory(id, name);
       }
 
       closeModal();
@@ -3201,11 +3258,31 @@ function openSettingsModal() {
   const addLocBtn = document.getElementById("add-location-btn");
   const newLocInput = document.getElementById("new-location-input");
   if (addLocBtn && newLocInput) {
-    addLocBtn.addEventListener("click", () => {
+    addLocBtn.addEventListener("click", async () => {
       const newLocation = newLocInput.value.trim();
-      if (newLocation) {
-        alert(`Location "${newLocation}" will be available in location dropdowns from now on. Add it to an ingredient to start using it!`);
-        newLocInput.value = "";
+      if (!newLocation) {
+        showToast("⚠️ Please enter a location name");
+        return;
+      }
+
+      // Check for duplicates
+      if (locationObjects.some(loc => loc.name.toLowerCase() === newLocation.toLowerCase())) {
+        showToast("⚠️ Location already exists");
+        return;
+      }
+
+      // Add to database
+      if (window.db && window.auth && window.auth.isAuthenticated()) {
+        const success = await window.db.addStorageLocation(newLocation);
+        if (success) {
+          showToast(`✅ Added location: ${newLocation}`);
+          closeModal();
+          setTimeout(() => openSettingsModal(), 100);
+        } else {
+          showToast("❌ Failed to add location");
+        }
+      } else {
+        showToast("⚠️ Not authenticated");
       }
     });
   }
@@ -3213,49 +3290,122 @@ function openSettingsModal() {
   // Wire up add category button
   const addCatBtn = document.getElementById("add-category-btn");
   const newCatInput = document.getElementById("new-category-input");
-  if (addCatBtn && newCatInput) {
-    addCatBtn.addEventListener("click", () => {
+  const newCatEmoji = document.getElementById("new-category-emoji");
+  if (addCatBtn && newCatInput && newCatEmoji) {
+    addCatBtn.addEventListener("click", async () => {
       const newCategory = newCatInput.value.trim();
-      if (newCategory) {
-        alert(`Category "${newCategory}" will be available in category dropdowns from now on. Add it to an ingredient to start using it!`);
-        newCatInput.value = "";
+      const emoji = newCatEmoji.value.trim() || '📦';
+
+      if (!newCategory) {
+        showToast("⚠️ Please enter a category name");
+        return;
+      }
+
+      // Check for duplicates
+      if (categoryObjects.some(cat => cat.name.toLowerCase() === newCategory.toLowerCase())) {
+        showToast("⚠️ Category already exists");
+        return;
+      }
+
+      // Add to database
+      if (window.db && window.auth && window.auth.isAuthenticated()) {
+        const success = await window.db.addCategory(newCategory, emoji);
+        if (success) {
+          showToast(`✅ Added category: ${emoji} ${newCategory}`);
+          closeModal();
+          setTimeout(() => openSettingsModal(), 100);
+        } else {
+          showToast("❌ Failed to add category");
+        }
+      } else {
+        showToast("⚠️ Not authenticated");
       }
     });
   }
 }
 
-function removeLocation(location) {
-  if (!confirm(`Remove location "${location}"? All items in this location will be moved to "Pantry".`)) {
+async function removeLocation(locationId, locationName) {
+  if (!confirm(`Remove location "${locationName}"? All items in this location will be moved to "Pantry".`)) {
     return;
   }
 
+  // Remove from database
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    const success = await window.db.removeStorageLocation(locationId, false);
+    if (!success) {
+      showToast("❌ Failed to remove location");
+      return;
+    }
+  }
+
+  // Update pantry items that use this location
+  let itemsToSync = [];
   pantry.forEach(item => {
+    let itemModified = false;
     item.locations.forEach(loc => {
-      if (loc.location === location) {
+      if (loc.location === locationName) {
         loc.location = "Pantry";
+        itemModified = true;
       }
     });
-  });
-
-  savePantry();
-  renderPantry();
-  updateDashboard();
-}
-
-function removeCategory(category) {
-  if (!confirm(`Remove category "${category}"? All items in this category will be moved to "Other".`)) {
-    return;
-  }
-
-  pantry.forEach(item => {
-    if (item.category === category) {
-      item.category = "Other";
+    if (itemModified) {
+      itemsToSync.push(item);
     }
   });
 
   savePantry();
+
+  // Sync modified items to database
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    for (const item of itemsToSync) {
+      await window.db.savePantryItem(item).catch(err => {
+        console.error('Error syncing pantry item after location removal:', err);
+      });
+    }
+  }
+
   renderPantry();
   updateDashboard();
+  showToast(`✅ Removed location: ${locationName}`);
+}
+
+async function removeCategory(categoryId, categoryName) {
+  if (!confirm(`Remove category "${categoryName}"? All items in this category will be moved to "Other".`)) {
+    return;
+  }
+
+  // Remove from database
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    const success = await window.db.removeCategory(categoryId, false);
+    if (!success) {
+      showToast("❌ Failed to remove category");
+      return;
+    }
+  }
+
+  // Update pantry items that use this category
+  let itemsToSync = [];
+  pantry.forEach(item => {
+    if (item.category === categoryName) {
+      item.category = "Other";
+      itemsToSync.push(item);
+    }
+  });
+
+  savePantry();
+
+  // Sync modified items to database
+  if (window.db && window.auth && window.auth.isAuthenticated()) {
+    for (const item of itemsToSync) {
+      await window.db.savePantryItem(item).catch(err => {
+        console.error('Error syncing pantry item after category removal:', err);
+      });
+    }
+  }
+
+  renderPantry();
+  updateDashboard();
+  showToast(`✅ Removed category: ${categoryName}`);
 }
 
 /* ---------------------------------------------------
