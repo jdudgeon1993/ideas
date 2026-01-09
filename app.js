@@ -997,7 +997,7 @@ async function saveRecipe(existing) {
     });
   }
 
-  createGhostPantryItems(ingredients);
+  await createGhostPantryItems(ingredients);
   renderRecipes();
   renderPantry();
   generateShoppingList();
@@ -1008,10 +1008,11 @@ async function saveRecipe(existing) {
   tempRecipePhotoUrl = null;
 }
 
-function createGhostPantryItems(ingredients) {
+async function createGhostPantryItems(ingredients) {
   // For each ingredient in the recipe, ensure it exists in pantry
   // If not, create a "ghost" item at qty 0 with location "Unassigned"
   let ghostsCreated = 0;
+  const itemsToSync = [];
 
   ingredients.forEach(ing => {
     // Validate ingredient has required fields
@@ -1037,7 +1038,7 @@ function createGhostPantryItems(ingredients) {
 
     if (!existing) {
       // Create ghost item with exact name/unit from recipe
-      pantry.push({
+      const newItem = {
         id: uid(),
         name: name,
         unit: unit,
@@ -1051,7 +1052,9 @@ function createGhostPantryItems(ingredients) {
         }],
         totalQty: 0,
         notes: "Auto-created from recipe"
-      });
+      };
+      pantry.push(newItem);
+      itemsToSync.push(newItem);
       ghostsCreated++;
     }
   });
@@ -1059,6 +1062,15 @@ function createGhostPantryItems(ingredients) {
   if (ghostsCreated > 0) {
     savePantry();
     console.log(`Created ${ghostsCreated} ghost pantry item(s)`);
+
+    // Sync ghost items to database if authenticated
+    if (window.db && window.auth && window.auth.isAuthenticated()) {
+      for (const item of itemsToSync) {
+        await window.db.savePantryItem(item).catch(err => {
+          console.error('Error syncing ghost pantry item to database:', err);
+        });
+      }
+    }
   }
 }
 
