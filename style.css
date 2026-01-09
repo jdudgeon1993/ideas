@@ -774,19 +774,51 @@ body::before {
   .planner-grid {
     grid-template-columns: repeat(7, 1fr);
     gap: 0.25rem;
+    padding: 0.5rem;
   }
 
   .planner-day {
-    padding: 0.4rem;
-    min-height: 60px;
+    padding: 0.35rem 0.25rem;
+    min-height: 50px;
   }
 
   .planner-day-number {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
   }
 
   .planner-day-content {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .planner-modal-content {
+    padding: 0.5rem;
+  }
+
+  /* Make modal cards wider on mobile to accommodate calendar */
+  .modal-card {
+    width: 95%;
+    max-width: 95vw;
+    padding: 1rem;
+  }
+
+  /* Stack modal fields on mobile */
+  .modal-fields {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  /* Make modal actions full width on mobile */
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
+    padding: 0.75rem;
   }
 
   .pantry-item-quantities {
@@ -1641,14 +1673,14 @@ body::before {
 /* Base modal card container - Cottagecore */
 .modal-card {
   background: linear-gradient(135deg, rgba(255,253,250,0.98) 0%, rgba(250,246,240,0.98) 100%);
-  border-radius: 20px;
+  border-radius: 16px;
   width: 90%;
-  max-width: 720px;
+  max-width: 600px;
   min-height: 300px;
-  padding: 2rem 2.5rem;
-  border: 3px solid rgba(156,175,136,0.2);
+  padding: 1.25rem 1.5rem;
+  border: 2px solid rgba(156,175,136,0.2);
   box-shadow:
-    0 16px 48px rgba(156,175,136,0.25),
+    0 12px 32px rgba(156,175,136,0.2),
     0 0 0 1px rgba(255,255,255,0.5),
     inset 0 2px 0 rgba(255,255,255,0.8);
   animation: slideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1838,15 +1870,15 @@ body::before {
 /* Title row */
 .modal-card-title {
   font-family: "Patrick Hand", cursive;
-  font-size: 2rem;
+  font-size: 1.5rem;
   margin-bottom: 0.25rem;
   color: #6a4f35;
 }
 
 .modal-card-subtitle {
-  font-size: 1rem;
-  opacity: 0.75;
-  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  opacity: 0.7;
+  margin-bottom: 0.75rem;
 }
 
 /* Divider line */
@@ -1854,29 +1886,30 @@ body::before {
   width: 100%;
   height: 1px;
   background: rgba(120, 94, 60, 0.25);
-  margin: 1rem 0;
+  margin: 0.75rem 0;
 }
 
 /* Two-column field layout */
 .modal-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.25rem 2rem;
-  margin-top: 1rem;
+  gap: 0.75rem 1rem;
+  margin-top: 0.75rem;
 }
 
 /* Single-column override for long content (instructions, lists) */
 .modal-fields-full {
   display: block;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 /* Field label */
 .modal-field label {
   display: block;
-  font-size: 0.9rem;
-  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
   color: #2F3E46;
+  font-weight: 600;
 }
 
 /* Inputs, selects, textareas */
@@ -1884,17 +1917,18 @@ body::before {
 .modal-field select,
 .modal-field textarea {
   width: 100%;
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.25);
-  font-size: 0.95rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.2);
+  font-size: 0.9rem;
   background: #fff;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .modal-field textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 80px;
 }
 
 /* Ingredient rows - see full styling below at line ~1363 */
@@ -1903,8 +1937,8 @@ body::before {
 .modal-location-row {
   display: grid;
   grid-template-columns: 1.5fr 1fr 1.5fr auto;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
   align-items: center;
 }
 
@@ -1937,12 +1971,13 @@ body::before {
 
 .modal-location-row select,
 .modal-location-row input {
-  padding: 0.55rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.25);
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.2);
   background: #fff;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .modal-remove-row {
@@ -2046,25 +2081,26 @@ body::before {
 .modal-ingredient-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
   align-items: center;
 }
 
 .modal-ingredient-row input {
-  padding: 0.75rem;
+  padding: 0.5rem 0.65rem;
   border: 1px solid rgba(0,0,0,0.15);
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   font-family: inherit;
   background: #fff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 .modal-ingredient-row input:focus {
   outline: none;
   border-color: #8A9A5B;
-  box-shadow: 0 0 0 3px rgba(138,154,91,0.1);
+  box-shadow: 0 0 0 2px rgba(138,154,91,0.1);
 }
 
 .modal-ingredient-row input.ing-name {
@@ -2079,10 +2115,10 @@ body::before {
   background: rgba(179,106,94,0.1);
   border: 1px solid rgba(179,106,94,0.3);
   color: #B36A5E;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2130,13 +2166,13 @@ body::before {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
 }
 
 .modal-actions .btn {
-  padding: 0.65rem 1.6rem;
-  font-size: 1rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
   border-radius: 999px;
   cursor: pointer;
   font-weight: 600;

@@ -4023,18 +4023,80 @@ async function handleInviteCode(code) {
         label: "Join Household",
         class: "btn-primary",
         onClick: async () => {
+          // Show processing message
+          openCardModal({
+            title: "Joining Household",
+            subtitle: "Setting up your account...",
+            contentHTML: `
+              ${modalFull(`
+                <div style="text-align:center; padding:2rem;">
+                  <div style="font-size:2rem; margin-bottom:1rem;">🔄</div>
+                  <p style="opacity:0.8;">Joining household...</p>
+                </div>
+              `)}
+            `,
+            actions: []
+          });
+
           // Accept the invite
           const result = await window.db.acceptHouseholdInvite(code);
 
           if (result.success) {
-            closeModal();
-            showToast('✅ Welcome to the household!');
-
-            // Reload auth to load new household
+            // Force reload household ID in auth module
             await window.auth.initAuth();
 
-            // Reload page to load household data
-            setTimeout(() => window.location.reload(), 1000);
+            // Wait a moment for auth to propagate
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Load all household data
+            try {
+              const householdData = await Promise.all([
+                window.db.loadPantryItems(),
+                window.db.loadRecipes(),
+                window.db.loadMealPlans(),
+                window.db.loadShoppingList()
+              ]);
+
+              const [dbPantry, dbRecipes, dbPlanner, dbShopping] = householdData;
+
+              if (dbPantry) {
+                pantry = dbPantry;
+                localStorage.setItem("pantry", JSON.stringify(pantry));
+              }
+
+              if (dbRecipes) {
+                recipes = dbRecipes;
+                localStorage.setItem("recipes", JSON.stringify(recipes));
+              }
+
+              if (dbPlanner) {
+                planner = dbPlanner;
+                localStorage.setItem("planner", JSON.stringify(planner));
+              }
+
+              if (dbShopping) {
+                window.customShoppingItems = dbShopping;
+              }
+
+              // Setup realtime sync for new household
+              if (window.realtime) {
+                await window.realtime.initRealtimeSync();
+              }
+
+              // Refresh UI
+              renderPantry();
+              renderRecipes();
+              generateShoppingList();
+              updateDashboard();
+
+              closeModal();
+              showToast('✅ Welcome to the household!');
+            } catch (err) {
+              console.error('Error loading household data:', err);
+              closeModal();
+              showToast('⚠️ Joined household! Refreshing page...');
+              setTimeout(() => window.location.reload(), 1000);
+            }
           } else {
             closeModal();
             showToast(`❌ ${result.error || 'Failed to join household'}`);
