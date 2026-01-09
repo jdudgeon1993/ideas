@@ -3271,18 +3271,34 @@ async function openSettingsModal() {
         return;
       }
 
+      // Debug logging
+      console.log('Add location check:', {
+        hasDb: !!window.db,
+        hasAuth: !!window.auth,
+        isAuthenticated: window.auth ? window.auth.isAuthenticated() : false,
+        currentUser: window.auth ? window.auth.getCurrentUser() : null,
+        householdId: window.auth ? window.auth.getCurrentHouseholdId() : null
+      });
+
       // Add to database
-      if (window.db && window.auth && window.auth.isAuthenticated()) {
-        const success = await window.db.addStorageLocation(newLocation);
-        if (success) {
-          showToast(`✅ Added location: ${newLocation}`);
-          closeModal();
-          setTimeout(() => openSettingsModal(), 100);
-        } else {
-          showToast("❌ Failed to add location");
-        }
+      if (!window.db || !window.auth) {
+        showToast("⚠️ System not initialized - please refresh");
+        return;
+      }
+
+      if (!window.auth.isAuthenticated()) {
+        showToast("⚠️ Please sign in to add locations");
+        console.error('Not authenticated when adding location');
+        return;
+      }
+
+      const success = await window.db.addStorageLocation(newLocation);
+      if (success) {
+        showToast(`✅ Added location: ${newLocation}`);
+        closeModal();
+        setTimeout(() => openSettingsModal(), 100);
       } else {
-        showToast("⚠️ Not authenticated");
+        showToast("❌ Failed to add location");
       }
     });
   }
@@ -3307,18 +3323,34 @@ async function openSettingsModal() {
         return;
       }
 
+      // Debug logging
+      console.log('Add category check:', {
+        hasDb: !!window.db,
+        hasAuth: !!window.auth,
+        isAuthenticated: window.auth ? window.auth.isAuthenticated() : false,
+        currentUser: window.auth ? window.auth.getCurrentUser() : null,
+        householdId: window.auth ? window.auth.getCurrentHouseholdId() : null
+      });
+
       // Add to database
-      if (window.db && window.auth && window.auth.isAuthenticated()) {
-        const success = await window.db.addCategory(newCategory, emoji);
-        if (success) {
-          showToast(`✅ Added category: ${emoji} ${newCategory}`);
-          closeModal();
-          setTimeout(() => openSettingsModal(), 100);
-        } else {
-          showToast("❌ Failed to add category");
-        }
+      if (!window.db || !window.auth) {
+        showToast("⚠️ System not initialized - please refresh");
+        return;
+      }
+
+      if (!window.auth.isAuthenticated()) {
+        showToast("⚠️ Please sign in to add categories");
+        console.error('Not authenticated when adding category');
+        return;
+      }
+
+      const success = await window.db.addCategory(newCategory, emoji);
+      if (success) {
+        showToast(`✅ Added category: ${emoji} ${newCategory}`);
+        closeModal();
+        setTimeout(() => openSettingsModal(), 100);
       } else {
-        showToast("⚠️ Not authenticated");
+        showToast("❌ Failed to add category");
       }
     });
   }
