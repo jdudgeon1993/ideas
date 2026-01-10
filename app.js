@@ -233,8 +233,9 @@ function findShoppingItem(name, unit) {
 let currentEscapeHandler = null;
 
 function closeModal() {
-  const overlay = document.querySelector(".modal-overlay");
-  if (overlay) overlay.remove();
+  // Remove ALL modal overlays (in case multiple were created)
+  const overlays = document.querySelectorAll(".modal-overlay");
+  overlays.forEach(overlay => overlay.remove());
 
   // Clean up escape key listener if it exists
   if (currentEscapeHandler) {
@@ -690,18 +691,19 @@ function openRecipeModal(existing = null) {
     .join("");
 
   const contentHTML = `
-    ${modalFull(modalField({
-      label: "Recipe Name",
-      value: existing ? existing.name : "",
-      placeholder: "e.g., Grandma's Chicken Soup"
-    }))}
-
-    ${modalFull(modalField({
-      label: "Servings",
-      type: "number",
-      value: existing ? existing.servings : "",
-      placeholder: "e.g., 4"
-    }))}
+    <div class="modal-fields modal-fields-recipe-name-servings">
+      ${modalField({
+        label: "Recipe Name",
+        value: existing ? existing.name : "",
+        placeholder: "e.g., Grandma's Chicken Soup"
+      })}
+      ${modalField({
+        label: "Servings",
+        type: "number",
+        value: existing ? existing.servings : "",
+        placeholder: "4"
+      })}
+    </div>
 
     ${modalFull(`
       <div id="recipe-photo-upload">
@@ -2542,9 +2544,12 @@ async function loadHouseholdName() {
   const welcomeEl = document.getElementById("utility-welcome");
   if (!welcomeEl) return;
 
+  // Check if mobile (screen width <= 768px)
+  const isMobile = window.innerWidth <= 768;
+
   // Check if user is authenticated
   if (!window.auth || !window.auth.isAuthenticated()) {
-    welcomeEl.textContent = "Welcome to Chef's Kiss";
+    welcomeEl.textContent = isMobile ? "Chef" : "Welcome to Chef's Kiss";
     return;
   }
 
@@ -2554,9 +2559,13 @@ async function loadHouseholdName() {
     const user = window.auth.getCurrentUser();
     if (user && user.email) {
       const userName = user.email.split('@')[0];
-      welcomeEl.textContent = `Welcome, ${userName}`;
+      if (isMobile) {
+        welcomeEl.textContent = userName.substring(0, 5);
+      } else {
+        welcomeEl.textContent = `Welcome, ${userName}`;
+      }
     } else {
-      welcomeEl.textContent = "Welcome to Chef's Kiss";
+      welcomeEl.textContent = isMobile ? "Chef" : "Welcome to Chef's Kiss";
     }
     return;
   }
@@ -2571,18 +2580,23 @@ async function loadHouseholdName() {
 
     if (error) {
       console.error('Error loading household name:', error);
-      welcomeEl.textContent = "Welcome to Your Household";
+      welcomeEl.textContent = isMobile ? "House" : "Welcome to Your Household";
       return;
     }
 
     if (data && data.name) {
-      welcomeEl.textContent = `Welcome to ${data.name}`;
+      if (isMobile) {
+        // Show just first 5 characters on mobile
+        welcomeEl.textContent = data.name.substring(0, 5);
+      } else {
+        welcomeEl.textContent = `Welcome to ${data.name}`;
+      }
     } else {
-      welcomeEl.textContent = "Welcome to Your Household";
+      welcomeEl.textContent = isMobile ? "House" : "Welcome to Your Household";
     }
   } catch (err) {
     console.error('Error in loadHouseholdName:', err);
-    welcomeEl.textContent = "Welcome to Your Household";
+    welcomeEl.textContent = isMobile ? "House" : "Welcome to Your Household";
   }
 }
 
@@ -2680,6 +2694,15 @@ document.addEventListener('DOMContentLoaded', () => {
 // Expose household name functions globally
 window.loadHouseholdName = loadHouseholdName;
 window.editHouseholdName = editHouseholdName;
+
+// Update household name on window resize (for mobile/desktop transition)
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    loadHouseholdName();
+  }, 250);
+});
 
 /* ---------------------------------------------------
    PANTRY FILTER

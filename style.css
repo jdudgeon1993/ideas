@@ -217,23 +217,42 @@ body {
 @media (max-width: 1024px) {
   body {
     flex-direction: column;
+    padding-top: 65px; /* Taller utility bar on mobile */
   }
 
   .utility-bar {
-    padding: 0 1rem;
+    padding: 0.5rem 1rem;
+    height: auto;
+    min-height: 65px;
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
 
   .utility-left {
-    gap: 1rem;
+    order: 1;
+    gap: 0;
     font-size: 0.85rem;
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .utility-right {
+    order: 2;
+    margin-left: auto;
   }
 
   .utility-welcome {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
+    font-weight: 700;
   }
 
   .utility-datetime {
-    font-size: 0.75rem;
+    order: 3;
+    font-size: 0.7rem;
+    width: 100%;
+    margin-top: 0.35rem;
+    padding-left: 0;
+    opacity: 0.7;
   }
 
   .shopping-sidebar {
@@ -727,6 +746,37 @@ body {
   .modal-fields {
     grid-template-columns: 1fr;
     gap: 0.5rem;
+  }
+
+  /* Stack custom flex layouts on mobile */
+  .modal-fields-ingredient-name-unit,
+  .modal-fields-recipe-name-servings {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-fields-ingredient-name-unit .modal-field:last-child,
+  .modal-fields-recipe-name-servings .modal-field:last-child {
+    width: 100%;
+  }
+
+  /* Stack ingredient and location rows on mobile */
+  .modal-ingredient-row,
+  .modal-location-row {
+    flex-wrap: wrap;
+  }
+
+  .modal-ingredient-row input.ing-name,
+  .modal-location-row select {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .modal-ingredient-row input.ing-qty,
+  .modal-ingredient-row input.ing-unit,
+  .modal-location-row input {
+    flex: 1;
+    width: auto;
   }
 
   /* Make modal actions full width on mobile */
@@ -1673,9 +1723,38 @@ body {
   margin-top: 0.75rem;
 }
 
-/* Custom grid for ingredient name and unit - name gets more space */
+/* Custom flex layout for ingredient name and unit - name fills, unit fixed */
 .modal-fields-ingredient-name-unit {
-  grid-template-columns: 3fr 1fr;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.modal-fields-ingredient-name-unit .modal-field:first-child {
+  flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
+}
+
+.modal-fields-ingredient-name-unit .modal-field:last-child {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+/* Recipe name and servings row - name fills, servings fixed small */
+.modal-fields-recipe-name-servings {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.modal-fields-recipe-name-servings .modal-field:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-fields-recipe-name-servings .modal-field:last-child {
+  width: 100px;
+  flex-shrink: 0;
 }
 
 /* Single-column override for long content (instructions, lists) */
@@ -1716,11 +1795,26 @@ body {
 
 /* Location rows inside ingredient modal */
 .modal-location-row {
-  display: grid;
-  grid-template-columns: 2fr 0.8fr 1.5fr auto;
+  display: flex;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   align-items: center;
+}
+
+.modal-location-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-location-row input[type="number"] {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.modal-location-row input[type="date"],
+.modal-location-row input[type="text"]:last-of-type {
+  width: 140px;
+  flex-shrink: 0;
 }
 
 /* Deplete modal specific */
@@ -1858,8 +1952,7 @@ body {
 
 /* Ingredient row inside recipe modal */
 .modal-ingredient-row {
-  display: grid;
-  grid-template-columns: 3fr 0.8fr 1fr auto;
+  display: flex;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   align-items: center;
@@ -1883,10 +1976,19 @@ body {
 
 .modal-ingredient-row input.ing-name {
   font-weight: 500;
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-ingredient-row input.ing-qty {
   text-align: right;
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.modal-ingredient-row input.ing-unit {
+  width: 90px;
+  flex-shrink: 0;
 }
 
 .modal-ingredient-row .modal-remove-row {
