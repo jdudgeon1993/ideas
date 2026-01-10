@@ -1509,7 +1509,7 @@ body {
   box-shadow: 0 12px 32px rgba(156,175,136,0.2);
   position: relative;
   box-sizing: border-box;
-  max-height: 90vh;
+  max-height: 100vh;
   overflow-y: auto;
 }
 
