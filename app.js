@@ -229,9 +229,18 @@ function findShoppingItem(name, unit) {
    UNIFIED MODAL FRAMEWORK
 --------------------------------------------------- */
 
+// Store reference to current escape handler for cleanup
+let currentEscapeHandler = null;
+
 function closeModal() {
   const overlay = document.querySelector(".modal-overlay");
   if (overlay) overlay.remove();
+
+  // Clean up escape key listener if it exists
+  if (currentEscapeHandler) {
+    document.removeEventListener("keydown", currentEscapeHandler);
+    currentEscapeHandler = null;
+  }
 }
 
 function openCardModal({ title, subtitle = "", contentHTML = "", actions = [], slideout = false }) {
@@ -292,12 +301,13 @@ function openCardModal({ title, subtitle = "", contentHTML = "", actions = [], s
     if (e.target === overlay) closeModal();
   });
 
-  document.addEventListener("keydown", function escHandler(e) {
+  // Store escape handler reference for cleanup
+  currentEscapeHandler = function(e) {
     if (e.key === "Escape") {
       closeModal();
-      document.removeEventListener("keydown", escHandler);
     }
-  });
+  };
+  document.addEventListener("keydown", currentEscapeHandler);
 }
 
 /* ---------------------------------------------------
@@ -422,33 +432,32 @@ async function openIngredientModal(existing = null) {
     .join("");
 
   const contentHTML = `
-    ${modalRow([
-      modalField({
+    <div class="modal-fields modal-fields-ingredient-name-unit">
+      ${modalField({
         label: "Ingredient Name",
         value: existing ? existing.name : "",
         placeholder: "e.g., Chicken Breast, Garlic, etc."
-      }),
-      modalField({
-        label: "Unit of Measure",
+      })}
+      ${modalField({
+        label: "Unit",
         value: existing ? existing.unit : "",
-        placeholder: "e.g., lbs, cups, pieces"
-      })
-    ])}
+        placeholder: "lbs"
+      })}
+    </div>
 
-    ${modalRow([
-      modalField({
-        label: "Minimum Threshold",
-        type: "number",
-        value: existing ? existing.min : "",
-        placeholder: "Restock when below this amount"
-      }),
-      modalField({
-        label: "Category",
-        type: "select",
-        options: availableCategories,
-        value: existing ? existing.category : ""
-      })
-    ])}
+    ${modalFull(modalField({
+      label: "Minimum Threshold",
+      type: "number",
+      value: existing ? existing.min : "",
+      placeholder: "Restock when below this amount"
+    }))}
+
+    ${modalFull(modalField({
+      label: "Category",
+      type: "select",
+      options: availableCategories,
+      value: existing ? existing.category : ""
+    }))}
 
     ${modalFull(`
       <label style="font-weight:600; margin-bottom:0.35rem;">Storage Locations</label>
@@ -681,19 +690,18 @@ function openRecipeModal(existing = null) {
     .join("");
 
   const contentHTML = `
-    ${modalRow([
-      modalField({
-        label: "Recipe Name",
-        value: existing ? existing.name : "",
-        placeholder: "e.g., Grandma's Chicken Soup"
-      }),
-      modalField({
-        label: "Servings",
-        type: "number",
-        value: existing ? existing.servings : "",
-        placeholder: "e.g., 4"
-      })
-    ])}
+    ${modalFull(modalField({
+      label: "Recipe Name",
+      value: existing ? existing.name : "",
+      placeholder: "e.g., Grandma's Chicken Soup"
+    }))}
+
+    ${modalFull(modalField({
+      label: "Servings",
+      type: "number",
+      value: existing ? existing.servings : "",
+      placeholder: "e.g., 4"
+    }))}
 
     ${modalFull(`
       <div id="recipe-photo-upload">
