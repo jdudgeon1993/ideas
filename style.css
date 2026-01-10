@@ -682,14 +682,18 @@ body {
   }
 
   .planner-grid {
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(50px, 1fr));
     gap: 0.25rem;
     padding: 0.5rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .planner-day {
     padding: 0.35rem 0.25rem;
     min-height: 50px;
+    min-width: 50px;
+    font-size: 0.7rem;
   }
 
   .planner-day-number {
@@ -711,6 +715,12 @@ body {
     width: 95%;
     max-width: 95vw;
     padding: 1rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .modal-content {
+    overflow-x: hidden;
   }
 
   /* Stack modal fields on mobile */
@@ -1274,6 +1284,8 @@ body {
   background: rgba(248,244,235,0.95);
   border-radius: 14px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  overflow-x: auto;
+  max-width: 100%;
 }
 
 .planner-day {
@@ -1661,6 +1673,11 @@ body {
   margin-top: 0.75rem;
 }
 
+/* Custom grid for ingredient name and unit - name gets more space */
+.modal-fields-ingredient-name-unit {
+  grid-template-columns: 3fr 1fr;
+}
+
 /* Single-column override for long content (instructions, lists) */
 .modal-fields-full {
   display: block;
@@ -1700,7 +1717,7 @@ body {
 /* Location rows inside ingredient modal */
 .modal-location-row {
   display: grid;
-  grid-template-columns: 1.5fr 1fr 1.5fr auto;
+  grid-template-columns: 2fr 0.8fr 1.5fr auto;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   align-items: center;
@@ -1842,7 +1859,7 @@ body {
 /* Ingredient row inside recipe modal */
 .modal-ingredient-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: 3fr 0.8fr 1fr auto;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   align-items: center;
