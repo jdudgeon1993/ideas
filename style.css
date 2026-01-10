@@ -116,9 +116,9 @@ body {
 .shopping-sidebar {
   position: fixed;
   left: 0;
-  top: 165px; /* Start below utility bar (45px) + header (~120px) */
+  top: 261px; /* Start below utility bar (45px) + header (~120px) */
   width: 340px;
-  height: calc(100vh - 165px); /* Full height minus utility bar + header */
+  height: calc(100vh - 261px); /* Full height minus utility bar + header */
 
   background: #FAF0E6;
   border-right: 2px solid rgba(156,175,136,0.2);
@@ -324,7 +324,7 @@ body {
 }
 
 .header-title h1 {
-  font-size: 2.5rem;
+  font-size: 4rem;
   margin-bottom: 0.3rem;
   font-family: "Pacifico", cursive;
   color: #A47DAB;
@@ -332,7 +332,7 @@ body {
 }
 
 .header-tagline {
-  font-size: 1rem;
+  font-size: 1.5rem;
   opacity: 0.75;
   color: #9CAF88;
   font-style: italic;
@@ -347,7 +347,7 @@ body {
   padding: 2rem 1rem 1.5rem;
   background: #FAF0E6;
   border-radius: 20px;
-  margin: 1rem 1.5rem 0 1.5rem;
+  margin: 6.5rem 1.5rem 0 1.5rem;
   border: 2px solid rgba(156,175,136,0.1);
   position: relative;
   overflow: hidden;
