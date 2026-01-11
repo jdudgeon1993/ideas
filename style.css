@@ -986,63 +986,62 @@ body {
 }
 
 /* ---------------------------------------------------
-   BUTTONS - Cottagecore
+   BUTTONS - Refined Professional
 --------------------------------------------------- */
 .btn {
-  border-radius: 20px;
+  border-radius: 8px;
   padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   font-weight: 600;
   border: none;
-  font-family: "Quicksand", sans-serif;
-  box-shadow: 0 3px 12px rgba(156,175,136,0.15);
+  font-family: "Lato", sans-serif;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   position: relative;
-  overflow: hidden;
   transition: all 0.2s ease;
+  letter-spacing: 0.3px;
 }
 
 .btn:hover {
-  box-shadow: 0 6px 20px rgba(156,175,136,0.3);
-  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: translateY(0);
 }
 
 .btn-primary {
-  background: #F1C338;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  border: 2px solid rgba(255,255,255,0.3);
+  background: var(--btn-primary);
+  color: white;
+  border: none;
 }
 
 .btn-primary:hover {
-  background: #e0b530;
+  background: var(--btn-primary-hover);
 }
 
 .btn-secondary {
-  background: rgba(255,255,255,0.8);
-  color: #9CAF88;
-  border: 2px solid #B8C5A8;
+  background: white;
+  color: var(--color-text-primary);
+  border: 2px solid var(--color-accent-olive);
 }
 
 .btn-secondary:hover {
-  background: #B8E3E9;
-  border-color: #9CAF88;
+  background: var(--color-accent-olive);
+  border-color: var(--color-accent-olive);
   color: white;
 }
 
 .btn-danger {
-  background: rgba(255,255,255,0.8);
-  color: #D4A5A5;
-  border: 2px solid #D4A5A5;
+  background: white;
+  color: var(--btn-danger);
+  border: 2px solid var(--btn-danger);
 }
 
 .btn-danger:hover {
-  background: rgba(212,165,165,0.15);
-  border-color: #B36A5E;
+  background: var(--btn-danger);
+  color: white;
 }
 
 /* ---------------------------------------------------
@@ -1193,46 +1192,50 @@ body {
 }
 
 .search-input {
-  padding: 0.55rem 1rem;
+  padding: 0.65rem 1rem;
   border-radius: 8px;
-  border: 2px solid rgba(156,175,136,0.3);
-  background: rgba(255,255,255,0.9);
+  border: 2px solid var(--color-accent-olive);
+  background: white;
   font-size: 0.95rem;
-  font-family: inherit;
-  color: #5a4a3a;
+  font-family: "Lato", sans-serif;
+  color: var(--color-text-primary);
   flex: 1;
   min-width: 200px;
+  transition: all 0.2s;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #F1C338;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(241,195,56,0.1);
+  border-color: var(--color-header-purple);
+  background: white;
+  box-shadow: 0 4px 12px rgba(125,102,122,0.15);
 }
 
 .search-input::placeholder {
-  color: rgba(90,74,58,0.5);
+  color: var(--color-text-secondary);
+  opacity: 0.6;
 }
 
 .pantry-filters select,
 .recipe-filters select {
-  padding: 0.55rem 0.75rem;
+  padding: 0.65rem 0.85rem;
   border-radius: 8px;
-  border: 2px solid rgba(156,175,136,0.3);
-  background: #fff;
+  border: 2px solid var(--color-accent-olive);
+  background: white;
   font-size: 0.95rem;
-  font-family: inherit;
+  font-family: "Lato", sans-serif;
   cursor: pointer;
+  color: var(--color-text-primary);
+  transition: all 0.2s;
 }
 
 .pantry-filters select:hover {
-  border-color: #F1C338;
+  border-color: var(--color-header-purple);
 }
 
 .pantry-filters select:focus {
-  border-color: #F1C338;
-  box-shadow: 0 0 0 2px rgba(241,195,56,0.25);
+  border-color: var(--color-header-purple);
+  box-shadow: 0 4px 12px rgba(125,102,122,0.15);
   outline: none;
 }
 
@@ -1577,26 +1580,29 @@ body {
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: #F1C338;
-  border: 3px solid rgba(255,255,255,0.6);
+  background: var(--color-recipe-accent);
+  border: 3px solid white;
   font-size: 2.5rem;
   font-weight: 300;
   line-height: 1;
   color: white;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(156,175,136,0.3);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
 }
 
 .floating-action-btn:hover {
-  background: #e0b530;
-  box-shadow: 0 12px 32px rgba(156,175,136,0.4);
+  background: var(--btn-primary);
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
 }
 
 .floating-action-btn.active {
-  background: #e0b530;
+  background: var(--btn-primary);
+  transform: rotate(45deg);
 }
 
 .floating-action-options {
@@ -1617,26 +1623,28 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1.25rem;
-  background: var(--color-card-bg);
-  border: 2px solid rgba(156,175,136,0.25);
-  border-radius: 28px;
-  font-size: 1rem;
-  font-weight: 500;
-  color: #5a4a3a;
+  background: white;
+  border: 2px solid var(--color-accent-olive);
+  border-radius: 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(156,175,136,0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   white-space: nowrap;
+  transition: all 0.2s;
 }
 
 .floating-action-option:hover {
-  background: #F1C338;
-  border-color: rgba(156,175,136,0.4);
+  background: var(--btn-primary);
+  border-color: var(--btn-primary);
   color: white;
-  box-shadow: 0 6px 16px rgba(156,175,136,0.3);
+  transform: translateX(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
 .floating-action-option span {
-  font-family: "Quicksand", sans-serif;
+  font-family: "Lato", sans-serif;
 }
 
 .floating-planner-btn {
@@ -1845,18 +1853,21 @@ body {
   flex: 1;
   padding: 0.65rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid rgba(0,0,0,0.2);
+  border: 2px solid var(--color-accent-olive);
   font-size: 0.9rem;
-  font-family: inherit;
+  font-family: "Lato", sans-serif;
+  color: var(--color-text-primary);
+  background: white;
+  transition: all 0.2s;
 }
 
 .shopping-add-inline input:hover {
-  border-color: #F1C338;
+  border-color: var(--color-header-purple);
 }
 
 .shopping-add-inline input:focus {
-  border-color: #F1C338;
-  box-shadow: 0 0 0 2px rgba(241,195,56,0.25);
+  border-color: var(--color-header-purple);
+  box-shadow: 0 4px 12px rgba(125,102,122,0.15);
   outline: none;
 }
 
