@@ -119,8 +119,22 @@
     </div>
   </div>
 
+  <!-- Hidden elements for app.js compatibility -->
+  <div style="display: none;">
+    <div id="pantry-section"></div>
+    <div id="pantry-display"></div>
+    <input id="pantry-search" />
+    <select id="filter-category"></select>
+    <select id="sort-pantry"></select>
+    <div id="recipes-section"></div>
+    <input id="recipe-search" />
+    <select id="filter-recipe-ready"></select>
+    <div id="recipe-list"></div>
+    <button id="btn-signin"></button>
+  </div>
+
   <!-- RECIPE LEDGER INTERFACE -->
-  <section class="recipe-ledger-section">
+  <section class="recipe-ledger-section" id="recipe-ledger-section">
 
     <!-- Filter Ledger Search Bar -->
     <div class="ledger-search-bar">
@@ -279,10 +293,16 @@
     -->
   </div>
 
-  <!-- Dashboard Modal Handler -->
+  <!-- Redesign Bridge Script - Connects app.js with new visual design -->
   <script>
-    // Open dashboard modal when clicking the 📋 icon
+    // COMPREHENSIVE BRIDGE SCRIPT FOR NEW DESIGN
     document.addEventListener('DOMContentLoaded', function() {
+
+      // ===========================================
+      // HEADER ICON WIRING
+      // ===========================================
+
+      // Dashboard modal (📋)
       const dashboardBtn = document.getElementById('btn-clipboard');
       const dashboardModal = document.getElementById('dashboard-modal');
       const dashboardClose = document.getElementById('dashboard-modal-close');
@@ -307,6 +327,224 @@
           }
         });
       }
+
+      // Household/Settings (📁) - trigger the signin/settings functionality
+      const householdBtn = document.getElementById('btn-household');
+      if (householdBtn) {
+        householdBtn.addEventListener('click', function() {
+          // Trigger the existing signin button which opens settings
+          const signinBtn = document.getElementById('btn-signin');
+          if (signinBtn) {
+            signinBtn.click();
+          }
+        });
+      }
+
+      // Stats (📊) - for now, show dashboard
+      const statsBtn = document.getElementById('btn-stats');
+      if (statsBtn) {
+        statsBtn.addEventListener('click', function() {
+          if (dashboardModal) {
+            dashboardModal.style.display = 'block';
+          }
+        });
+      }
+
+      // ===========================================
+      // PANTRY TABLE RENDERER
+      // ===========================================
+
+      // Function to render pantry items in the Master Pantry table
+      window.renderPantryTable = function() {
+        const tbody = document.getElementById('pantry-table-body');
+        if (!tbody || !window.pantry) return;
+
+        tbody.innerHTML = '';
+
+        // Get first 10 items for the table
+        const displayItems = window.pantry.slice(0, 20);
+
+        displayItems.forEach(item => {
+          const tr = document.createElement('tr');
+
+          // Calculate totals
+          let totalOnHand = 0;
+          let totalRestock = 0;
+
+          if (item.locations && item.locations.length > 0) {
+            item.locations.forEach(loc => {
+              totalOnHand += parseFloat(loc.onHand) || 0;
+              totalRestock += parseFloat(loc.restock) || 0;
+            });
+          }
+
+          const available = totalOnHand >= totalRestock ? 1 : 0;
+
+          tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${Math.round(totalOnHand)}</td>
+            <td>${Math.round(totalRestock)}</td>
+            <td style="color: ${available ? '#8B9376' : '#C86B6B'}; font-weight: 600;">${available}</td>
+          `;
+
+          // Make row clickable to edit
+          tr.style.cursor = 'pointer';
+          tr.addEventListener('click', function() {
+            if (window.openIngredientModal) {
+              window.openIngredientModal(item);
+            }
+          });
+
+          tbody.appendChild(tr);
+        });
+      };
+
+      // ===========================================
+      // RECIPE LEDGER RENDERER
+      // ===========================================
+
+      // Function to render recipes as tabs and cards
+      window.renderRecipeLedger = function() {
+        const tabsContainer = document.getElementById('recipe-tabs');
+        const cardDisplay = document.getElementById('recipe-card-display');
+
+        if (!tabsContainer || !window.recipes) return;
+
+        // Clear existing tabs
+        tabsContainer.innerHTML = '';
+
+        // Create tabs for each recipe
+        window.recipes.forEach((recipe, index) => {
+          const tab = document.createElement('button');
+          tab.className = 'recipe-tab';
+          if (index === 0) tab.classList.add('active');
+          tab.textContent = recipe.name;
+          tab.setAttribute('data-recipe-id', recipe.id);
+
+          tab.addEventListener('click', function() {
+            // Update active tab
+            document.querySelectorAll('.recipe-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Display this recipe
+            displayRecipeCard(recipe);
+          });
+
+          tabsContainer.appendChild(tab);
+        });
+
+        // Display first recipe
+        if (window.recipes.length > 0) {
+          displayRecipeCard(window.recipes[0]);
+        }
+      };
+
+      // Function to display a single recipe in the card
+      function displayRecipeCard(recipe) {
+        document.getElementById('current-recipe-id').textContent = recipe.id || '';
+        document.getElementById('current-recipe-title').textContent = recipe.name || '';
+        document.getElementById('current-recipe-yield').textContent = recipe.yield || '4';
+        document.getElementById('current-recipe-time').textContent = recipe.cookTime || '30min';
+
+        // Render ingredients
+        const ingredientsList = document.getElementById('current-recipe-ingredients');
+        if (ingredientsList && recipe.ingredients) {
+          ingredientsList.innerHTML = '';
+          recipe.ingredients.forEach(ing => {
+            const li = document.createElement('li');
+            li.textContent = `${ing.amount || ''} ${ing.unit || ''} ${ing.name || ''}`.trim();
+            ingredientsList.appendChild(li);
+          });
+        }
+
+        // Render method
+        const methodText = document.getElementById('current-recipe-method');
+        if (methodText) {
+          methodText.innerHTML = `<p>${recipe.method || ''}</p>`;
+        }
+
+        // Wire up edit button
+        const editBtn = document.getElementById('btn-edit-current-recipe');
+        if (editBtn) {
+          editBtn.onclick = function() {
+            if (window.openRecipeModal) {
+              window.openRecipeModal(recipe);
+            }
+          };
+        }
+
+        // Wire up delete button
+        const deleteBtn = document.getElementById('btn-delete-current-recipe');
+        if (deleteBtn) {
+          deleteBtn.onclick = function() {
+            if (confirm(`Delete "${recipe.name}"? This cannot be undone.`)) {
+              if (window.deleteRecipe) {
+                window.deleteRecipe(recipe.id);
+              }
+            }
+          };
+        }
+      }
+
+      // ===========================================
+      // LEDGER SEARCH FILTER
+      // ===========================================
+
+      const ledgerSearch = document.getElementById('ledger-search');
+      if (ledgerSearch) {
+        ledgerSearch.addEventListener('input', function(e) {
+          const query = e.target.value.toLowerCase();
+          document.querySelectorAll('.recipe-tab').forEach(tab => {
+            const text = tab.textContent.toLowerCase();
+            tab.style.display = text.includes(query) ? '' : 'none';
+          });
+        });
+      }
+
+      // ===========================================
+      // NEW PANTRY ENTRY BUTTON
+      // ===========================================
+
+      const newPantryBtn = document.getElementById('btn-new-pantry-entry');
+      if (newPantryBtn) {
+        newPantryBtn.addEventListener('click', function() {
+          // Trigger the existing FAB add ingredient button
+          const fabIngredient = document.getElementById('fab-add-ingredient');
+          if (fabIngredient) {
+            fabIngredient.click();
+          }
+        });
+      }
+
+      // ===========================================
+      // MONITOR APP.JS CHANGES
+      // ===========================================
+
+      // Watch for changes to pantry and recipes arrays
+      let lastPantryLength = 0;
+      let lastRecipesLength = 0;
+
+      setInterval(function() {
+        if (window.pantry && window.pantry.length !== lastPantryLength) {
+          lastPantryLength = window.pantry.length;
+          if (window.renderPantryTable) {
+            window.renderPantryTable();
+          }
+        }
+
+        if (window.recipes && window.recipes.length !== lastRecipesLength) {
+          lastRecipesLength = window.recipes.length;
+          if (window.renderRecipeLedger) {
+            window.renderRecipeLedger();
+          }
+        }
+      }, 500);
+
+      // Initial render after a delay to let app.js load
+      setTimeout(function() {
+        if (window.renderPantryTable) window.renderPantryTable();
+        if (window.renderRecipeLedger) window.renderRecipeLedger();
+      }, 1000);
     });
   </script>
 

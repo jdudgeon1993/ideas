@@ -42,13 +42,13 @@ html {
 
 body {
   font-family: "Lato", -apple-system, BlinkMacSystemFont, sans-serif;
-  /* Green and white gingham background pattern */
-  background-color: #F5F0E8;
+  /* Green and white gingham background pattern - VISIBLE */
+  background-color: #FFFFFF;
   background-image:
-    linear-gradient(45deg, #E8F5E8 25%, transparent 25%),
-    linear-gradient(-45deg, #E8F5E8 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #E8F5E8 75%),
-    linear-gradient(-45deg, transparent 75%, #E8F5E8 75%);
+    linear-gradient(45deg, #C8E6C9 25%, transparent 25%),
+    linear-gradient(-45deg, #C8E6C9 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #C8E6C9 75%),
+    linear-gradient(-45deg, transparent 75%, #C8E6C9 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
   background-attachment: fixed;
