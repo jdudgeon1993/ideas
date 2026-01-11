@@ -19,6 +19,7 @@ function uid() {
 
 // Pantry - Multi-location data model
 let pantry = JSON.parse(localStorage.getItem("pantry") || "[]");
+window.pantry = pantry; // Expose for bridge script
 
 // Track which categories are collapsed
 const pantryCollapsedCategories = new Set();
@@ -78,6 +79,7 @@ function getTotalQty(ingredient) {
 
 // Recipes
 let recipes = JSON.parse(localStorage.getItem("recipes") || "[]");
+window.recipes = recipes; // Expose for bridge script
 
 function saveRecipes() {
   // Save to localStorage (for offline mode)
@@ -3581,6 +3583,7 @@ async function loadUserData() {
     const dbPantry = await window.db.loadPantryItems();
     if (dbPantry) {
       pantry = dbPantry;
+      window.pantry = pantry; // Update window reference
       localStorage.setItem("pantry", JSON.stringify(pantry));
     }
 
@@ -3588,6 +3591,7 @@ async function loadUserData() {
     const dbRecipes = await window.db.loadRecipes();
     if (dbRecipes) {
       recipes = dbRecipes;
+      window.recipes = recipes; // Update window reference
       localStorage.setItem("recipes", JSON.stringify(recipes));
     }
 
@@ -4251,11 +4255,13 @@ async function handleInviteCode(code) {
 
               if (dbPantry) {
                 pantry = dbPantry;
+                window.pantry = pantry; // Update window reference
                 localStorage.setItem("pantry", JSON.stringify(pantry));
               }
 
               if (dbRecipes) {
                 recipes = dbRecipes;
+                window.recipes = recipes; // Update window reference
                 localStorage.setItem("recipes", JSON.stringify(recipes));
               }
 
