@@ -120,7 +120,7 @@
   </div>
 
   <!-- App.js rendering targets - hidden but functional -->
-  <div style="position: absolute; left: -9999px; opacity: 0; pointer-events: none;">
+  <div style="position: fixed; left: -9999px; opacity: 0; pointer-events: none; z-index: -1;">
     <div id="pantry-section">
       <div id="pantry-display"></div>
       <input id="pantry-search" />
@@ -370,49 +370,60 @@
       // PANTRY TABLE RENDERER
       // ===========================================
 
-      // Function to render pantry items in the Master Pantry table
+      // Function to extract data from app.js and populate Master Pantry table
       window.renderPantryTable = function() {
         const tbody = document.getElementById('pantry-table-body');
-        if (!tbody || !window.pantry) return;
+        if (!tbody) return;
 
         tbody.innerHTML = '';
 
-        // Get first 10 items for the table
-        const displayItems = window.pantry.slice(0, 20);
+        // Extract data from app.js's rendered #pantry-display
+        const pantryDisplay = document.getElementById('pantry-display');
+        if (!pantryDisplay) return;
 
-        displayItems.forEach(item => {
+        const pantryItems = pantryDisplay.querySelectorAll('.pantry-item');
+        const itemsToShow = Array.from(pantryItems).slice(0, 20);
+
+        itemsToShow.forEach(itemCard => {
           const tr = document.createElement('tr');
 
-          // Calculate totals
-          let totalOnHand = 0;
-          let totalRestock = 0;
+          // Extract name and quantities from app.js's rendered HTML
+          const name = itemCard.querySelector('.pantry-item-header strong')?.textContent || '';
 
-          if (item.locations && item.locations.length > 0) {
-            item.locations.forEach(loc => {
-              totalOnHand += parseFloat(loc.onHand) || 0;
-              totalRestock += parseFloat(loc.restock) || 0;
-            });
-          }
+          // Find the three quantity sections in order: On Hand, Reserved, Available
+          const qtyValues = itemCard.querySelectorAll('.pantry-qty-value');
+          const parseQty = (el) => {
+            if (!el) return 0;
+            const match = el.textContent.match(/^([\d.]+)/);
+            return match ? parseFloat(match[1]) : 0;
+          };
 
-          const available = totalOnHand >= totalRestock ? 1 : 0;
+          const onHand = qtyValues[0] ? parseQty(qtyValues[0]) : 0;
+          const reserved = qtyValues[1] ? parseQty(qtyValues[1]) : 0;
+          const available = qtyValues[2] ? parseQty(qtyValues[2]) : 0;
 
           tr.innerHTML = `
-            <td>${item.name}</td>
-            <td>${Math.round(totalOnHand)}</td>
-            <td>${Math.round(totalRestock)}</td>
-            <td style="color: ${available ? '#8B9376' : '#C86B6B'}; font-weight: 600;">${available}</td>
+            <td>${name}</td>
+            <td>${Math.round(onHand)}</td>
+            <td>${Math.round(reserved)}</td>
+            <td style="color: ${available >= 1 ? '#8B9376' : '#C86B6B'}; font-weight: 600;">${Math.round(available)}</td>
           `;
 
-          // Make row clickable to edit
+          // Make row clickable - trigger app.js's click handler on original card
           tr.style.cursor = 'pointer';
           tr.addEventListener('click', function() {
-            if (window.openIngredientModal) {
-              window.openIngredientModal(item);
-            }
+            itemCard.click();
           });
 
           tbody.appendChild(tr);
         });
+
+        // If no items
+        if (itemsToShow.length === 0) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td colspan="4" style="text-align: center; opacity: 0.6; padding: 1rem;">No pantry items yet</td>';
+          tbody.appendChild(tr);
+        }
       };
 
       // ===========================================
@@ -470,36 +481,52 @@
         }
       };
 
+      // Store current recipe globally for button handlers
+      let currentDisplayedRecipe = null;
+
       // Function to display a single recipe in the card
       function displayRecipeCard(recipe) {
+        if (!recipe) return;
+
+        // Store the current recipe
+        currentDisplayedRecipe = recipe;
+
         document.getElementById('current-recipe-id').textContent = recipe.id || '';
         document.getElementById('current-recipe-title').textContent = recipe.name || '';
-        document.getElementById('current-recipe-yield').textContent = recipe.yield || '4';
-        document.getElementById('current-recipe-time').textContent = recipe.cookTime || '30min';
+        document.getElementById('current-recipe-yield').textContent = recipe.yield || recipe.servings || '4';
+        document.getElementById('current-recipe-time').textContent = recipe.cookTime || recipe.time || '30min';
 
         // Render ingredients
         const ingredientsList = document.getElementById('current-recipe-ingredients');
-        if (ingredientsList && recipe.ingredients) {
+        if (ingredientsList) {
           ingredientsList.innerHTML = '';
-          recipe.ingredients.forEach(ing => {
+          if (recipe.ingredients && recipe.ingredients.length > 0) {
+            recipe.ingredients.forEach(ing => {
+              const li = document.createElement('li');
+              const amount = ing.amount || ing.qty || '';
+              li.textContent = `${amount} ${ing.unit || ''} ${ing.name || ''}`.trim();
+              ingredientsList.appendChild(li);
+            });
+          } else {
             const li = document.createElement('li');
-            li.textContent = `${ing.amount || ''} ${ing.unit || ''} ${ing.name || ''}`.trim();
+            li.textContent = 'No ingredients listed';
+            li.style.opacity = '0.6';
             ingredientsList.appendChild(li);
-          });
+          }
         }
 
         // Render method
         const methodText = document.getElementById('current-recipe-method');
         if (methodText) {
-          methodText.innerHTML = `<p>${recipe.method || ''}</p>`;
+          methodText.innerHTML = recipe.method || recipe.instructions || '<p style="opacity: 0.6;">No instructions provided</p>';
         }
 
         // Wire up edit button
         const editBtn = document.getElementById('btn-edit-current-recipe');
         if (editBtn) {
           editBtn.onclick = function() {
-            if (window.openRecipeModal) {
-              window.openRecipeModal(recipe);
+            if (window.openRecipeModal && currentDisplayedRecipe) {
+              window.openRecipeModal(currentDisplayedRecipe);
             }
           };
         }
@@ -508,9 +535,15 @@
         const deleteBtn = document.getElementById('btn-delete-current-recipe');
         if (deleteBtn) {
           deleteBtn.onclick = function() {
-            if (confirm(`Delete "${recipe.name}"? This cannot be undone.`)) {
+            if (!currentDisplayedRecipe || !currentDisplayedRecipe.id) {
+              console.error('No recipe ID to delete');
+              alert('Cannot delete: Recipe ID not found');
+              return;
+            }
+            if (confirm(`Delete "${currentDisplayedRecipe.name}"? This cannot be undone.`)) {
               if (window.deleteRecipe) {
-                window.deleteRecipe(recipe.id);
+                console.log('Deleting recipe with ID:', currentDisplayedRecipe.id);
+                window.deleteRecipe(currentDisplayedRecipe.id);
               }
             }
           };
