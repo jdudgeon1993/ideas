@@ -429,8 +429,12 @@
           return;
         }
 
+        console.log('renderRecipeLedger called');
+        console.log('window.recipes:', window.recipes);
+        console.log('typeof window.recipes:', typeof window.recipes);
+
         if (!window.recipes || window.recipes.length === 0) {
-          console.log('No recipes to display');
+          console.log('No recipes to display - window.recipes is', window.recipes);
           tabsContainer.innerHTML = '<p style="padding: 1rem; color: #999; font-style: italic;">No recipes yet. Click the + button to add your first recipe!</p>';
           return;
         }
@@ -577,6 +581,8 @@
       if (recipeList) {
         const recipeObserver = new MutationObserver(function(mutations) {
           console.log('recipe-list DOM changed, refreshing...');
+          console.log('recipe-list innerHTML length:', recipeList.innerHTML.length);
+          console.log('recipe-list children:', recipeList.children.length);
           setTimeout(refreshAllData, 50);
         });
         recipeObserver.observe(recipeList, {
