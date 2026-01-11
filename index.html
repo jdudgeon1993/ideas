@@ -101,67 +101,6 @@
   <!-- MAIN CONTENT AREA -->
   <div class="main-content">
 
-    <!-- HERO -->
-    <section class="hero">
-      <p class="hero-tagline">
-        Simple tools for the heart of your home
-      </p>
-    </section>
-
-  <!-- TODAY & WEEK DASHBOARD -->
-  <section class="section section-dashboard">
-    <header class="section-header">
-      <h2>Today & Week</h2>
-      <p class="section-subtitle">
-        A gentle snapshot of how your kitchen is doing right now.
-      </p>
-    </header>
-
-    <div class="dashboard-grid">
-      <div class="dashboard-card">
-        <span class="dashboard-label">Today’s meal</span>
-        <span class="dashboard-value" id="dash-today-meal">Not planned</span>
-      </div>
-
-      <div class="dashboard-card">
-        <span class="dashboard-label">Ready‑to‑cook recipes</span>
-        <span class="dashboard-value" id="dash-ready-recipes">0</span>
-      </div>
-
-      <div class="dashboard-card">
-        <span class="dashboard-label">Ingredients in pantry</span>
-        <span class="dashboard-value" id="dash-pantry-count">0</span>
-      </div>
-
-      <div class="dashboard-card">
-        <span class="dashboard-label">Expired ingredients</span>
-        <span class="dashboard-value" id="dash-expired-count">0</span>
-      </div>
-
-      <div class="dashboard-card">
-        <span class="dashboard-label">Meals planned this week</span>
-        <span class="dashboard-value">
-          <span id="dash-week-planned">0</span>/<span id="dash-week-total">7</span>
-        </span>
-      </div>
-    </div>
-
-    <!-- TODAY'S MEALS -->
-    <div class="today-meals-section" id="today-meals-section">
-      <!-- Populated by JS -->
-    </div>
-
-    <!-- READY TO COOK RECIPES -->
-    <div class="ready-recipes-section" id="ready-recipes-section">
-      <!-- Populated by JS -->
-    </div>
-
-    <div class="dashboard-actions">
-      <button class="btn btn-primary" id="btn-open-planner">Open meal plan</button>
-      <button class="btn btn-secondary" data-scroll-target="#recipes-section">Browse recipes</button>
-    </div>
-  </section>
-
   <!-- FLOATING ACTION BUTTON -->
   <div class="floating-action-menu" id="floating-action-menu">
     <button class="floating-action-btn" id="floating-action-btn" title="Quick Add">
@@ -260,6 +199,65 @@
 
   </div> <!-- end main-content -->
 
+  <!-- DASHBOARD MODAL (accessible via 📋 icon in header) -->
+  <div id="dashboard-modal" class="dashboard-modal" style="display: none;">
+    <div class="dashboard-modal-overlay">
+      <div class="dashboard-modal-content">
+        <button class="dashboard-modal-close" id="dashboard-modal-close">✕</button>
+
+        <header class="dashboard-modal-header">
+          <h2>Today & Week Dashboard</h2>
+          <p class="dashboard-modal-subtitle">
+            A snapshot of how your kitchen is doing right now.
+          </p>
+        </header>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-card">
+            <span class="dashboard-label">Today's meal</span>
+            <span class="dashboard-value" id="dash-today-meal">Not planned</span>
+          </div>
+
+          <div class="dashboard-card">
+            <span class="dashboard-label">Ready‑to‑cook recipes</span>
+            <span class="dashboard-value" id="dash-ready-recipes">0</span>
+          </div>
+
+          <div class="dashboard-card">
+            <span class="dashboard-label">Ingredients in pantry</span>
+            <span class="dashboard-value" id="dash-pantry-count">0</span>
+          </div>
+
+          <div class="dashboard-card">
+            <span class="dashboard-label">Expired ingredients</span>
+            <span class="dashboard-value" id="dash-expired-count">0</span>
+          </div>
+
+          <div class="dashboard-card">
+            <span class="dashboard-label">Meals planned this week</span>
+            <span class="dashboard-value">
+              <span id="dash-week-planned">0</span>/<span id="dash-week-total">7</span>
+            </span>
+          </div>
+        </div>
+
+        <!-- TODAY'S MEALS -->
+        <div class="today-meals-section" id="today-meals-section">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- READY TO COOK RECIPES -->
+        <div class="ready-recipes-section" id="ready-recipes-section">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="dashboard-actions">
+          <button class="btn btn-primary" id="btn-open-planner">Open meal plan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL ROOT (unified recipe-card style modals injected here) -->
   <div id="modal-root">
     <!-- JS will inject:
@@ -268,6 +266,37 @@
          </div>
     -->
   </div>
+
+  <!-- Dashboard Modal Handler -->
+  <script>
+    // Open dashboard modal when clicking the 📋 icon
+    document.addEventListener('DOMContentLoaded', function() {
+      const dashboardBtn = document.getElementById('btn-clipboard');
+      const dashboardModal = document.getElementById('dashboard-modal');
+      const dashboardClose = document.getElementById('dashboard-modal-close');
+      const dashboardOverlay = document.querySelector('.dashboard-modal-overlay');
+
+      if (dashboardBtn && dashboardModal) {
+        dashboardBtn.addEventListener('click', function() {
+          dashboardModal.style.display = 'block';
+        });
+      }
+
+      if (dashboardClose) {
+        dashboardClose.addEventListener('click', function() {
+          dashboardModal.style.display = 'none';
+        });
+      }
+
+      if (dashboardOverlay) {
+        dashboardOverlay.addEventListener('click', function(e) {
+          if (e.target === dashboardOverlay) {
+            dashboardModal.style.display = 'none';
+          }
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>
