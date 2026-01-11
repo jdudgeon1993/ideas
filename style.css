@@ -382,6 +382,193 @@ body {
     margin-left: 0;
     order: 1;
   }
+
+  /* Recipe Ledger Mobile */
+  .recipe-ledger-section {
+    padding: 1rem;
+  }
+
+  .ledger-search-input {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .recipe-tabs {
+    gap: 0.35rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .recipe-tab {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Floating Action Button Mobile */
+  .floating-action-menu {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .floating-action-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+
+  .floating-action-options {
+    gap: 0.5rem;
+  }
+
+  .floating-action-option {
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* Dashboard Modal Mobile */
+  .dashboard-modal-overlay {
+    padding: 1rem;
+  }
+
+  .dashboard-modal-content {
+    padding: 1.5rem;
+  }
+
+  .dashboard-modal-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .dashboard-card {
+    padding: 1rem;
+  }
+
+  .dashboard-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* Extra Small Mobile (Portrait Phones) */
+@media (max-width: 480px) {
+  body {
+    padding-top: 80px; /* Extra space for wrapped header */
+  }
+
+  .site-header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header-brand {
+    font-size: 1.25rem;
+  }
+
+  .btn-header-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
+
+  .sidebar-section {
+    padding: 1rem;
+  }
+
+  .pantry-table th,
+  .pantry-table td {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.2rem;
+  }
+
+  .pantry-table th {
+    font-size: 0.7rem;
+  }
+
+  .recipe-ledger-section {
+    padding: 0.75rem;
+  }
+
+  .ledger-search-input {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.85rem;
+  }
+
+  .recipe-tab {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .recipe-ledger-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .recipe-ledger-title {
+    font-size: 1.75rem;
+  }
+
+  .recipe-ledger-meta {
+    font-size: 0.85rem;
+    padding: 0.75rem;
+  }
+
+  .recipe-ledger-heading {
+    font-size: 0.9rem;
+  }
+
+  .recipe-ingredients-list li,
+  .recipe-method-text {
+    font-size: 0.9rem;
+  }
+
+  .btn-edit-ledger,
+  .btn-burn-card {
+    padding: 0.85rem 1.5rem;
+    font-size: 0.85rem;
+  }
+
+  .floating-action-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 1.75rem;
+  }
+
+  .floating-action-menu {
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  .dashboard-modal-content {
+    padding: 1rem;
+  }
+
+  .dashboard-card {
+    padding: 0.85rem;
+  }
+
+  /* Optimize gingham background for small screens */
+  body {
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+
+  /* Ensure touch targets are large enough */
+  .btn,
+  .recipe-tab,
+  button {
+    min-height: 44px;
+  }
+
+  /* Better spacing for small screens */
+  .shopping-add-inline {
+    gap: 0.35rem;
+  }
+
+  .btn-add-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
 }
 
 /* Utility spacing - Cottagecore */
