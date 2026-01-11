@@ -59,89 +59,80 @@ body {
   display: flex;
   min-height: 100vh;
   position: relative;
-  padding-top: 45px; /* Space for utility bar */
+  padding-top: 70px; /* Space for unified header */
 }
 
 /* ---------------------------------------------------
-   UTILITY BAR - Slim professional top bar
+   UNIFIED PURPLE HEADER BAR
 --------------------------------------------------- */
-.utility-bar {
+.site-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 45px;
-  background: var(--color-card-bg);
-  border-bottom: 1px solid rgba(156,175,136,0.2);
+  height: 70px;
+  background: var(--color-header-purple);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 2rem;
   z-index: 200;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 
-.utility-left {
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-brand {
+  font-size: 2rem;
+  font-family: "Libre Baskerville", Georgia, serif;
+  color: #FFFFFF;
+  margin: 0;
+  letter-spacing: 0.5px;
+  font-weight: 400;
+}
+
+.header-right {
   display: flex;
   align-items: center;
   gap: 2rem;
 }
 
-.utility-welcome {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #5a4a3a;
-  cursor: pointer;
+.header-datetime {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
-.utility-welcome:hover {
-  color: #A47DAB;
-  text-decoration: underline;
-}
-
-.utility-datetime {
+.header-nav {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 0.85rem;
-  color: #8b6f47;
-  opacity: 0.8;
 }
 
-.utility-separator {
-  opacity: 0.5;
-}
-
-.utility-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.btn-utility-icon {
+.btn-header-icon {
   background: transparent;
   border: none;
-  color: #8b6f47;
-  padding: 0.35rem;
-  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0.5rem;
+  font-size: 1.3rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  transition: background 0.2s;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
-.btn-utility-icon:hover {
-  background: rgba(164,125,171,0.15);
-  color: #A47DAB;
-}
-
-.btn-utility-reset:hover {
-  background: rgba(241,195,56,0.15);
-  color: #F1C338;
+.btn-header-icon:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  transform: translateY(-2px);
 }
 
 /* ---------------------------------------------------
@@ -150,9 +141,9 @@ body {
 .shopping-sidebar {
   position: fixed;
   left: 0;
-  top: 261px; /* Start below utility bar (45px) + header (~120px) */
+  top: 70px; /* Start below unified header */
   width: 340px;
-  height: calc(100vh - 261px); /* Full height minus utility bar + header */
+  height: calc(100vh - 70px); /* Full height minus header */
 
   background: var(--color-card-bg);
   border-right: 2px solid rgba(156,175,136,0.2);
@@ -196,7 +187,7 @@ body {
   position: relative;
   z-index: 1;
   padding: 0;
-  padding-top: 120px; /* Space for fixed header (min-height of header) */
+  padding-top: 0; /* No extra space needed - header is 70px tall */
 }
 
 .btn-block {
@@ -229,46 +220,44 @@ body {
   transform: translateY(1px);
 }
 
-/* Mobile: sidebar becomes bottom section - Cottagecore */
+/* Mobile: sidebar becomes bottom section */
 @media (max-width: 1024px) {
   body {
     flex-direction: column;
-    padding-top: 65px; /* Taller utility bar on mobile */
+    padding-top: 70px; /* Unified header height */
   }
 
-  .utility-bar {
-    padding: 0.5rem 1rem;
+  .site-header {
     height: auto;
-    min-height: 65px;
+    min-height: 70px;
+    padding: 0.75rem 1rem;
     flex-wrap: wrap;
-    align-items: flex-start;
   }
 
-  .utility-left {
-    order: 1;
-    gap: 0;
-    font-size: 0.85rem;
-    width: auto;
-    flex: 0 0 auto;
+  .header-brand {
+    font-size: 1.5rem;
   }
 
-  .utility-right {
-    order: 2;
-    margin-left: auto;
+  .header-right {
+    gap: 1rem;
+    flex-wrap: wrap;
   }
 
-  .utility-welcome {
-    font-size: 0.9rem;
-    font-weight: 700;
-  }
-
-  .utility-datetime {
-    order: 3;
-    font-size: 0.7rem;
+  .header-datetime {
+    font-size: 0.75rem;
     width: 100%;
-    margin-top: 0.35rem;
-    padding-left: 0;
-    opacity: 0.7;
+    order: 3;
+    margin-top: 0.5rem;
+  }
+
+  .header-nav {
+    gap: 0.25rem;
+  }
+
+  .btn-header-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
   }
 
   .shopping-sidebar {
@@ -280,11 +269,6 @@ body {
     border-top: 3px solid rgba(156,175,136,0.2);
     order: 2;
     box-shadow: 0 -4px 20px rgba(156,175,136,0.12);
-  }
-
-  .shopping-sidebar::before {
-    top: auto;
-    bottom: 1rem;
   }
 
   .main-content {
@@ -325,45 +309,6 @@ body {
   font-style: italic;
 }
 
-/* ---------------------------------------------------
-   HEADER - Cottagecore - FULL WIDTH, CENTERED
---------------------------------------------------- */
-.site-header {
-  position: fixed;
-  top: 45px; /* Below utility bar */
-  left: 0;
-  right: 0;
-  width: 100%;
-  padding: 2rem 0;
-  background: var(--color-card-bg);
-  border-bottom: 3px solid #B8E3E9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 16px rgba(156,175,136,0.08);
-  z-index: 50;
-  min-height: 120px; /* Set minimum height for consistency */
-}
-
-.header-title {
-  text-align: center;
-}
-
-.header-title h1 {
-  font-size: 4rem;
-  margin-bottom: 0.3rem;
-  font-family: "Libre Baskerville", Georgia, serif;
-  color: #A47DAB;
-  letter-spacing: 0.5px;
-}
-
-.header-tagline {
-  font-size: 1.5rem;
-  opacity: 0.75;
-  color: #9CAF88;
-  font-style: italic;
-  font-weight: 500;
-}
 
 /* ---------------------------------------------------
    HERO - Cottagecore
