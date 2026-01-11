@@ -429,17 +429,10 @@
           return;
         }
 
-        console.log('renderRecipeLedger called');
-        console.log('window.recipes:', window.recipes);
-        console.log('typeof window.recipes:', typeof window.recipes);
-
         if (!window.recipes || window.recipes.length === 0) {
-          console.log('No recipes to display - window.recipes is', window.recipes);
           tabsContainer.innerHTML = '<p style="padding: 1rem; color: #999; font-style: italic;">No recipes yet. Click the + button to add your first recipe!</p>';
           return;
         }
-
-        console.log('Rendering', window.recipes.length, 'recipes');
 
         // Clear existing tabs
         tabsContainer.innerHTML = '';
@@ -576,39 +569,19 @@
       let lastRecipesLength = 0;
 
       function refreshAllData() {
-        console.log('Refreshing all data...');
         if (window.renderPantryTable) window.renderPantryTable();
         if (window.renderRecipeLedger) window.renderRecipeLedger();
       }
-
-      // Fast polling of data arrays
-      setInterval(function() {
-        if (window.pantry && window.pantry.length !== lastPantryLength) {
-          lastPantryLength = window.pantry.length;
-          console.log('Pantry array changed:', window.pantry.length, 'items');
-          refreshAllData();
-        }
-
-        if (window.recipes && window.recipes.length !== lastRecipesLength) {
-          lastRecipesLength = window.recipes.length;
-          console.log('Recipes array changed:', window.recipes.length, 'recipes');
-          refreshAllData();
-        }
-      }, 200);
 
       // Watch #recipe-list for when app.js renders to it
       const recipeList = document.getElementById('recipe-list');
       if (recipeList) {
         const recipeObserver = new MutationObserver(function(mutations) {
-          console.log('recipe-list DOM changed, refreshing...');
-          console.log('recipe-list innerHTML length:', recipeList.innerHTML.length);
-          console.log('recipe-list children:', recipeList.children.length);
           setTimeout(refreshAllData, 50);
         });
         recipeObserver.observe(recipeList, {
           childList: true,
-          subtree: true,
-          attributes: true
+          subtree: false // Only watch direct children, not deep tree
         });
       }
 
@@ -616,44 +589,28 @@
       const pantryDisplay = document.getElementById('pantry-display');
       if (pantryDisplay) {
         const pantryObserver = new MutationObserver(function(mutations) {
-          console.log('pantry-display DOM changed, refreshing...');
           setTimeout(refreshAllData, 50);
         });
         pantryObserver.observe(pantryDisplay, {
           childList: true,
-          subtree: true,
-          attributes: true
+          subtree: false // Only watch direct children, not deep tree
         });
       }
 
-      // Watch modal root for when modals close
+      // Watch modal root for when modals close (triggers data reload)
       const modalRoot = document.getElementById('modal-root');
       if (modalRoot) {
         const modalObserver = new MutationObserver(function(mutations) {
           const hasModal = modalRoot.querySelector('.modal-overlay');
           if (!hasModal && mutations.length > 0) {
-            console.log('Modal closed, refreshing...');
             setTimeout(refreshAllData, 100);
           }
         });
-        modalObserver.observe(modalRoot, { childList: true, subtree: true });
+        modalObserver.observe(modalRoot, { childList: true });
       }
 
-      // Multiple initial render attempts
-      setTimeout(function() {
-        console.log('=== Initial render attempt 1 (1s) ===');
-        refreshAllData();
-      }, 1000);
-
-      setTimeout(function() {
-        console.log('=== Initial render attempt 2 (2s) ===');
-        refreshAllData();
-      }, 2000);
-
-      setTimeout(function() {
-        console.log('=== Initial render attempt 3 (3s) ===');
-        refreshAllData();
-      }, 3000);
+      // Initial render after data loads
+      setTimeout(refreshAllData, 1500);
     });
   </script>
 
