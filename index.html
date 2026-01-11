@@ -90,9 +90,8 @@
         <span id="utility-date">SUN, JAN 11, 08:41 AM</span>
       </div>
       <nav class="header-nav">
-        <button class="btn-header-icon" id="btn-clipboard" title="Dashboard">📋</button>
         <button class="btn-header-icon" id="btn-household" title="Accounts & Households">📁</button>
-        <button class="btn-header-icon" id="btn-stats" title="Statistics">📊</button>
+        <button class="btn-header-icon" id="btn-stats" title="Dashboard & Stats">📊</button>
         <button class="btn-header-icon" id="btn-settings" title="Settings">⚙️</button>
       </nav>
     </div>
@@ -318,18 +317,19 @@
       // HEADER ICON WIRING
       // ===========================================
 
-      // Dashboard modal (📋)
-      const dashboardBtn = document.getElementById('btn-clipboard');
       const dashboardModal = document.getElementById('dashboard-modal');
       const dashboardClose = document.getElementById('dashboard-modal-close');
       const dashboardOverlay = document.querySelector('.dashboard-modal-overlay');
 
-      if (dashboardBtn && dashboardModal) {
-        dashboardBtn.addEventListener('click', function() {
+      // Stats icon (📊) - opens dashboard
+      const statsBtn = document.getElementById('btn-stats');
+      if (statsBtn && dashboardModal) {
+        statsBtn.addEventListener('click', function() {
           dashboardModal.style.display = 'block';
         });
       }
 
+      // Close dashboard modal
       if (dashboardClose) {
         dashboardClose.addEventListener('click', function() {
           dashboardModal.style.display = 'none';
@@ -344,24 +344,13 @@
         });
       }
 
-      // Household/Settings (📁) - trigger the signin/settings functionality
+      // Household/Settings icon (📁) - opens household settings
       const householdBtn = document.getElementById('btn-household');
       if (householdBtn) {
         householdBtn.addEventListener('click', function() {
-          // Trigger the existing signin button which opens settings
           const signinBtn = document.getElementById('btn-signin');
           if (signinBtn) {
             signinBtn.click();
-          }
-        });
-      }
-
-      // Stats (📊) - for now, show dashboard
-      const statsBtn = document.getElementById('btn-stats');
-      if (statsBtn) {
-        statsBtn.addEventListener('click', function() {
-          if (dashboardModal) {
-            dashboardModal.style.display = 'block';
           }
         });
       }
@@ -536,15 +525,13 @@
         if (deleteBtn) {
           deleteBtn.onclick = function() {
             if (!currentDisplayedRecipe || !currentDisplayedRecipe.id) {
-              console.error('No recipe ID to delete');
-              alert('Cannot delete: Recipe ID not found');
+              console.error('No recipe to delete');
+              alert('Cannot delete: Recipe not loaded');
               return;
             }
-            if (confirm(`Delete "${currentDisplayedRecipe.name}"? This cannot be undone.`)) {
-              if (window.deleteRecipe) {
-                console.log('Deleting recipe with ID:', currentDisplayedRecipe.id);
-                window.deleteRecipe(currentDisplayedRecipe.id);
-              }
+            // Pass the full recipe object - app.js handles the confirmation dialog
+            if (window.deleteRecipe) {
+              window.deleteRecipe(currentDisplayedRecipe);
             }
           };
         }
