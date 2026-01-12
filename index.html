@@ -6,7 +6,6 @@
   <meta name="version" content="2.5">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- CSS + JS will be added later -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Supabase Client -->
@@ -24,26 +23,34 @@
   <aside class="shopping-sidebar" id="shopping-sidebar">
 
     <!-- MASTER PANTRY SECTION -->
-    <section class="sidebar-section pantry-section">
+    <section class="sidebar-section pantry-section" id="pantry-section">
       <div class="sidebar-header">
         <h2>MASTER PANTRY</h2>
       </div>
 
-      <div class="pantry-table-container">
-        <table class="pantry-table">
-          <thead>
-            <tr>
-              <th class="pantry-col-item">ITEM</th>
-              <th class="pantry-col-oh">OH</th>
-              <th class="pantry-col-rs">RS</th>
-              <th class="pantry-col-av">AV</th>
-            </tr>
-          </thead>
-          <tbody id="pantry-table-body">
-            <!-- Pantry items will be injected here -->
-          </tbody>
-        </table>
+      <!-- Pantry search and filters -->
+      <div class="pantry-controls">
+        <input type="text" id="pantry-search" placeholder="Search pantry..." class="pantry-search-input">
+        <select id="filter-category" class="pantry-filter-select">
+          <option value="">All categories</option>
+          <option value="Meat">Meat</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Produce">Produce</option>
+          <option value="Pantry">Pantry staples</option>
+          <option value="Frozen">Frozen</option>
+          <option value="Spices">Spices</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="sort-pantry" class="pantry-sort-select">
+          <option value="alpha">A-Z</option>
+          <option value="lowStock">Low Stock First</option>
+          <option value="expiring">Expiring Soon</option>
+          <option value="recent">Recently Added</option>
+        </select>
       </div>
+
+      <!-- App.js renders pantry items here -->
+      <div id="pantry-display" class="pantry-display"></div>
 
       <button class="btn btn-new-entry" id="btn-new-pantry-entry">
         + NEW ENTRY
@@ -90,6 +97,7 @@
         <span id="utility-date">SUN, JAN 11, 08:41 AM</span>
       </div>
       <nav class="header-nav">
+        <button class="btn-header-icon" id="btn-signin" title="Sign In">👤</button>
         <button class="btn-header-icon" id="btn-household" title="Accounts & Households">📁</button>
         <button class="btn-header-icon" id="btn-stats" title="Dashboard & Stats">📊</button>
         <button class="btn-header-icon" id="btn-settings" title="Settings">⚙️</button>
@@ -100,156 +108,56 @@
   <!-- MAIN CONTENT AREA -->
   <div class="main-content">
 
-  <!-- FLOATING ACTION BUTTON -->
-  <div class="floating-action-menu" id="floating-action-menu">
-    <button class="floating-action-btn" id="floating-action-btn" title="Quick Add">
-      +
-    </button>
-    <div class="floating-action-options" id="floating-action-options">
-      <button class="floating-action-option" id="fab-add-ingredient" title="Add Ingredient">
-        🥬 <span>Add Ingredient</span>
+    <!-- FLOATING ACTION BUTTON -->
+    <div class="floating-action-menu" id="floating-action-menu">
+      <button class="floating-action-btn" id="floating-action-btn" title="Quick Add">
+        +
       </button>
-      <button class="floating-action-option" id="fab-add-recipe" title="Add Recipe">
-        🍳 <span>Add Recipe</span>
-      </button>
-      <button class="floating-action-option" id="fab-add-meal" title="Plan Meal">
-        📅 <span>Plan Meal</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- App.js rendering targets - hidden but functional -->
-  <div style="position: fixed; left: -9999px; opacity: 0; pointer-events: none; z-index: -1;">
-    <div id="pantry-section">
-      <div id="pantry-display"></div>
-      <input id="pantry-search" />
-      <select id="filter-category">
-        <option value="">All categories</option>
-        <option value="Meat">Meat</option>
-        <option value="Dairy">Dairy</option>
-        <option value="Produce">Produce</option>
-        <option value="Pantry">Pantry staples</option>
-        <option value="Frozen">Frozen</option>
-        <option value="Spices">Spices</option>
-        <option value="Other">Other</option>
-      </select>
-      <select id="sort-pantry">
-        <option value="alpha">A-Z</option>
-        <option value="lowStock">Low Stock First</option>
-        <option value="expiring">Expiring Soon</option>
-        <option value="recent">Recently Added</option>
-      </select>
-    </div>
-    <div id="recipes-section">
-      <input id="recipe-search" />
-      <select id="filter-recipe-ready">
-        <option value="">All recipes</option>
-        <option value="ready">Ready to Cook</option>
-        <option value="missing">Missing Ingredients</option>
-      </select>
-      <div id="recipe-list"></div>
-    </div>
-    <button id="btn-signin"></button>
-  </div>
-
-  <!-- COOK NOW SECTION -->
-  <section class="cook-now-section" id="cook-now-section">
-    <!-- Today's planned meals that haven't been cooked -->
-    <div id="today-meals-section"></div>
-
-    <!-- Ready-to-cook recipes (all ingredients available) -->
-    <div id="ready-recipes-section"></div>
-  </section>
-
-  <!-- RECIPE LEDGER INTERFACE -->
-  <section class="recipe-ledger-section" id="recipe-ledger-section">
-
-    <!-- Filter Ledger Search Bar -->
-    <div class="ledger-search-bar">
-      <input
-        type="text"
-        id="ledger-search"
-        class="ledger-search-input"
-        placeholder="Filter Ledger Index..."
-      >
+      <div class="floating-action-options" id="floating-action-options">
+        <button class="floating-action-option" id="fab-add-ingredient" title="Add Ingredient">
+          🥬 <span>Add Ingredient</span>
+        </button>
+        <button class="floating-action-option" id="fab-add-recipe" title="Add Recipe">
+          🍳 <span>Add Recipe</span>
+        </button>
+        <button class="floating-action-option" id="fab-add-meal" title="Plan Meal">
+          📅 <span>Plan Meal</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Recipe Tabs (Index Card Style) -->
-    <div class="recipe-tabs" id="recipe-tabs">
-      <!-- Recipe tabs will be injected here by JS -->
-      <!-- Example:
-      <button class="recipe-tab active" data-recipe-id="123">Sausage & Potatoes</button>
-      <button class="recipe-tab" data-recipe-id="124">Bread</button>
-      -->
-    </div>
+    <!-- COOK NOW SECTION -->
+    <section class="cook-now-section" id="cook-now-section">
+      <!-- Today's planned meals that haven't been cooked -->
+      <div id="today-meals-section"></div>
 
-    <!-- Single Recipe Card Display -->
-    <div class="recipe-card-display" id="recipe-card-display">
-      <!-- Active recipe card will be displayed here -->
-      <div class="recipe-ledger-card">
+      <!-- Ready-to-cook recipes (all ingredients available) -->
+      <div id="ready-recipes-section"></div>
+    </section>
 
-        <!-- Recipe ID -->
-        <div class="recipe-ledger-id">№ <span id="current-recipe-id"></span></div>
-
-        <!-- Recipe Title -->
-        <h1 class="recipe-ledger-title" id="current-recipe-title">No recipe selected</h1>
-
-        <!-- Metadata: Yield & Time -->
-        <div class="recipe-ledger-meta">
-          <span class="recipe-meta-item">
-            <strong>YIELD:</strong> <span id="current-recipe-yield">-</span>
-          </span>
-          <span class="recipe-meta-separator">|</span>
-          <span class="recipe-meta-item">
-            <strong>TIME:</strong> <span id="current-recipe-time">-</span>
-          </span>
-        </div>
-
-        <!-- Two-Column Layout: Ingredients | Method -->
-        <div class="recipe-ledger-content">
-
-          <!-- Left Column: Ingredients -->
-          <div class="recipe-ledger-column">
-            <h3 class="recipe-ledger-heading">INGREDIENTS</h3>
-            <ul class="recipe-ingredients-list" id="current-recipe-ingredients">
-              <!-- Ingredients will be injected here by JavaScript -->
-            </ul>
-          </div>
-
-          <!-- Right Column: Method -->
-          <div class="recipe-ledger-column">
-            <h3 class="recipe-ledger-heading">METHOD</h3>
-            <div class="recipe-method-text" id="current-recipe-method">
-              <!-- Method will be injected here by JavaScript -->
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="recipe-ledger-actions">
-          <button class="btn btn-edit-ledger" id="btn-edit-current-recipe">
-            EDIT LEDGER
-          </button>
-          <button class="btn btn-burn-card" id="btn-delete-current-recipe">
-            [ BURN CARD ]
-          </button>
-        </div>
-
+    <!-- RECIPES SECTION -->
+    <section class="recipes-section" id="recipes-section">
+      <div class="recipes-header">
+        <h2>Recipe Box</h2>
       </div>
 
-      <!-- Empty State (when no recipe selected) -->
-      <div class="recipe-ledger-empty" id="recipe-ledger-empty" style="display: none;">
-        <p>No recipe selected. Use the tabs above or add a new recipe.</p>
+      <!-- Recipe search and filters -->
+      <div class="recipes-controls">
+        <input type="text" id="recipe-search" placeholder="Search recipes..." class="recipe-search-input">
+        <select id="filter-recipe-ready" class="recipe-filter-select">
+          <option value="">All recipes</option>
+          <option value="ready">Ready to Cook</option>
+          <option value="missing">Missing Ingredients</option>
+        </select>
       </div>
 
-    </div>
-
-  </section>
+      <!-- App.js renders recipe cards here -->
+      <div id="recipe-list" class="recipe-list"></div>
+    </section>
 
   </div> <!-- end main-content -->
 
-  <!-- DASHBOARD MODAL (accessible via 📋 icon in header) -->
+  <!-- DASHBOARD MODAL (accessible via 📊 icon in header) -->
   <div id="dashboard-modal" class="dashboard-modal" style="display: none;">
     <div class="dashboard-modal-overlay">
       <div class="dashboard-modal-content">
@@ -292,12 +200,12 @@
         </div>
 
         <!-- TODAY'S MEALS -->
-        <div class="today-meals-section" id="today-meals-section">
+        <div class="today-meals-section" id="today-meals-section-modal">
           <!-- Populated by JS -->
         </div>
 
         <!-- READY TO COOK RECIPES -->
-        <div class="ready-recipes-section" id="ready-recipes-section">
+        <div class="ready-recipes-section" id="ready-recipes-section-modal">
           <!-- Populated by JS -->
         </div>
 
@@ -310,35 +218,24 @@
 
   <!-- MODAL ROOT (unified recipe-card style modals injected here) -->
   <div id="modal-root">
-    <!-- JS will inject:
-         <div class="modal-overlay">
-           <div class="modal-card modal-card-horizontal">...</div>
-         </div>
-    -->
+    <!-- JS will inject modals here -->
   </div>
 
-  <!-- Redesign Bridge Script - Connects app.js with new visual design -->
+  <!-- Simple header icon wiring -->
   <script>
-    // COMPREHENSIVE BRIDGE SCRIPT FOR NEW DESIGN
     document.addEventListener('DOMContentLoaded', function() {
-
-      // ===========================================
-      // HEADER ICON WIRING
-      // ===========================================
-
+      // Stats icon opens dashboard
+      const statsBtn = document.getElementById('btn-stats');
       const dashboardModal = document.getElementById('dashboard-modal');
       const dashboardClose = document.getElementById('dashboard-modal-close');
       const dashboardOverlay = document.querySelector('.dashboard-modal-overlay');
 
-      // Stats icon (📊) - opens dashboard
-      const statsBtn = document.getElementById('btn-stats');
       if (statsBtn && dashboardModal) {
         statsBtn.addEventListener('click', function() {
           dashboardModal.style.display = 'block';
         });
       }
 
-      // Close dashboard modal
       if (dashboardClose) {
         dashboardClose.addEventListener('click', function() {
           dashboardModal.style.display = 'none';
@@ -352,274 +249,6 @@
           }
         });
       }
-
-      // Household/Settings icon (📁) - opens household settings
-      const householdBtn = document.getElementById('btn-household');
-      if (householdBtn) {
-        householdBtn.addEventListener('click', function() {
-          const signinBtn = document.getElementById('btn-signin');
-          if (signinBtn) {
-            signinBtn.click();
-          }
-        });
-      }
-
-      // ===========================================
-      // PANTRY TABLE RENDERER
-      // ===========================================
-
-      // Function to extract data from app.js and populate Master Pantry table
-      window.renderPantryTable = function() {
-        const tbody = document.getElementById('pantry-table-body');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        // Extract data from app.js's rendered #pantry-display
-        const pantryDisplay = document.getElementById('pantry-display');
-        if (!pantryDisplay) return;
-
-        const pantryItems = pantryDisplay.querySelectorAll('.pantry-item');
-        const itemsToShow = Array.from(pantryItems).slice(0, 20);
-
-        itemsToShow.forEach(itemCard => {
-          const tr = document.createElement('tr');
-
-          // Extract name and quantities from app.js's rendered HTML
-          const name = itemCard.querySelector('.pantry-item-header strong')?.textContent || '';
-
-          // Find the three quantity sections in order: On Hand, Reserved, Available
-          const qtyValues = itemCard.querySelectorAll('.pantry-qty-value');
-          const parseQty = (el) => {
-            if (!el) return 0;
-            const match = el.textContent.match(/^([\d.]+)/);
-            return match ? parseFloat(match[1]) : 0;
-          };
-
-          const onHand = qtyValues[0] ? parseQty(qtyValues[0]) : 0;
-          const reserved = qtyValues[1] ? parseQty(qtyValues[1]) : 0;
-          const available = qtyValues[2] ? parseQty(qtyValues[2]) : 0;
-
-          tr.innerHTML = `
-            <td>${name}</td>
-            <td>${Math.round(onHand)}</td>
-            <td>${Math.round(reserved)}</td>
-            <td style="color: ${available >= 1 ? '#8B9376' : '#C86B6B'}; font-weight: 600;">${Math.round(available)}</td>
-          `;
-
-          // Make row clickable - trigger app.js's click handler on original card
-          tr.style.cursor = 'pointer';
-          tr.addEventListener('click', function() {
-            itemCard.click();
-          });
-
-          tbody.appendChild(tr);
-        });
-
-        // If no items
-        if (itemsToShow.length === 0) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = '<td colspan="4" style="text-align: center; opacity: 0.6; padding: 1rem;">No pantry items yet</td>';
-          tbody.appendChild(tr);
-        }
-      };
-
-      // ===========================================
-      // RECIPE LEDGER RENDERER
-      // ===========================================
-
-      // Function to render recipes as tabs and cards
-      window.renderRecipeLedger = function() {
-        const tabsContainer = document.getElementById('recipe-tabs');
-        const cardDisplay = document.getElementById('recipe-card-display');
-
-        if (!tabsContainer) {
-          console.warn('Recipe tabs container not found');
-          return;
-        }
-
-        if (!window.recipes || window.recipes.length === 0) {
-          tabsContainer.innerHTML = '<p style="padding: 1rem; color: #999; font-style: italic;">No recipes yet. Click the + button to add your first recipe!</p>';
-          return;
-        }
-
-        // Clear existing tabs
-        tabsContainer.innerHTML = '';
-
-        // Create tabs for each recipe
-        window.recipes.forEach((recipe, index) => {
-          const tab = document.createElement('button');
-          tab.className = 'recipe-tab';
-          if (index === 0) tab.classList.add('active');
-          tab.textContent = recipe.name;
-          tab.setAttribute('data-recipe-id', recipe.id);
-
-          tab.addEventListener('click', function() {
-            // Update active tab
-            document.querySelectorAll('.recipe-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            // Display this recipe
-            displayRecipeCard(recipe);
-          });
-
-          tabsContainer.appendChild(tab);
-        });
-
-        // Display first recipe
-        if (window.recipes.length > 0) {
-          displayRecipeCard(window.recipes[0]);
-        }
-      };
-
-      // Store current recipe globally for button handlers
-      let currentDisplayedRecipe = null;
-
-      // Function to display a single recipe in the card
-      function displayRecipeCard(recipe) {
-        if (!recipe) return;
-
-        // Store the current recipe
-        currentDisplayedRecipe = recipe;
-
-        document.getElementById('current-recipe-id').textContent = recipe.id || '';
-        document.getElementById('current-recipe-title').textContent = recipe.name || '';
-        document.getElementById('current-recipe-yield').textContent = recipe.yield || recipe.servings || '4';
-        document.getElementById('current-recipe-time').textContent = recipe.cookTime || recipe.time || '30min';
-
-        // Render ingredients
-        const ingredientsList = document.getElementById('current-recipe-ingredients');
-        if (ingredientsList) {
-          ingredientsList.innerHTML = '';
-          if (recipe.ingredients && recipe.ingredients.length > 0) {
-            recipe.ingredients.forEach(ing => {
-              const li = document.createElement('li');
-              const amount = ing.amount || ing.qty || '';
-              li.textContent = `${amount} ${ing.unit || ''} ${ing.name || ''}`.trim();
-              ingredientsList.appendChild(li);
-            });
-          } else {
-            const li = document.createElement('li');
-            li.textContent = 'No ingredients listed';
-            li.style.opacity = '0.6';
-            ingredientsList.appendChild(li);
-          }
-        }
-
-        // Render method
-        const methodText = document.getElementById('current-recipe-method');
-        if (methodText) {
-          methodText.innerHTML = recipe.method || recipe.instructions || '<p style="opacity: 0.6;">No instructions provided</p>';
-        }
-
-        // Wire up edit button
-        const editBtn = document.getElementById('btn-edit-current-recipe');
-        if (editBtn) {
-          editBtn.onclick = function() {
-            if (window.openRecipeModal && currentDisplayedRecipe) {
-              window.openRecipeModal(currentDisplayedRecipe);
-            }
-          };
-        }
-
-        // Wire up delete button
-        const deleteBtn = document.getElementById('btn-delete-current-recipe');
-        if (deleteBtn) {
-          deleteBtn.onclick = function() {
-            if (!currentDisplayedRecipe || !currentDisplayedRecipe.id) {
-              console.error('No recipe to delete');
-              alert('Cannot delete: Recipe not loaded');
-              return;
-            }
-            // Pass the full recipe object - app.js handles the confirmation dialog
-            if (window.deleteRecipe) {
-              window.deleteRecipe(currentDisplayedRecipe);
-            }
-          };
-        }
-      }
-
-      // ===========================================
-      // LEDGER SEARCH FILTER
-      // ===========================================
-
-      const ledgerSearch = document.getElementById('ledger-search');
-      if (ledgerSearch) {
-        ledgerSearch.addEventListener('input', function(e) {
-          const query = e.target.value.toLowerCase();
-          document.querySelectorAll('.recipe-tab').forEach(tab => {
-            const text = tab.textContent.toLowerCase();
-            tab.style.display = text.includes(query) ? '' : 'none';
-          });
-        });
-      }
-
-      // ===========================================
-      // NEW PANTRY ENTRY BUTTON
-      // ===========================================
-
-      const newPantryBtn = document.getElementById('btn-new-pantry-entry');
-      if (newPantryBtn) {
-        newPantryBtn.addEventListener('click', function() {
-          // Trigger the existing FAB add ingredient button
-          const fabIngredient = document.getElementById('fab-add-ingredient');
-          if (fabIngredient) {
-            fabIngredient.click();
-          }
-        });
-      }
-
-      // ===========================================
-      // MONITOR APP.JS CHANGES - COMPREHENSIVE
-      // ===========================================
-
-      // Watch for changes to pantry and recipes arrays
-      let lastPantryLength = 0;
-      let lastRecipesLength = 0;
-
-      function refreshAllData() {
-        if (window.renderPantryTable) window.renderPantryTable();
-        if (window.renderRecipeLedger) window.renderRecipeLedger();
-      }
-
-      // Watch #recipe-list for when app.js renders to it
-      const recipeList = document.getElementById('recipe-list');
-      if (recipeList) {
-        const recipeObserver = new MutationObserver(function(mutations) {
-          setTimeout(refreshAllData, 50);
-        });
-        recipeObserver.observe(recipeList, {
-          childList: true,
-          subtree: false // Only watch direct children, not deep tree
-        });
-      }
-
-      // Watch #pantry-display for when app.js renders to it
-      const pantryDisplay = document.getElementById('pantry-display');
-      if (pantryDisplay) {
-        const pantryObserver = new MutationObserver(function(mutations) {
-          setTimeout(refreshAllData, 50);
-        });
-        pantryObserver.observe(pantryDisplay, {
-          childList: true,
-          subtree: false // Only watch direct children, not deep tree
-        });
-      }
-
-      // Watch modal root for when modals close (triggers data reload)
-      const modalRoot = document.getElementById('modal-root');
-      if (modalRoot) {
-        const modalObserver = new MutationObserver(function(mutations) {
-          const hasModal = modalRoot.querySelector('.modal-overlay');
-          if (!hasModal && mutations.length > 0) {
-            setTimeout(refreshAllData, 100);
-          }
-        });
-        modalObserver.observe(modalRoot, { childList: true });
-      }
-
-      // Initial render after data loads
-      setTimeout(refreshAllData, 1500);
     });
   </script>
 

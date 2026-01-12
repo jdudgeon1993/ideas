@@ -245,6 +245,42 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Pantry Controls */
+.pantry-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.pantry-search-input,
+.pantry-filter-select,
+.pantry-sort-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(197,184,165,0.3);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  color: var(--color-text-primary);
+  font-family: inherit;
+}
+
+.pantry-search-input:focus,
+.pantry-filter-select:focus,
+.pantry-sort-select:focus {
+  outline: none;
+  border-color: var(--color-accent-olive);
+}
+
+/* Pantry Display Container */
+.pantry-display {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+}
+
 /* New Entry Button */
 .btn-new-entry {
   width: 100%;
@@ -898,64 +934,65 @@ body {
 }
 
 /* ---------------------------------------------------
-   RECIPE LEDGER INTERFACE
+   RECIPES SECTION
 --------------------------------------------------- */
-.recipe-ledger-section {
+.recipes-section {
   padding: 1.5rem;
   max-width: 1300px;
   margin: 0 auto;
 }
 
-/* Filter Ledger Search Bar */
-.ledger-search-bar {
-  margin-bottom: 1rem;
+.recipes-header {
+  margin-bottom: 1.5rem;
 }
 
-.ledger-search-input {
-  width: 100%;
-  max-width: 500px;
+.recipes-header h2 {
+  font-size: 2rem;
+  color: var(--color-text-primary);
+  font-family: "Libre Baskerville", Georgia, serif;
+  margin: 0;
+}
+
+/* Recipe Controls */
+.recipes-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.recipe-search-input,
+.recipe-filter-select {
   padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  border: 2px solid var(--color-accent-olive);
+  border: 2px solid var(--color-recipe-border);
   border-radius: 8px;
+  font-size: 0.95rem;
   background: white;
   color: var(--color-text-primary);
-  font-family: "Lato", sans-serif;
-  transition: all 0.2s;
+  font-family: inherit;
 }
 
-.ledger-search-input:focus {
+.recipe-search-input {
+  flex: 1;
+  min-width: 250px;
+}
+
+.recipe-filter-select {
+  min-width: 180px;
+}
+
+.recipe-search-input:focus,
+.recipe-filter-select:focus {
   outline: none;
-  border-color: var(--color-header-purple);
-  box-shadow: 0 4px 16px rgba(125,102,122,0.15);
-}
-
-/* Recipe Tabs (Index Card Style) */
-.recipe-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-}
-
-.recipe-tab {
-  padding: 0.75rem 1.5rem;
-  background: var(--color-pantry-row);
-  border: 2px solid var(--color-recipe-border);
-  border-radius: 8px 8px 0 0;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  font-family: "Lato", sans-serif;
-}
-
-.recipe-tab:hover {
-  background: var(--color-card-bg);
   border-color: var(--color-accent-olive);
+}
+
+/* Recipe List Grid */
+.recipe-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
 }
 
 .recipe-tab.active {
