@@ -23,10 +23,10 @@ body {
   /* Green and white gingham background */
   background-color: #FFFFFF;
   background-image:
-    linear-gradient(45deg, #C8E6C9 25%, transparent 25%),
-    linear-gradient(-45deg, #C8E6C9 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #C8E6C9 75%),
-    linear-gradient(-45deg, transparent 75%, #C8E6C9 75%);
+    linear-gradient(45deg, #7D8F6926 25%, transparent 25%),
+    linear-gradient(-45deg, #7D8F6926 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #7D8F6926 75%),
+    linear-gradient(-45deg, transparent 75%, #7D8F6926 75%);
   background-size: 60px 60px;
   background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
   background-attachment: fixed;
