@@ -152,14 +152,15 @@ body {
    DUAL-PURPOSE SIDEBAR: Master Pantry + Shopping List
 --------------------------------------------------- */
 .shopping-sidebar {
-  position: absolute;
+  position: sticky;
   left: 25px;
   top: 100px; /* Start below unified header */
   width: 340px;
-  height: calc(90dvh);
+  height: calc(80dvh);
   background: var(--color-card-bg);
   border-right: 2px solid rgba(139,147,118,0.3);
   box-shadow: 3px 0 20px rgba(0,0,0,0.08);
+  
   display: flex;
   flex-direction: column;
   overflow-y: auto;
