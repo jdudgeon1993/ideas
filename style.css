@@ -41,23 +41,18 @@ html {
 }
 
 body {
-  font-family: "Lato", -apple-system  BlinkMacSystemFont, sans-serif;
     background: var(--warm-white);
     background-image: 
         /* The Vertical Stripes */
         linear-gradient(90deg, var(--gingham-green) 50%, transparent 50%), 
         /* The Horizontal Stripes */
-  linear-gradient(var(--gingham-green) 50%, transparent 50%);
-  background-attachment: fixed;
-  color: var(--color-text-primary);
-  line-height: 1.65;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  min-height: 100vh;
-  position: relative;
-  padding-top: 70px; /* Space for unified header */
+        linear-gradient(var(--gingham-green) 50%, transparent 50%);
+    
+    /* This controls the "tightness" of the pattern (50px squares) */
+    background-size: 50px 50px; 
+    background-attachment: fixed;
 }
+
 
 /* ---------------------------------------------------
    UNIFIED PURPLE HEADER BAR
