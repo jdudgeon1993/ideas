@@ -1054,10 +1054,11 @@ body {
 /* Recipe Stack Container */
 .recipe-card-stack-container {
   position: relative;
-  max-width: 1000px;
+  max-width: 750px;
   margin: 0 auto;
   perspective: 1500px;
-  min-height: 600px;
+  min-height: 500px;
+  padding-bottom: 2rem;
 }
 
 /* Stack Effect - Back Cards (Visual Only) */
@@ -1066,7 +1067,7 @@ body {
 .recipe-card-stack-back-1 {
   position: absolute;
   width: 100%;
-  height: 580px;
+  height: 480px;
   background: var(--color-card-bg);
   border: 2px solid var(--color-recipe-border);
   border-radius: 12px;
@@ -1075,26 +1076,26 @@ body {
 }
 
 .recipe-card-stack-back-3 {
-  top: 12px;
+  top: 18px;
   left: 50%;
-  transform: translateX(-50%) scale(0.94);
-  opacity: 0.3;
+  transform: translateX(-50%) scale(0.92);
+  opacity: 0.4;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .recipe-card-stack-back-2 {
-  top: 8px;
+  top: 12px;
   left: 50%;
-  transform: translateX(-50%) scale(0.97);
-  opacity: 0.5;
+  transform: translateX(-50%) scale(0.95);
+  opacity: 0.6;
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
 }
 
 .recipe-card-stack-back-1 {
-  top: 4px;
+  top: 6px;
   left: 50%;
-  transform: translateX(-50%) scale(0.99);
-  opacity: 0.7;
+  transform: translateX(-50%) scale(0.98);
+  opacity: 0.8;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 }
 
@@ -1105,8 +1106,8 @@ body {
   background: var(--color-card-bg);
   border: 2px solid var(--color-recipe-border);
   border-radius: 12px;
-  padding: 2.5rem;
-  min-height: 580px;
+  padding: 2rem;
+  min-height: 480px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
 }
@@ -2872,18 +2873,19 @@ body {
   }
 }
 
-/* Mobile: All modals use bottom sheet style */
+/* Mobile: Center modals on viewport */
 @media (max-width: 768px) {
   .modal-overlay,
   .modal-overlay-slideout {
-    align-items: flex-end;
+    align-items: center;
+    padding: 1rem;
   }
 
   .modal-card,
   .modal-card-slideout {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 20px 20px 0 0;
+    width: 95%;
+    max-width: 95%;
+    border-radius: 16px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;

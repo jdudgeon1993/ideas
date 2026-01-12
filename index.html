@@ -136,7 +136,7 @@
     <!-- MASTER PANTRY SECTION -->
     <section class="pantry-section" id="pantry-section">
       <div class="pantry-header">
-        <h2>MASTER PANTRY LEDGER</h2>
+        <h2>PANTRY LEDGER</h2>
       </div>
 
       <!-- Pantry search and filters -->
@@ -270,13 +270,17 @@
           return;
         }
 
-        filteredRecipes.forEach((recipe, index) => {
+        // Sort tabs A-Z for easy viewing
+        const sortedRecipes = [...filteredRecipes].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedRecipes.forEach((recipe, index) => {
           const tab = document.createElement('button');
           tab.className = 'recipe-index-tab';
-          if (index === currentRecipeIndex) tab.classList.add('active');
+          if (recipe.id === filteredRecipes[currentRecipeIndex]?.id) tab.classList.add('active');
           tab.textContent = recipe.name;
           tab.onclick = () => {
-            currentRecipeIndex = index;
+            // Find the index in the unsorted filteredRecipes array
+            currentRecipeIndex = filteredRecipes.findIndex(r => r.id === recipe.id);
             renderCurrentRecipe();
             renderIndexTabs();
           };
@@ -374,25 +378,41 @@
         });
       }
 
-      // Watch for recipe changes
-      let lastRecipeCount = 0;
-      setInterval(() => {
-        if (window.recipes && window.recipes.length !== lastRecipeCount) {
-          lastRecipeCount = window.recipes.length;
+      // Watch for recipe changes using MutationObserver
+      function setupRecipeObserver() {
+        const recipeList = document.getElementById('recipe-list');
+        if (!recipeList) {
+          setTimeout(setupRecipeObserver, 500);
+          return;
+        }
+
+        // Observe changes to #recipe-list (app.js renders here)
+        const observer = new MutationObserver(() => {
+          // When app.js updates the hidden recipe list, re-render our stack
           filteredRecipes = [...window.recipes];
           if (currentRecipeIndex >= filteredRecipes.length) {
             currentRecipeIndex = Math.max(0, filteredRecipes.length - 1);
           }
           renderIndexTabs();
           renderCurrentRecipe();
-        }
-      }, 1000);
+        });
+
+        observer.observe(recipeList, {
+          childList: true,
+          subtree: true,
+          characterData: true
+        });
+      }
 
       // Initialize when DOM is ready
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initRecipeStackView);
+        document.addEventListener('DOMContentLoaded', () => {
+          initRecipeStackView();
+          setupRecipeObserver();
+        });
       } else {
         initRecipeStackView();
+        setupRecipeObserver();
       }
     })();
   </script>
@@ -554,6 +574,7 @@
                       <th class="ledger-col-qty">OH</th>
                       <th class="ledger-col-qty">RS</th>
                       <th class="ledger-col-qty">AVAIL</th>
+                      <th class="ledger-col-qty">MIN</th>
                       <th class="ledger-col-locations">LOCATIONS</th>
                       <th class="ledger-col-expiry">EXPIRY</th>
                       <th class="ledger-col-actions">ACTIONS</th>
@@ -642,6 +663,7 @@
             <td class="ledger-qty">${item.totalQty} ${item.unit}</td>
             <td class="ledger-qty">${reservedQty} ${item.unit}</td>
             <td class="ledger-qty ${availClass}">${available} ${item.unit}</td>
+            <td class="ledger-qty">${item.min || 0} ${item.unit}</td>
             <td class="ledger-locations">${locationsHTML || '-'}</td>
             <td class="ledger-expiry ${expiryClass}">${expiryHTML}</td>
             <td class="ledger-actions">
@@ -707,20 +729,36 @@
         }
       }
 
-      // Watch for pantry changes
-      let lastPantryCount = 0;
-      setInterval(() => {
-        if (window.pantry && window.pantry.length !== lastPantryCount) {
-          lastPantryCount = window.pantry.length;
-          renderPantryLedger();
+      // Watch for pantry changes using MutationObserver
+      function setupPantryObserver() {
+        const pantryDisplay = document.getElementById('pantry-display');
+        if (!pantryDisplay) {
+          setTimeout(setupPantryObserver, 500);
+          return;
         }
-      }, 1000);
+
+        // Observe changes to #pantry-display (app.js renders here)
+        const observer = new MutationObserver(() => {
+          // When app.js updates the hidden pantry display, re-render our table
+          renderPantryLedger();
+        });
+
+        observer.observe(pantryDisplay, {
+          childList: true,
+          subtree: true,
+          characterData: true
+        });
+      }
 
       // Initialize when DOM is ready
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initPantryLedger);
+        document.addEventListener('DOMContentLoaded', () => {
+          initPantryLedger();
+          setupPantryObserver();
+        });
       } else {
         initPantryLedger();
+        setupPantryObserver();
       }
     })();
   </script>
