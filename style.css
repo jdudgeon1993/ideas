@@ -19,17 +19,20 @@ html {
 }
 
 body {
- margin: 0; 
-    font-family: "Palatino", serif; 
-    color: var(--text-dark);
-    background: var(--warm-white);
-    background-image: 
-        linear-gradient(90deg, var(--gingham-green) 50%, transparent 50%), 
-        linear-gradient(var(--gingham-green) 50%, transparent 50%);
-    /* Shrink this number to make the squares smaller */
-    background-size: 20px 20px; 
-    background-attachment: fixed;
-    perspective: 1500px;
+  font-family: "Lato", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Green and white gingham background */
+  background-color: #FFFFFF;
+  background-image:
+    linear-gradient(45deg, #C8E6C9 25%, transparent 25%),
+    linear-gradient(-45deg, #C8E6C9 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #C8E6C9 75%),
+    linear-gradient(-45deg, transparent 75%, #C8E6C9 75%);
+  background-size: 60px 60px;
+  background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+  line-height: 1.65;
+  margin: 0;
   padding: 0;
   display: flex;
   min-height: 100vh;
@@ -1776,7 +1779,11 @@ body {
     padding: 0.85rem;
   }
 
-  /* Gingham background remains consistent on mobile */
+  /* Optimize gingham background for small screens */
+  body {
+    background-size: 40px 40px;
+    background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
+  }
 
   /* Touch targets */
   .btn,
