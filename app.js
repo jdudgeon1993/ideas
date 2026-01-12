@@ -1197,16 +1197,27 @@ async function deleteRecipe(recipe) {
     return;
   }
 
-  // Remove recipe from recipes array
-  recipes = recipes.filter(r => r.id !== recipe.id);
-  saveRecipes();
-
-  // Delete from database if authenticated
+  // Delete from database FIRST (if authenticated)
   if (window.db && window.auth && window.auth.isAuthenticated()) {
-    await window.db.deleteRecipe(recipe.id).catch(err => {
+    try {
+      await window.db.deleteRecipe(recipe.id);
+    } catch (err) {
       console.error('Error deleting recipe from database:', err);
-    });
+
+      // Check if it's a foreign key error (recipe is in meal plan)
+      if (err.code === '23503' || (err.message && err.message.includes('meal_plans'))) {
+        alert(`Cannot delete "${recipe.name}" because it's planned in your meal planner.\n\nPlease remove it from your meal plan first, then try deleting again.`);
+      } else {
+        alert(`Error deleting recipe: ${err.message || 'Unknown error'}`);
+      }
+      return; // Don't delete locally if database delete failed
+    }
   }
+
+  // If database delete succeeded (or offline mode), remove from local arrays
+  recipes = recipes.filter(r => r.id !== recipe.id);
+  window.recipes = recipes; // Update window reference
+  saveRecipes();
 
   // Remove from all planned meals
   Object.keys(planner).forEach(dateStr => {

@@ -249,6 +249,26 @@
           }
         });
       }
+
+      // Household icon opens settings (since it's account/household settings)
+      const householdBtn = document.getElementById('btn-household');
+      if (householdBtn) {
+        householdBtn.addEventListener('click', function() {
+          if (window.openSettingsModal) {
+            window.openSettingsModal();
+          }
+        });
+      }
+
+      // New Pantry Entry button
+      const btnNewPantryEntry = document.getElementById('btn-new-pantry-entry');
+      if (btnNewPantryEntry) {
+        btnNewPantryEntry.addEventListener('click', function() {
+          if (window.openIngredientModal) {
+            window.openIngredientModal(null);
+          }
+        });
+      }
     });
   </script>
 
