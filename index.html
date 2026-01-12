@@ -136,13 +136,13 @@
     <!-- MASTER PANTRY SECTION -->
     <section class="pantry-section" id="pantry-section">
       <div class="pantry-header">
-        <h2>MASTER PANTRY</h2>
+        <h2>MASTER PANTRY LEDGER</h2>
       </div>
 
       <!-- Pantry search and filters -->
       <div class="pantry-controls">
-        <input type="text" id="pantry-search" placeholder="Search pantry..." class="pantry-search-input">
-        <select id="filter-category" class="pantry-filter-select">
+        <input type="text" id="pantry-search-ledger" placeholder="Search ingredients..." class="pantry-search-input">
+        <select id="filter-category-ledger" class="pantry-filter-select">
           <option value="">All categories</option>
           <option value="Meat">Meat</option>
           <option value="Dairy">Dairy</option>
@@ -152,7 +152,7 @@
           <option value="Spices">Spices</option>
           <option value="Other">Other</option>
         </select>
-        <select id="sort-pantry" class="pantry-sort-select">
+        <select id="sort-pantry-ledger" class="pantry-sort-select">
           <option value="alpha">A-Z</option>
           <option value="lowStock">Low Stock First</option>
           <option value="expiring">Expiring Soon</option>
@@ -160,8 +160,13 @@
         </select>
       </div>
 
-      <!-- App.js renders pantry items here -->
-      <div id="pantry-display" class="pantry-display"></div>
+      <!-- Master Pantry Table View -->
+      <div id="pantry-ledger-display" class="pantry-ledger-display">
+        <!-- Categories with tables will be rendered here -->
+      </div>
+
+      <!-- Hidden: App.js renders here (for data only) -->
+      <div id="pantry-display" class="pantry-display" style="display: none;"></div>
 
       <button class="btn btn-new-entry" id="btn-new-pantry-entry">
         + NEW ENTRY
@@ -388,6 +393,334 @@
         document.addEventListener('DOMContentLoaded', initRecipeStackView);
       } else {
         initRecipeStackView();
+      }
+    })();
+  </script>
+
+  <!-- Pantry Ledger Table Script -->
+  <script>
+    (function() {
+      let collapsedCategories = new Set();
+
+      function initPantryLedger() {
+        // Wait for window.pantry to be available
+        if (!window.pantry) {
+          setTimeout(initPantryLedger, 500);
+          return;
+        }
+
+        renderPantryLedger();
+        setupPantrySearch();
+        setupPantryFilters();
+      }
+
+      function renderPantryLedger() {
+        const ledgerDisplay = document.getElementById('pantry-ledger-display');
+        if (!ledgerDisplay) return;
+
+        const searchInput = document.getElementById('pantry-search-ledger');
+        const filterSelect = document.getElementById('filter-category-ledger');
+        const sortSelect = document.getElementById('sort-pantry-ledger');
+
+        const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const selectedCategory = filterSelect ? filterSelect.value : '';
+        const sortBy = sortSelect ? sortSelect.value : 'alpha';
+
+        // Apply filters
+        let filtered = window.pantry || [];
+
+        if (selectedCategory) {
+          filtered = filtered.filter(item => item.category === selectedCategory);
+        }
+
+        if (searchTerm) {
+          filtered = filtered.filter(item =>
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.category.toLowerCase().includes(searchTerm)
+          );
+        }
+
+        // Sort
+        if (sortBy === 'alpha') {
+          filtered.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (sortBy === 'lowStock') {
+          filtered.sort((a, b) => {
+            const aRatio = a.min > 0 ? a.totalQty / a.min : 999;
+            const bRatio = b.min > 0 ? b.totalQty / b.min : 999;
+            return aRatio - bRatio;
+          });
+        } else if (sortBy === 'expiring') {
+          filtered.sort((a, b) => {
+            const aExpiry = getEarliestExpiry(a);
+            const bExpiry = getEarliestExpiry(b);
+            if (aExpiry === null && bExpiry === null) return 0;
+            if (aExpiry === null) return 1;
+            if (bExpiry === null) return -1;
+            return aExpiry - bExpiry;
+          });
+        } else if (sortBy === 'recent') {
+          filtered = [...filtered].reverse();
+        }
+
+        if (filtered.length === 0) {
+          ledgerDisplay.innerHTML = '<p style="text-align: center; opacity: 0.6; padding: 2rem;">No items to display</p>';
+          return;
+        }
+
+        // Group by category
+        const categories = ['Meat', 'Dairy', 'Produce', 'Pantry', 'Frozen', 'Spices', 'Other'];
+        const grouped = {};
+        categories.forEach(cat => grouped[cat] = []);
+        filtered.forEach(item => {
+          if (grouped[item.category]) {
+            grouped[item.category].push(item);
+          }
+        });
+
+        // Calculate reserved quantities
+        const reserved = window.calculateReservedIngredients ? window.calculateReservedIngredients() : {};
+
+        // Render categories
+        ledgerDisplay.innerHTML = '';
+        categories.forEach(category => {
+          const items = grouped[category];
+          if (items.length === 0) return;
+
+          // Calculate category stats
+          const totalOH = items.reduce((sum, item) => sum + item.totalQty, 0);
+          const lowStockCount = items.filter(item => {
+            const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
+            const reservedQty = reserved[key] || 0;
+            const available = item.totalQty - reservedQty;
+            return available < item.min;
+          }).length;
+          const expiringCount = items.filter(item => {
+            const days = getEarliestExpiry(item);
+            return days !== null && days <= 7;
+          }).length;
+
+          const isCollapsed = collapsedCategories.has(category);
+          const categoryEmoji = getCategoryEmoji(category);
+
+          // Category header
+          const categorySection = document.createElement('div');
+          categorySection.className = 'pantry-ledger-category';
+
+          let alertsHTML = '';
+          let alerts = [];
+          if (expiringCount > 0) alerts.push(`${expiringCount} expiring`);
+          if (lowStockCount > 0) alerts.push(`${lowStockCount} low stock`);
+          if (alerts.length > 0) {
+            alertsHTML = `<span class="ledger-category-alert">${alerts.join(', ')}</span>`;
+          }
+
+          const headerHTML = `
+            <div class="ledger-category-header" data-category="${category}">
+              <div class="ledger-category-left">
+                <span class="ledger-category-icon">${isCollapsed ? '▶' : '▼'}</span>
+                <span class="ledger-category-name">${categoryEmoji} ${category}</span>
+                <span class="ledger-category-count">(${items.length} items)</span>
+              </div>
+              <div class="ledger-category-right">
+                <span class="ledger-category-total">Total OH: ${totalOH.toFixed(1)}</span>
+                ${alertsHTML}
+              </div>
+            </div>
+          `;
+
+          categorySection.innerHTML = headerHTML;
+
+          // Add click handler to header
+          const header = categorySection.querySelector('.ledger-category-header');
+          header.addEventListener('click', () => {
+            if (collapsedCategories.has(category)) {
+              collapsedCategories.delete(category);
+            } else {
+              collapsedCategories.add(category);
+            }
+            renderPantryLedger();
+          });
+
+          ledgerDisplay.appendChild(categorySection);
+
+          // Render table if not collapsed
+          if (!isCollapsed) {
+            const tableHTML = `
+              <div class="ledger-table-container">
+                <table class="ledger-table">
+                  <thead>
+                    <tr>
+                      <th class="ledger-col-item">ITEM</th>
+                      <th class="ledger-col-qty">OH</th>
+                      <th class="ledger-col-qty">RS</th>
+                      <th class="ledger-col-qty">AVAIL</th>
+                      <th class="ledger-col-locations">LOCATIONS</th>
+                      <th class="ledger-col-expiry">EXPIRY</th>
+                      <th class="ledger-col-actions">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${items.map(item => renderTableRow(item, reserved)).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `;
+
+            const tableContainer = document.createElement('div');
+            tableContainer.innerHTML = tableHTML;
+            categorySection.appendChild(tableContainer.firstElementChild);
+
+            // Add event listeners to buttons
+            const rows = categorySection.querySelectorAll('tbody tr');
+            rows.forEach((row, index) => {
+              const item = items[index];
+
+              // Click row to edit
+              row.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                  if (window.openIngredientModal) {
+                    window.openIngredientModal(item);
+                  }
+                }
+              });
+
+              // Quick use button
+              const quickUseBtn = row.querySelector('.btn-quick-use');
+              if (quickUseBtn) {
+                quickUseBtn.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  if (window.openQuickDepleteModal) {
+                    window.openQuickDepleteModal(item);
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+
+      function renderTableRow(item, reserved) {
+        const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
+        const reservedQty = reserved[key] || 0;
+        const available = item.totalQty - reservedQty;
+
+        // Locations display
+        const locationsHTML = item.locations.map(loc => {
+          const locDays = getDaysUntilExpiry(loc.expiry);
+          const expiryText = locDays !== null && locDays <= 7 ? `(${locDays}d)` : '';
+          return `${loc.location}: ${loc.qty}${expiryText}`;
+        }).join(', ');
+
+        // Earliest expiry
+        const expiryDays = getEarliestExpiry(item);
+        let expiryHTML = '-';
+        let expiryClass = '';
+        if (expiryDays !== null) {
+          if (expiryDays < 0) {
+            expiryHTML = `Expired`;
+            expiryClass = 'expiry-expired';
+          } else if (expiryDays === 0) {
+            expiryHTML = `Today!`;
+            expiryClass = 'expiry-today';
+          } else if (expiryDays <= 3) {
+            expiryHTML = `${expiryDays} days`;
+            expiryClass = 'expiry-urgent';
+          } else if (expiryDays <= 7) {
+            expiryHTML = `${expiryDays} days`;
+            expiryClass = 'expiry-soon';
+          } else {
+            expiryHTML = `${expiryDays} days`;
+            expiryClass = 'expiry-ok';
+          }
+        }
+
+        const availClass = available < item.min ? 'qty-low' : '';
+
+        return `
+          <tr class="ledger-row">
+            <td class="ledger-item-name">${item.name}</td>
+            <td class="ledger-qty">${item.totalQty} ${item.unit}</td>
+            <td class="ledger-qty">${reservedQty} ${item.unit}</td>
+            <td class="ledger-qty ${availClass}">${available} ${item.unit}</td>
+            <td class="ledger-locations">${locationsHTML || '-'}</td>
+            <td class="ledger-expiry ${expiryClass}">${expiryHTML}</td>
+            <td class="ledger-actions">
+              <button class="btn-ledger-action btn-quick-use" title="Quick Use">⚡</button>
+            </td>
+          </tr>
+        `;
+      }
+
+      function getEarliestExpiry(item) {
+        let soonest = null;
+        item.locations.forEach(loc => {
+          if (loc.expiry) {
+            const days = getDaysUntilExpiry(loc.expiry);
+            if (days !== null && (soonest === null || days < soonest)) {
+              soonest = days;
+            }
+          }
+        });
+        return soonest;
+      }
+
+      function getDaysUntilExpiry(expiryStr) {
+        if (!expiryStr) return null;
+        const expiry = new Date(expiryStr);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        expiry.setHours(0, 0, 0, 0);
+        const diffTime = expiry - today;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      }
+
+      function getCategoryEmoji(category) {
+        const emojis = {
+          'Meat': '🥩',
+          'Dairy': '🥛',
+          'Produce': '🥬',
+          'Pantry': '🏺',
+          'Frozen': '🧊',
+          'Spices': '🌶️',
+          'Other': '📦'
+        };
+        return emojis[category] || '📦';
+      }
+
+      function setupPantrySearch() {
+        const searchInput = document.getElementById('pantry-search-ledger');
+        if (searchInput) {
+          searchInput.addEventListener('input', renderPantryLedger);
+        }
+      }
+
+      function setupPantryFilters() {
+        const filterSelect = document.getElementById('filter-category-ledger');
+        const sortSelect = document.getElementById('sort-pantry-ledger');
+
+        if (filterSelect) {
+          filterSelect.addEventListener('change', renderPantryLedger);
+        }
+
+        if (sortSelect) {
+          sortSelect.addEventListener('change', renderPantryLedger);
+        }
+      }
+
+      // Watch for pantry changes
+      let lastPantryCount = 0;
+      setInterval(() => {
+        if (window.pantry && window.pantry.length !== lastPantryCount) {
+          lastPantryCount = window.pantry.length;
+          renderPantryLedger();
+        }
+      }, 1000);
+
+      // Initialize when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPantryLedger);
+      } else {
+        initPantryLedger();
       }
     })();
   </script>
