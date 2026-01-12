@@ -19,43 +19,8 @@
 </head>
 <body>
 
-  <!-- DUAL-PURPOSE SIDEBAR: Master Pantry + Shopping List -->
+  <!-- SHOPPING LIST SIDEBAR -->
   <aside class="shopping-sidebar" id="shopping-sidebar">
-
-    <!-- MASTER PANTRY SECTION -->
-    <section class="sidebar-section pantry-section" id="pantry-section">
-      <div class="sidebar-header">
-        <h2>MASTER PANTRY</h2>
-      </div>
-
-      <!-- Pantry search and filters -->
-      <div class="pantry-controls">
-        <input type="text" id="pantry-search" placeholder="Search pantry..." class="pantry-search-input">
-        <select id="filter-category" class="pantry-filter-select">
-          <option value="">All categories</option>
-          <option value="Meat">Meat</option>
-          <option value="Dairy">Dairy</option>
-          <option value="Produce">Produce</option>
-          <option value="Pantry">Pantry staples</option>
-          <option value="Frozen">Frozen</option>
-          <option value="Spices">Spices</option>
-          <option value="Other">Other</option>
-        </select>
-        <select id="sort-pantry" class="pantry-sort-select">
-          <option value="alpha">A-Z</option>
-          <option value="lowStock">Low Stock First</option>
-          <option value="expiring">Expiring Soon</option>
-          <option value="recent">Recently Added</option>
-        </select>
-      </div>
-
-      <!-- App.js renders pantry items here -->
-      <div id="pantry-display" class="pantry-display"></div>
-
-      <button class="btn btn-new-entry" id="btn-new-pantry-entry">
-        + NEW ENTRY
-      </button>
-    </section>
 
     <!-- SHOPPING LIST SECTION -->
     <section class="sidebar-section shopping-section">
@@ -90,11 +55,16 @@
   <!-- UNIFIED PURPLE HEADER BAR -->
   <header class="site-header">
     <div class="header-left">
-      <h1 class="header-brand">Chef's Kiss</h1>
+      <h1 class="header-brand">
+        Chef's Kiss
+        <span class="header-brand-underline"></span>
+      </h1>
     </div>
     <div class="header-right">
       <div class="header-datetime">
-        <span id="utility-date">SUN, JAN 11, 08:41 AM</span>
+        <span id="utility-date">SUN, JAN 11</span>
+        <span class="datetime-separator">•</span>
+        <span id="utility-time">09:39 AM</span>
       </div>
       <nav class="header-nav">
         <button class="btn-header-icon" id="btn-signin" title="Sign In">👤</button>
@@ -126,15 +96,6 @@
       </div>
     </div>
 
-    <!-- COOK NOW SECTION -->
-    <section class="cook-now-section" id="cook-now-section">
-      <!-- Today's planned meals that haven't been cooked -->
-      <div id="today-meals-section"></div>
-
-      <!-- Ready-to-cook recipes (all ingredients available) -->
-      <div id="ready-recipes-section"></div>
-    </section>
-
     <!-- RECIPES SECTION -->
     <section class="recipes-section" id="recipes-section">
       <div class="recipes-header">
@@ -153,6 +114,41 @@
 
       <!-- App.js renders recipe cards here -->
       <div id="recipe-list" class="recipe-list"></div>
+    </section>
+
+    <!-- MASTER PANTRY SECTION -->
+    <section class="pantry-section" id="pantry-section">
+      <div class="pantry-header">
+        <h2>MASTER PANTRY</h2>
+      </div>
+
+      <!-- Pantry search and filters -->
+      <div class="pantry-controls">
+        <input type="text" id="pantry-search" placeholder="Search pantry..." class="pantry-search-input">
+        <select id="filter-category" class="pantry-filter-select">
+          <option value="">All categories</option>
+          <option value="Meat">Meat</option>
+          <option value="Dairy">Dairy</option>
+          <option value="Produce">Produce</option>
+          <option value="Pantry">Pantry staples</option>
+          <option value="Frozen">Frozen</option>
+          <option value="Spices">Spices</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="sort-pantry" class="pantry-sort-select">
+          <option value="alpha">A-Z</option>
+          <option value="lowStock">Low Stock First</option>
+          <option value="expiring">Expiring Soon</option>
+          <option value="recent">Recently Added</option>
+        </select>
+      </div>
+
+      <!-- App.js renders pantry items here -->
+      <div id="pantry-display" class="pantry-display"></div>
+
+      <button class="btn btn-new-entry" id="btn-new-pantry-entry">
+        + NEW ENTRY
+      </button>
     </section>
 
   </div> <!-- end main-content -->
