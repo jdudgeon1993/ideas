@@ -398,7 +398,7 @@ body {
 .pantry-section {
   padding: 2rem;
   max-width: 850px;
-  margin: 2rem auto 0 auto;
+  margin: 2rem auto;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -695,9 +695,9 @@ body {
    7. RECIPE STACK VIEW (Main Content)
    ------------------------------------------------------------------- */
 .recipes-section {
-  padding: 1.5rem;
+  padding: 2rem;
   max-width: 850px;
-  margin: 0 auto;
+  margin: 2rem auto;
 }
 
 .recipes-header h2 {
@@ -1832,7 +1832,9 @@ body {
 
   .recipes-section,
   .pantry-section {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
+    margin: 1rem auto;
+    max-width: 95%;
   }
 
   .floating-action-menu {
@@ -1871,6 +1873,17 @@ body {
     padding: 1rem;
   }
 
+  /* Main Content Sections - Mobile */
+  .recipes-section,
+  .pantry-section {
+    position: relative;
+    left: 2.5%;
+    width: 95%;
+    padding: 1.5rem 1rem;
+    margin: 1rem auto;
+    max-width: 95%;
+  }
+
   /* Recipe Card Responsive */
   .recipe-card-columns {
     grid-template-columns: 1fr;
@@ -1881,8 +1894,13 @@ body {
     font-size: 2rem;
   }
 
+  .recipe-card-stack-container {
+    padding: 1rem 0;
+    margin: 1rem auto;
+  }
+
   .recipe-card-stack-front {
-    padding: 2rem 1.5rem;
+    padding: 1.5rem 1rem;
   }
 
   .recipe-card-actions {
