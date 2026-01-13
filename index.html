@@ -421,13 +421,32 @@
   <script>
     (function() {
       let collapsedCategories = new Set();
+      let categoryEmojiMap = {}; // Cache for category emojis
 
-      function initPantryLedger() {
+      // Load category emojis from database
+      async function loadCategoryEmojis() {
+        if (window.db && window.auth && window.auth.isAuthenticated()) {
+          try {
+            const categoryObjects = await window.db.loadCategoryObjects();
+            categoryEmojiMap = {};
+            categoryObjects.forEach(cat => {
+              categoryEmojiMap[cat.name] = cat.emoji || '📦';
+            });
+          } catch (err) {
+            console.error('Error loading category emojis:', err);
+          }
+        }
+      }
+
+      async function initPantryLedger() {
         // Wait for window.pantry to be available
         if (!window.pantry) {
           setTimeout(initPantryLedger, 500);
           return;
         }
+
+        // Load category emojis
+        await loadCategoryEmojis();
 
         renderPantryLedger();
         setupPantrySearch();
@@ -487,14 +506,15 @@
           return;
         }
 
-        // Group by category
-        const categories = ['Meat', 'Dairy', 'Produce', 'Pantry', 'Frozen', 'Spices', 'Other'];
+        // Group by category - dynamically get unique categories from filtered items
+        const categoriesInUse = [...new Set(filtered.map(item => item.category))];
         const grouped = {};
-        categories.forEach(cat => grouped[cat] = []);
+        categoriesInUse.forEach(cat => grouped[cat] = []);
         filtered.forEach(item => {
-          if (grouped[item.category]) {
-            grouped[item.category].push(item);
+          if (!grouped[item.category]) {
+            grouped[item.category] = [];
           }
+          grouped[item.category].push(item);
         });
 
         // Calculate reserved quantities
@@ -502,7 +522,7 @@
 
         // Render categories
         ledgerDisplay.innerHTML = '';
-        categories.forEach(category => {
+        categoriesInUse.forEach(category => {
           const items = grouped[category];
           if (items.length === 0) return;
 
@@ -697,6 +717,12 @@
       }
 
       function getCategoryEmoji(category) {
+        // Try to get emoji from cached map (includes custom categories)
+        if (categoryEmojiMap[category]) {
+          return categoryEmojiMap[category];
+        }
+
+        // Fallback to default emojis for standard categories
         const emojis = {
           'Meat': '🥩',
           'Dairy': '🥛',
@@ -749,6 +775,12 @@
           characterData: true
         });
       }
+
+      // Expose function to reload category emojis (called when categories are added/removed)
+      window.reloadCategoryEmojis = async function() {
+        await loadCategoryEmojis();
+        renderPantryLedger();
+      };
 
       // Initialize when DOM is ready
       if (document.readyState === 'loading') {
