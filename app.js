@@ -4004,6 +4004,10 @@ async function openSettingsModal() {
         showToast(`✅ Added category: ${emoji} ${newCategory}`);
         // Refresh category dropdown to show new category
         await populateCategoryDropdown();
+        // Reload category emojis in pantry ledger
+        if (window.reloadCategoryEmojis) {
+          await window.reloadCategoryEmojis();
+        }
         closeModal();
         setTimeout(() => openSettingsModal(), 100);
       } else {
@@ -4094,6 +4098,11 @@ async function removeCategory(categoryId, categoryName) {
 
   // Refresh category dropdown to remove deleted category
   await populateCategoryDropdown();
+
+  // Reload category emojis in pantry ledger
+  if (window.reloadCategoryEmojis) {
+    await window.reloadCategoryEmojis();
+  }
 
   renderPantry();
   updateDashboard();
