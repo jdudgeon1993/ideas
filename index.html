@@ -520,13 +520,37 @@
         // Calculate reserved quantities
         const reserved = window.calculateReservedIngredients ? window.calculateReservedIngredients() : {};
 
-        // Render categories
+        // Build single unified ledger table
         ledgerDisplay.innerHTML = '';
-        categoriesInUse.forEach(category => {
+
+        // Create table container
+        const tableContainer = document.createElement('div');
+        tableContainer.className = 'ledger-table-container unified-ledger';
+
+        let tableHTML = `
+          <table class="ledger-table unified-ledger-table">
+            <thead>
+              <tr>
+                <th class="ledger-col-category">CATEGORY</th>
+                <th class="ledger-col-item">ITEM</th>
+                <th class="ledger-col-qty">OH</th>
+                <th class="ledger-col-qty">RS</th>
+                <th class="ledger-col-qty">AVAIL</th>
+                <th class="ledger-col-qty">MIN</th>
+                <th class="ledger-col-locations">LOCATIONS</th>
+                <th class="ledger-col-expiry">EXPIRY</th>
+                <th class="ledger-col-actions">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        // Render each category with header row and items
+        categoriesInUse.forEach((category, catIndex) => {
           const items = grouped[category];
           if (items.length === 0) return;
 
-          // Calculate category stats
+          const categoryEmoji = getCategoryEmoji(category);
           const totalOH = items.reduce((sum, item) => sum + item.totalQty, 0);
           const lowStockCount = items.filter(item => {
             const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
@@ -539,108 +563,73 @@
             return days !== null && days <= 7;
           }).length;
 
-          const isCollapsed = collapsedCategories.has(category);
-          const categoryEmoji = getCategoryEmoji(category);
-
-          // Category header
-          const categorySection = document.createElement('div');
-          categorySection.className = 'pantry-ledger-category';
-
-          let alertsHTML = '';
           let alerts = [];
           if (expiringCount > 0) alerts.push(`${expiringCount} expiring`);
           if (lowStockCount > 0) alerts.push(`${lowStockCount} low stock`);
-          if (alerts.length > 0) {
-            alertsHTML = `<span class="ledger-category-alert">${alerts.join(', ')}</span>`;
-          }
+          const alertsText = alerts.length > 0 ? ` • ${alerts.join(', ')}` : '';
 
-          const headerHTML = `
-            <div class="ledger-category-header" data-category="${category}">
-              <div class="ledger-category-left">
-                <span class="ledger-category-icon">${isCollapsed ? '▶' : '▼'}</span>
-                <span class="ledger-category-name">${categoryEmoji} ${category}</span>
-                <span class="ledger-category-count">(${items.length} items)</span>
-              </div>
-              <div class="ledger-category-right">
-                <span class="ledger-category-total">Total OH: ${totalOH.toFixed(1)}</span>
-                ${alertsHTML}
-              </div>
-            </div>
+          // Category header row
+          tableHTML += `
+            <tr class="ledger-category-divider">
+              <td colspan="9" class="ledger-category-header-cell">
+                <strong>${categoryEmoji} ${category}</strong>
+                <span class="ledger-category-meta">(${items.length} items • Total OH: ${totalOH.toFixed(1)}${alertsText})</span>
+              </td>
+            </tr>
           `;
 
-          categorySection.innerHTML = headerHTML;
+          // Render items for this category
+          items.forEach((item, itemIndex) => {
+            const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
+            const reservedQty = reserved[key] || 0;
+            const available = item.totalQty - reservedQty;
+            const isLowStock = available < item.min;
 
-          // Add click handler to header
-          const header = categorySection.querySelector('.ledger-category-header');
-          header.addEventListener('click', () => {
-            if (collapsedCategories.has(category)) {
-              collapsedCategories.delete(category);
-            } else {
-              collapsedCategories.add(category);
+            // Location display
+            const locationsList = item.locations.map(loc =>
+              `${loc.location}: ${loc.qty}`
+            ).join(', ');
+
+            // Expiry display
+            const expiryDays = getEarliestExpiry(item);
+            let expiryHTML = '-';
+            if (expiryDays !== null) {
+              const isExpiringSoon = expiryDays <= 7;
+              const expiryClass = isExpiringSoon ? 'expiry-warning' : '';
+              expiryHTML = `<span class="${expiryClass}">${expiryDays} days</span>`;
             }
-            renderPantryLedger();
-          });
 
-          ledgerDisplay.appendChild(categorySection);
+            const rowClass = itemIndex % 2 === 0 ? 'ledger-row-even' : 'ledger-row-odd';
+            const lowStockClass = isLowStock ? 'ledger-row-low-stock' : '';
 
-          // Render table if not collapsed
-          if (!isCollapsed) {
-            const tableHTML = `
-              <div class="ledger-table-container">
-                <table class="ledger-table">
-                  <thead>
-                    <tr>
-                      <th class="ledger-col-item">ITEM</th>
-                      <th class="ledger-col-qty">OH</th>
-                      <th class="ledger-col-qty">RS</th>
-                      <th class="ledger-col-qty">AVAIL</th>
-                      <th class="ledger-col-qty">MIN</th>
-                      <th class="ledger-col-locations">LOCATIONS</th>
-                      <th class="ledger-col-expiry">EXPIRY</th>
-                      <th class="ledger-col-actions">ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${items.map(item => renderTableRow(item, reserved)).join('')}
-                  </tbody>
-                </table>
-              </div>
+            tableHTML += `
+              <tr class="ledger-data-row ${rowClass} ${lowStockClass}">
+                <td class="ledger-col-category">${categoryEmoji}</td>
+                <td class="ledger-col-item"><strong>${item.name}</strong> <span class="item-unit">(${item.unit})</span></td>
+                <td class="ledger-col-qty">${item.totalQty.toFixed(1)}</td>
+                <td class="ledger-col-qty">${reservedQty.toFixed(1)}</td>
+                <td class="ledger-col-qty ${isLowStock ? 'low-stock-value' : ''}">${available.toFixed(1)}</td>
+                <td class="ledger-col-qty">${item.min}</td>
+                <td class="ledger-col-locations">${locationsList}</td>
+                <td class="ledger-col-expiry">${expiryHTML}</td>
+                <td class="ledger-col-actions">
+                  <button class="btn-ledger-action" onclick="window.openIngredientModal(${JSON.stringify(item).replace(/"/g, '&quot;')})" title="Edit">✏️</button>
+                </td>
+              </tr>
             `;
-
-            const tableContainer = document.createElement('div');
-            tableContainer.innerHTML = tableHTML;
-            categorySection.appendChild(tableContainer.firstElementChild);
-
-            // Add event listeners to buttons
-            const rows = categorySection.querySelectorAll('tbody tr');
-            rows.forEach((row, index) => {
-              const item = items[index];
-
-              // Click row to edit
-              row.addEventListener('click', (e) => {
-                if (!e.target.closest('button')) {
-                  if (window.openIngredientModal) {
-                    window.openIngredientModal(item);
-                  }
-                }
-              });
-
-              // Quick use button
-              const quickUseBtn = row.querySelector('.btn-quick-use');
-              if (quickUseBtn) {
-                quickUseBtn.addEventListener('click', (e) => {
-                  e.stopPropagation();
-                  if (window.openQuickDepleteModal) {
-                    window.openQuickDepleteModal(item);
-                  }
-                });
-              }
-            });
-          }
+          });
         });
+
+        tableHTML += `
+            </tbody>
+          </table>
+        `;
+
+        tableContainer.innerHTML = tableHTML;
+        ledgerDisplay.appendChild(tableContainer);
       }
 
-      function renderTableRow(item, reserved) {
+      function _oldRenderTableRowNotUsed(item, reserved) {
         const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
         const reservedQty = reserved[key] || 0;
         const available = item.totalQty - reservedQty;

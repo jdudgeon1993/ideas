@@ -549,7 +549,7 @@ body {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 0.85rem 1rem;
+  padding: 0.6rem 0.75rem;
   border-bottom: 2px solid var(--color-accent-olive);
   color: var(--color-pantry-header);
   background: var(--color-card-bg);
@@ -611,6 +611,122 @@ body {
 .qty-low {
   color: #B36A5E;
   font-weight: 600;
+}
+
+/* -------------------------------------------------------------------
+   UNIFIED LEDGER TABLE STYLES
+   ------------------------------------------------------------------- */
+
+/* Unified Ledger Container */
+.unified-ledger {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Unified Table Styling */
+.unified-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.unified-ledger-table thead th {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.7rem;
+  text-align: left;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--color-accent-olive);
+  color: var(--color-pantry-header);
+  background: var(--color-card-bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* Category Divider Rows */
+.ledger-category-divider {
+  background: linear-gradient(135deg, #f8f4eb 0%, #f0ebe3 100%);
+  border-top: 2px solid rgba(139, 147, 118, 0.3);
+  border-bottom: 1px solid rgba(139, 147, 118, 0.2);
+}
+
+.ledger-category-header-cell {
+  padding: 0.6rem 0.75rem !important;
+  font-size: 0.85rem;
+  color: var(--color-pantry-header);
+  font-family: "Libre Baskerville", Georgia, serif;
+}
+
+.ledger-category-meta {
+  margin-left: 0.75rem;
+  font-size: 0.75rem;
+  font-family: "Lato", sans-serif;
+  opacity: 0.7;
+  font-weight: normal;
+}
+
+/* Data Rows - Alternating colors for ledger feel */
+.ledger-data-row {
+  border-bottom: 1px solid rgba(197, 184, 165, 0.15);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.ledger-row-even {
+  background: #FFFEF9;
+}
+
+.ledger-row-odd {
+  background: #FAF8F5;
+}
+
+.ledger-data-row:hover {
+  background: rgba(139, 147, 118, 0.08) !important;
+}
+
+.ledger-data-row td {
+  padding: 0.5rem 0.75rem;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Low stock highlighting */
+.ledger-row-low-stock {
+  background: rgba(200, 107, 107, 0.05) !important;
+}
+
+.low-stock-value {
+  color: #B36A5E;
+  font-weight: 600;
+}
+
+/* Item name styling */
+.ledger-col-item strong {
+  font-weight: 500;
+  color: var(--color-pantry-header);
+}
+
+.item-unit {
+  font-size: 0.8em;
+  opacity: 0.6;
+  font-weight: normal;
+}
+
+/* Expiry warning */
+.expiry-warning {
+  color: #B36A5E;
+  font-weight: 600;
+}
+
+/* Category column */
+.ledger-col-category {
+  width: 8%;
+  min-width: 60px;
+  text-align: center;
+  font-size: 1.2rem;
 }
 
 .ledger-locations {
@@ -1955,7 +2071,38 @@ body {
 
   .ledger-table th,
   .ledger-table td {
-    padding: 0.65rem 0.5rem;
+    padding: 0.5rem 0.4rem;
+  }
+
+  /* Unified Ledger Mobile Adjustments */
+  .unified-ledger-table {
+    font-size: 0.75rem;
+  }
+
+  .unified-ledger-table thead th {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.65rem;
+  }
+
+  .ledger-data-row td {
+    padding: 0.4rem 0.3rem;
+  }
+
+  .ledger-category-header-cell {
+    padding: 0.5rem 0.4rem !important;
+    font-size: 0.8rem;
+  }
+
+  .ledger-category-meta {
+    display: block;
+    margin-left: 0;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .ledger-col-category {
+    font-size: 1rem;
+    min-width: 45px;
   }
 
   .ledger-col-item {
