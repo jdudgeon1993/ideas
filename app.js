@@ -667,9 +667,9 @@ async function deleteIngredient(item) {
   closeModal();
 }
 
-function renderPantry() {
+async function renderPantry() {
   // Use the filter function to respect any active filters
-  applyPantryFilter();
+  await applyPantryFilter();
 }
 
 /* ---------------------------------------------------
@@ -2734,7 +2734,7 @@ function getEarliestExpiryDays(item) {
   return earliest;
 }
 
-function applyPantryFilter() {
+async function applyPantryFilter() {
   const filterSelect = document.getElementById("filter-category");
   const searchInput = document.getElementById("pantry-search");
   const sortSelect = document.getElementById("sort-pantry");
@@ -2796,18 +2796,28 @@ function applyPantryFilter() {
   // Calculate reserved quantities
   const reserved = calculateReservedIngredients();
 
+  // Load all categories (including custom ones) from database
+  const categoryObjects = await loadCategoryObjects();
+  const categoryMap = {};
+  categoryObjects.forEach(cat => {
+    categoryMap[cat.name] = cat.emoji || '📦';
+  });
+
+  // Build unique list of categories from filtered items
+  const categoriesInUse = [...new Set(filtered.map(item => item.category))];
+
   // Group items by category
-  const categories = ['Meat', 'Dairy', 'Produce', 'Pantry', 'Frozen', 'Spices', 'Other'];
   const grouped = {};
-  categories.forEach(cat => grouped[cat] = []);
+  categoriesInUse.forEach(cat => grouped[cat] = []);
   filtered.forEach(item => {
-    if (grouped[item.category]) {
-      grouped[item.category].push(item);
+    if (!grouped[item.category]) {
+      grouped[item.category] = [];
     }
+    grouped[item.category].push(item);
   });
 
   // Render by category
-  categories.forEach(category => {
+  categoriesInUse.forEach(category => {
     const items = grouped[category];
     if (items.length === 0) return;
 
@@ -2835,10 +2845,13 @@ function applyPantryFilter() {
     if (expiringCount > 0) statusText.push(`${expiringCount} expiring soon`);
     const statusHTML = statusText.length > 0 ? `<span class="category-status">${statusText.join(', ')}</span>` : '';
 
+    // Get emoji from category map or use default
+    const categoryEmoji = categoryMap[category] || getCategoryEmoji(category);
+
     categoryHeader.innerHTML = `
       <div class="category-header-left">
         <span class="category-icon">${icon}</span>
-        <span class="category-name">${getCategoryEmoji(category)} ${category}</span>
+        <span class="category-name">${categoryEmoji} ${category}</span>
         <span class="category-count">(${items.length} items)</span>
       </div>
       <div class="category-header-right">
