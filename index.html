@@ -527,6 +527,9 @@
         const tableContainer = document.createElement('div');
         tableContainer.className = 'ledger-table-container unified-ledger';
 
+        // Store items for event listeners
+        let allItems = [];
+
         let tableHTML = `
           <table class="ledger-table unified-ledger-table">
             <thead>
@@ -580,6 +583,9 @@
 
           // Render items for this category
           items.forEach((item, itemIndex) => {
+            const itemGlobalIndex = allItems.length;
+            allItems.push(item);
+
             const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
             const reservedQty = reserved[key] || 0;
             const available = item.totalQty - reservedQty;
@@ -603,7 +609,7 @@
             const lowStockClass = isLowStock ? 'ledger-row-low-stock' : '';
 
             tableHTML += `
-              <tr class="ledger-data-row ${rowClass} ${lowStockClass}">
+              <tr class="ledger-data-row ${rowClass} ${lowStockClass}" data-item-index="${itemGlobalIndex}">
                 <td class="ledger-col-category">${categoryEmoji}</td>
                 <td class="ledger-col-item"><strong>${item.name}</strong> <span class="item-unit">(${item.unit})</span></td>
                 <td class="ledger-col-qty">${item.totalQty.toFixed(1)}</td>
@@ -613,7 +619,8 @@
                 <td class="ledger-col-locations">${locationsList}</td>
                 <td class="ledger-col-expiry">${expiryHTML}</td>
                 <td class="ledger-col-actions">
-                  <button class="btn-ledger-action" onclick="window.openIngredientModal(${JSON.stringify(item).replace(/"/g, '&quot;')})" title="Edit">✏️</button>
+                  <button class="btn-ledger-action btn-quick-use" data-item-index="${itemGlobalIndex}" title="Quick Use">🔻</button>
+                  <button class="btn-ledger-action btn-edit-item" data-item-index="${itemGlobalIndex}" title="Edit">✏️</button>
                 </td>
               </tr>
             `;
@@ -627,6 +634,47 @@
 
         tableContainer.innerHTML = tableHTML;
         ledgerDisplay.appendChild(tableContainer);
+
+        // Add event listeners to rows and buttons
+        const rows = ledgerDisplay.querySelectorAll('.ledger-data-row');
+        rows.forEach(row => {
+          const itemIndex = parseInt(row.getAttribute('data-item-index'));
+          const item = allItems[itemIndex];
+
+          // Click row to edit (unless clicking a button)
+          row.addEventListener('click', (e) => {
+            if (!e.target.closest('button')) {
+              if (window.openIngredientModal) {
+                window.openIngredientModal(item);
+              }
+            }
+          });
+        });
+
+        // Add button event listeners
+        const editButtons = ledgerDisplay.querySelectorAll('.btn-edit-item');
+        editButtons.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const itemIndex = parseInt(btn.getAttribute('data-item-index'));
+            const item = allItems[itemIndex];
+            if (window.openIngredientModal) {
+              window.openIngredientModal(item);
+            }
+          });
+        });
+
+        const quickUseButtons = ledgerDisplay.querySelectorAll('.btn-quick-use');
+        quickUseButtons.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const itemIndex = parseInt(btn.getAttribute('data-item-index'));
+            const item = allItems[itemIndex];
+            if (window.openQuickDepleteModal) {
+              window.openQuickDepleteModal(item);
+            }
+          });
+        });
       }
 
       function _oldRenderTableRowNotUsed(item, reserved) {

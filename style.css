@@ -654,7 +654,7 @@ body {
 }
 
 .unified-ledger-table .ledger-col-item {
-  width: 22%;
+  width: 20%;
 }
 
 .unified-ledger-table .ledger-col-qty {
@@ -671,8 +671,14 @@ body {
 }
 
 .unified-ledger-table .ledger-col-actions {
-  width: 6%;
+  width: 8%;
   text-align: center;
+  white-space: nowrap;
+}
+
+/* Action Buttons in Ledger */
+.ledger-col-actions .btn-ledger-action {
+  margin: 0 0.15rem;
 }
 
 /* Category Divider Rows */
