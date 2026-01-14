@@ -145,6 +145,10 @@ async function addPlannedMeal(date, recipeId, mealType = "Dinner") {
 
   // Sync to database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
+    // Mark this as our own change to prevent echo from realtime
+    if (window.realtime && window.realtime.lastLocalUpdate) {
+      window.realtime.lastLocalUpdate.mealPlans = Date.now();
+    }
     await window.db.saveMealPlansForDate(date, planner[date]).catch(err => {
       console.error('Error syncing meal plans to database:', err);
     });
@@ -165,6 +169,10 @@ async function removePlannedMeal(date, mealId) {
 
   // Sync to database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
+    // Mark this as our own change to prevent echo from realtime
+    if (window.realtime && window.realtime.lastLocalUpdate) {
+      window.realtime.lastLocalUpdate.mealPlans = Date.now();
+    }
     await window.db.saveMealPlansForDate(date, planner[date] || []).catch(err => {
       console.error('Error syncing meal plans to database:', err);
     });
@@ -193,6 +201,10 @@ async function markMealCooked(date, mealId) {
 
     // Sync to database if authenticated
     if (window.db && window.auth && window.auth.isAuthenticated()) {
+      // Mark this as our own change to prevent echo from realtime
+      if (window.realtime && window.realtime.lastLocalUpdate) {
+        window.realtime.lastLocalUpdate.mealPlans = Date.now();
+      }
       await window.db.saveMealPlansForDate(date, planner[date]).catch(err => {
         console.error('Error syncing meal plans to database:', err);
       });
@@ -591,6 +603,10 @@ async function saveIngredient(existing) {
 
       // Sync merged item to database
       if (window.db && window.auth && window.auth.isAuthenticated()) {
+        // Mark this as our own change to prevent echo from realtime
+        if (window.realtime && window.realtime.lastLocalUpdate) {
+          window.realtime.lastLocalUpdate.pantry = Date.now();
+        }
         await window.db.savePantryItem(duplicate).catch(err => {
           console.error('Error syncing pantry item to database:', err);
         });
@@ -636,6 +652,10 @@ async function saveIngredient(existing) {
 
   // Sync to database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
+    // Mark this as our own change to prevent echo from realtime
+    if (window.realtime && window.realtime.lastLocalUpdate) {
+      window.realtime.lastLocalUpdate.pantry = Date.now();
+    }
     await window.db.savePantryItem(itemToSync).catch(err => {
       console.error('Error syncing pantry item to database:', err);
     });
@@ -658,6 +678,10 @@ async function deleteIngredient(item) {
 
   // Delete from database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
+    // Mark this as our own change to prevent echo from realtime
+    if (window.realtime && window.realtime.lastLocalUpdate) {
+      window.realtime.lastLocalUpdate.pantry = Date.now();
+    }
     await window.db.deletePantryItem(item.id).catch(err => {
       console.error('Error deleting pantry item from database:', err);
     });
@@ -1007,6 +1031,10 @@ async function saveRecipe(existing) {
 
   // Sync to database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
+    // Mark this as our own change to prevent echo from realtime
+    if (window.realtime && window.realtime.lastLocalUpdate) {
+      window.realtime.lastLocalUpdate.recipes = Date.now();
+    }
     await window.db.saveRecipe(recipeToSync).catch(err => {
       console.error('Error syncing recipe to database:', err);
     });
@@ -1203,6 +1231,10 @@ async function deleteRecipe(recipe) {
   // Delete from database FIRST (if authenticated)
   if (window.db && window.auth && window.auth.isAuthenticated()) {
     try {
+      // Mark this as our own change to prevent echo from realtime
+      if (window.realtime && window.realtime.lastLocalUpdate) {
+        window.realtime.lastLocalUpdate.recipes = Date.now();
+      }
       await window.db.deleteRecipe(recipe.id);
     } catch (err) {
       console.error('Error deleting recipe from database:', err);
@@ -1971,6 +2003,10 @@ async function handleQuickAddShopping() {
 
     // Sync to database if authenticated - get the item we just added
     if (window.db && window.auth && window.auth.isAuthenticated()) {
+      // Mark this as our own change to prevent echo from realtime
+      if (window.realtime && window.realtime.lastLocalUpdate) {
+        window.realtime.lastLocalUpdate.shopping = Date.now();
+      }
       const addedItem = shopping[shopping.length - 1]; // Last added item
       await window.db.saveShoppingItem({
         id: addedItem.id,
@@ -2110,6 +2146,10 @@ async function saveCustomShoppingItem() {
 
   // Sync to database if authenticated - get the item we just added
   if (window.db && window.auth && window.auth.isAuthenticated()) {
+    // Mark this as our own change to prevent echo from realtime
+    if (window.realtime && window.realtime.lastLocalUpdate) {
+      window.realtime.lastLocalUpdate.shopping = Date.now();
+    }
     const addedItem = shopping[shopping.length - 1]; // Last added item
     await window.db.saveShoppingItem({
       id: addedItem.id,
@@ -3137,6 +3177,10 @@ async function saveQuickDeplete(item) {
 
     // Sync to database if authenticated
     if (window.db && window.auth && window.auth.isAuthenticated()) {
+      // Mark this as our own change to prevent echo from realtime
+      if (window.realtime && window.realtime.lastLocalUpdate) {
+        window.realtime.lastLocalUpdate.pantry = Date.now();
+      }
       await window.db.savePantryItem(item).catch(err => {
         console.error('Error syncing pantry item to database:', err);
       });

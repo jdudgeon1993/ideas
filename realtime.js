@@ -5,6 +5,17 @@
 
 let realtimeSubscriptions = [];
 
+// Debounce timestamps to prevent processing own changes immediately
+const lastLocalUpdate = {
+  pantry: 0,
+  recipes: 0,
+  mealPlans: 0,
+  shopping: 0
+};
+
+// Debounce delay in milliseconds
+const DEBOUNCE_DELAY = 1000;
+
 /* ---------------------------------------------------
    SUBSCRIPTION MANAGEMENT
 --------------------------------------------------- */
@@ -42,9 +53,15 @@ async function initRealtimeSync() {
       },
       (payload) => handlePantryChange(payload)
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to pantry_items changes');
+      } else if (status === 'CLOSED') {
+        console.warn('⚠️ Pantry subscription closed - reconnecting in 3s...');
+        setTimeout(() => initRealtimeSync(), 3000);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Pantry subscription error:', err);
+        setTimeout(() => initRealtimeSync(), 5000);
       }
     });
 
@@ -62,9 +79,15 @@ async function initRealtimeSync() {
       },
       (payload) => handleLocationChange(payload)
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to pantry_locations changes');
+      } else if (status === 'CLOSED') {
+        console.warn('⚠️ Locations subscription closed - reconnecting in 3s...');
+        setTimeout(() => initRealtimeSync(), 3000);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Locations subscription error:', err);
+        setTimeout(() => initRealtimeSync(), 5000);
       }
     });
 
@@ -83,9 +106,15 @@ async function initRealtimeSync() {
       },
       (payload) => handleRecipeChange(payload)
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to recipes changes');
+      } else if (status === 'CLOSED') {
+        console.warn('⚠️ Recipes subscription closed - reconnecting in 3s...');
+        setTimeout(() => initRealtimeSync(), 3000);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Recipes subscription error:', err);
+        setTimeout(() => initRealtimeSync(), 5000);
       }
     });
 
@@ -104,9 +133,15 @@ async function initRealtimeSync() {
       },
       (payload) => handleMealPlanChange(payload)
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to meal_plans changes');
+      } else if (status === 'CLOSED') {
+        console.warn('⚠️ Meal plans subscription closed - reconnecting in 3s...');
+        setTimeout(() => initRealtimeSync(), 3000);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Meal plans subscription error:', err);
+        setTimeout(() => initRealtimeSync(), 5000);
       }
     });
 
@@ -125,9 +160,15 @@ async function initRealtimeSync() {
       },
       (payload) => handleShoppingChange(payload)
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to shopping_list changes');
+      } else if (status === 'CLOSED') {
+        console.warn('⚠️ Shopping subscription closed - reconnecting in 3s...');
+        setTimeout(() => initRealtimeSync(), 3000);
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Shopping subscription error:', err);
+        setTimeout(() => initRealtimeSync(), 5000);
       }
     });
 
@@ -155,6 +196,13 @@ function unsubscribeAll() {
 async function handlePantryChange(payload) {
   console.log('📡 Pantry change detected:', payload.eventType);
 
+  // Debounce: Skip if this is our own change (within debounce window)
+  const now = Date.now();
+  if (now - lastLocalUpdate.pantry < DEBOUNCE_DELAY) {
+    console.log('⏭️  Skipping own pantry change (debounced)');
+    return;
+  }
+
   // Reload full pantry data to get accurate state
   // (since pantry items and locations are linked)
   const dbPantry = await window.db.loadPantryItems();
@@ -174,6 +222,13 @@ async function handlePantryChange(payload) {
 async function handleLocationChange(payload) {
   console.log('📡 Location change detected:', payload.eventType);
 
+  // Debounce: Skip if this is our own change (within debounce window)
+  const now = Date.now();
+  if (now - lastLocalUpdate.pantry < DEBOUNCE_DELAY) {
+    console.log('⏭️  Skipping own location change (debounced)');
+    return;
+  }
+
   // Reload full pantry data
   const dbPantry = await window.db.loadPantryItems();
   if (dbPantry) {
@@ -190,6 +245,13 @@ async function handleLocationChange(payload) {
  */
 async function handleRecipeChange(payload) {
   console.log('📡 Recipe change detected:', payload.eventType);
+
+  // Debounce: Skip if this is our own change (within debounce window)
+  const now = Date.now();
+  if (now - lastLocalUpdate.recipes < DEBOUNCE_DELAY) {
+    console.log('⏭️  Skipping own recipe change (debounced)');
+    return;
+  }
 
   const dbRecipes = await window.db.loadRecipes();
   if (dbRecipes) {
@@ -208,6 +270,13 @@ async function handleRecipeChange(payload) {
 async function handleMealPlanChange(payload) {
   console.log('📡 Meal plan change detected:', payload.eventType);
 
+  // Debounce: Skip if this is our own change (within debounce window)
+  const now = Date.now();
+  if (now - lastLocalUpdate.mealPlans < DEBOUNCE_DELAY) {
+    console.log('⏭️  Skipping own meal plan change (debounced)');
+    return;
+  }
+
   const dbPlanner = await window.db.loadMealPlans();
   if (dbPlanner) {
     planner = dbPlanner;
@@ -223,6 +292,13 @@ async function handleMealPlanChange(payload) {
  */
 async function handleShoppingChange(payload) {
   console.log('📡 Shopping list change detected:', payload.eventType);
+
+  // Debounce: Skip if this is our own change (within debounce window)
+  const now = Date.now();
+  if (now - lastLocalUpdate.shopping < DEBOUNCE_DELAY) {
+    console.log('⏭️  Skipping own shopping change (debounced)');
+    return;
+  }
 
   const dbShopping = await window.db.loadShoppingList();
   if (dbShopping) {
@@ -289,5 +365,6 @@ function showRealtimeToast(message) {
 
 window.realtime = {
   initRealtimeSync,
-  unsubscribeAll
+  unsubscribeAll,
+  lastLocalUpdate
 };
