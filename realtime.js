@@ -16,9 +16,35 @@ const lastLocalUpdate = {
 // Debounce delay in milliseconds
 const DEBOUNCE_DELAY = 1000;
 
+// Reconnection state management
+let isReconnecting = false;
+let reconnectTimeout = null;
+
 /* ---------------------------------------------------
    SUBSCRIPTION MANAGEMENT
 --------------------------------------------------- */
+
+/**
+ * Safely attempt reconnection with debouncing
+ */
+function attemptReconnection() {
+  // Prevent multiple simultaneous reconnection attempts
+  if (isReconnecting) {
+    console.log('⏭️  Already reconnecting, skipping...');
+    return;
+  }
+
+  // Clear any pending reconnection timeout
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+  }
+
+  // Schedule reconnection after 5 seconds
+  reconnectTimeout = setTimeout(() => {
+    console.log('🔄 Attempting to reconnect realtime...');
+    initRealtimeSync();
+  }, 5000);
+}
 
 /**
  * Initialize realtime subscriptions for current household
@@ -26,15 +52,24 @@ const DEBOUNCE_DELAY = 1000;
 async function initRealtimeSync() {
   if (!window.auth || !window.auth.isAuthenticated()) {
     console.log('Not authenticated - skipping realtime sync');
+    isReconnecting = false;
     return;
   }
 
   const householdId = window.auth.getCurrentHouseholdId();
   if (!householdId) {
     console.warn('No household ID - skipping realtime sync');
+    isReconnecting = false;
     return;
   }
 
+  // Prevent concurrent initialization
+  if (isReconnecting) {
+    console.log('⏭️  Reconnection already in progress, skipping');
+    return;
+  }
+
+  isReconnecting = true;
   console.log('🔄 Setting up realtime subscriptions...');
 
   // Unsubscribe from any existing subscriptions
@@ -57,11 +92,11 @@ async function initRealtimeSync() {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to pantry_items changes');
       } else if (status === 'CLOSED') {
-        console.warn('⚠️ Pantry subscription closed - reconnecting in 3s...');
-        setTimeout(() => initRealtimeSync(), 3000);
+        console.warn('⚠️ Pantry subscription closed');
+        attemptReconnection();
       } else if (status === 'CHANNEL_ERROR') {
         console.error('❌ Pantry subscription error:', err);
-        setTimeout(() => initRealtimeSync(), 5000);
+        attemptReconnection();
       }
     });
 
@@ -83,11 +118,11 @@ async function initRealtimeSync() {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to pantry_locations changes');
       } else if (status === 'CLOSED') {
-        console.warn('⚠️ Locations subscription closed - reconnecting in 3s...');
-        setTimeout(() => initRealtimeSync(), 3000);
+        console.warn('⚠️ Locations subscription closed');
+        attemptReconnection();
       } else if (status === 'CHANNEL_ERROR') {
         console.error('❌ Locations subscription error:', err);
-        setTimeout(() => initRealtimeSync(), 5000);
+        attemptReconnection();
       }
     });
 
@@ -110,11 +145,11 @@ async function initRealtimeSync() {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to recipes changes');
       } else if (status === 'CLOSED') {
-        console.warn('⚠️ Recipes subscription closed - reconnecting in 3s...');
-        setTimeout(() => initRealtimeSync(), 3000);
+        console.warn('⚠️ Recipes subscription closed');
+        attemptReconnection();
       } else if (status === 'CHANNEL_ERROR') {
         console.error('❌ Recipes subscription error:', err);
-        setTimeout(() => initRealtimeSync(), 5000);
+        attemptReconnection();
       }
     });
 
@@ -137,11 +172,11 @@ async function initRealtimeSync() {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to meal_plans changes');
       } else if (status === 'CLOSED') {
-        console.warn('⚠️ Meal plans subscription closed - reconnecting in 3s...');
-        setTimeout(() => initRealtimeSync(), 3000);
+        console.warn('⚠️ Meal plans subscription closed');
+        attemptReconnection();
       } else if (status === 'CHANNEL_ERROR') {
         console.error('❌ Meal plans subscription error:', err);
-        setTimeout(() => initRealtimeSync(), 5000);
+        attemptReconnection();
       }
     });
 
@@ -164,15 +199,19 @@ async function initRealtimeSync() {
       if (status === 'SUBSCRIBED') {
         console.log('✅ Subscribed to shopping_list changes');
       } else if (status === 'CLOSED') {
-        console.warn('⚠️ Shopping subscription closed - reconnecting in 3s...');
-        setTimeout(() => initRealtimeSync(), 3000);
+        console.warn('⚠️ Shopping subscription closed');
+        attemptReconnection();
       } else if (status === 'CHANNEL_ERROR') {
         console.error('❌ Shopping subscription error:', err);
-        setTimeout(() => initRealtimeSync(), 5000);
+        attemptReconnection();
       }
     });
 
   realtimeSubscriptions.push(shoppingChannel);
+
+  // Mark reconnection as complete
+  isReconnecting = false;
+  console.log('✅ Realtime sync initialized successfully');
 }
 
 /**
