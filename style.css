@@ -21,10 +21,12 @@ html {
 body {
   font-family: "Lato", -apple-system,   BlinkMacSystemFont, sans-serif;
   /* Green and white gingham background */
-  background-color: var(--gingham-white);
-  background-image: linear-gradient(90deg, rgba(45, 138, 78, 0.5) 50%, transparent 50%),
-  linear-gradient(rgba(45, 138, 78, 0.5) 50%, transparent 50%);
-  background-size: 100px 100px;
+  background-color: var(--cream-bg);
+            background-image: 
+                linear-gradient(90deg, rgba(139, 168, 142, 0.4) 50%, transparent 50%),
+                linear-gradient(rgba(139, 168, 142, 0.4) 50%, transparent 50%);
+            background-size: 80px 80px;
+            transition: background-color 0.5s ease;
   color: var(--color-text-primary);
   line-height: 1.65;
   margin: 0;
@@ -48,6 +50,11 @@ body {
   --color-accent-olive: #8B9376;
   --color-text-primary: #3a3a3a;
   --color-text-secondary: #6b6b6b;
+  --sage-dark: #7a947d;
+  --sage-mid: #8ba88e;
+  --sage-light: #b2c4b5;
+  --cream-bg: #f5f5f0;
+  --ink: #3a473b;
 
   /* Pantry Table Colors */
   --color-pantry-header: #5a4a3a;
