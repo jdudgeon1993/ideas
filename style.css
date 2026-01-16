@@ -12,7 +12,7 @@
   padding: 0;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Dancing+Script:wght@400;500;600;700&display=swap');
 
 html {
   scroll-behavior: smooth;
@@ -865,10 +865,26 @@ body {
 }
 
 .recipes-header h2 {
-  font-size: 2rem;
-  color: var(--color-text-primary);
-  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 2.5rem;
+  color: var(--color-pantry-header);
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
   margin: 0 0 1.5rem 0;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+@media (min-width: 768px) {
+  .recipes-header h2 {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recipes-header h2 {
+    font-size: 3.5rem;
+  }
 }
 
 /* Recipe Search */
@@ -936,12 +952,24 @@ body {
 /* Recipe Stack Container */
 .recipe-card-stack-container {
   position: relative;
-  max-width: 750px;
+  max-width: 500px;
   margin: 0 auto;
   perspective: 1500px;
   min-height: 500px;
-  padding-bottom: 2rem;
+  padding-bottom: 4rem;
   padding-top: 2rem;
+}
+
+@media (min-width: 768px) {
+  .recipe-card-stack-container {
+    max-width: 650px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recipe-card-stack-container {
+    max-width: 750px;
+  }
 }
 
 /* Stack Effect - Back Cards (Visual Only - showing only top edges) */
@@ -990,10 +1018,23 @@ body {
   background: var(--color-card-bg);
   border: 2px solid var(--color-recipe-border);
   border-radius: 12px;
-  padding: 1.75rem;
-  min-height: 450px;
+  padding: 1.25rem;
+  min-height: 400px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .recipe-card-stack-front {
+    padding: 1.75rem;
+    min-height: 450px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recipe-card-stack-front {
+    padding: 2rem;
+  }
 }
 
 .recipe-card-stack-front:hover {
@@ -1002,24 +1043,39 @@ body {
 
 /* Recipe Card Elements */
 .recipe-card-id {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.5px;
+  font-size: 0.7rem;
+  color: #A68A6F;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  letter-spacing: 3px;
   text-transform: uppercase;
+  text-align: center;
+  font-family: "Lato", sans-serif;
 }
 
 .recipe-card-title {
-  font-size: 2.5rem;
-  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 2rem;
+  font-family: "Dancing Script", cursive;
   color: var(--color-pantry-header);
   margin-bottom: 1rem;
-  font-weight: 400;
-  line-height: 1.2;
+  font-weight: 600;
+  line-height: 1.3;
   text-align: center;
-  padding-bottom: 0.75rem;
-  border-bottom: 3px solid var(--color-recipe-accent);
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+@media (min-width: 768px) {
+  .recipe-card-title {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recipe-card-title {
+    font-size: 3rem;
+  }
 }
 
 .recipe-card-meta {
@@ -1043,15 +1099,15 @@ body {
   margin: 0 0.75rem;
 }
 
-/* Two-Column Layout: INGREDIENTS | METHOD */
+/* Single Column Layout: Ingredients then Preparation vertically */
 .recipe-card-columns {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   margin: 1.5rem 0;
   padding: 1.5rem 0;
-  border-top: 1px solid rgba(197, 184, 165, 0.3);
-  border-bottom: 1px solid rgba(197, 184, 165, 0.3);
+  border-top: none;
+  border-bottom: none;
 }
 
 .recipe-card-column {
@@ -1059,15 +1115,28 @@ body {
 }
 
 .recipe-card-column h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--color-pantry-header);
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid var(--color-accent-olive);
-  font-family: "Lato", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  color: #8B5A3C;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: none;
+  font-family: "Dancing Script", cursive;
+}
+
+@media (min-width: 768px) {
+  .recipe-card-column h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .recipe-card-column h3 {
+    font-size: 1.75rem;
+  }
 }
 
 .recipe-card-column ul {
@@ -1085,10 +1154,8 @@ body {
 }
 
 .recipe-card-column ul li:before {
-  content: "• ";
-  color: var(--color-recipe-accent);
-  font-weight: bold;
-  font-size: 1.2rem;
+  content: "🍄 ";
+  font-size: 1.1rem;
   margin-right: 0.5rem;
 }
 
@@ -1146,24 +1213,35 @@ body {
   box-shadow: 0 6px 20px rgba(200, 107, 107, 0.3);
 }
 
-/* Navigation Buttons */
+/* Navigation Buttons - Underneath the card */
 .recipe-nav-btn {
-  display: none;
+  position: absolute;
+  bottom: 0;
+  background: transparent;
+  border: none;
+  color: var(--color-pantry-header);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s;
+  font-family: "Lato", sans-serif;
+  text-decoration: underline;
 }
 
 .recipe-nav-btn:hover {
-  background: var(--color-accent-olive);
-  color: white;
-  transform: translateY(-50%) scale(1.05);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  color: var(--color-accent-olive);
+  transform: translateY(-2px);
 }
 
 .recipe-nav-prev {
-  left: -30px;
+  left: 0;
 }
 
 .recipe-nav-next {
-  right: -30px;
+  right: 0;
 }
 
 /* Hidden recipe list (used by app.js) */
@@ -2138,12 +2216,7 @@ body {
 
   /* Recipe Card Responsive */
   .recipe-card-columns {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .recipe-card-title {
-    font-size: 2rem;
+    gap: 1.5rem;
   }
 
   .recipe-card-stack-container {
