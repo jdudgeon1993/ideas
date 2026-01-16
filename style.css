@@ -12,7 +12,7 @@
   padding: 0;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Dancing+Script:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Lato:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Caveat:wght@600&family=Space+Mono&display=swap');
 
 html {
   scroll-behavior: smooth;
@@ -64,9 +64,12 @@ body {
   --color-pantry-row: #FAF8F5;
   --color-pantry-hover: #f0ebe3;
 
-  /* Recipe Card Colors */
-  --color-recipe-accent: #D4A574;
-  --color-recipe-border: #C5B8A5;
+  /* Recipe Card Colors - Updated to match reference */
+  --buttermilk: #fdfaf1;
+  --forest: #3d5a44;
+  --clay-warm: #a6634b;
+  --linen-texture: rgba(0, 0, 0, 0.03);
+  --color-recipe-border: #e8e2d0;
 
   /* Button Colors */
   --btn-primary: #8B9376;
@@ -876,32 +879,28 @@ body {
 }
 
 .recipes-header h2 {
-  font-size: 1.5rem;
-  color: #5a6b5d;
-  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.5rem;
+  color: var(--forest);
+  font-family: "Playfair Display", serif;
   font-style: italic;
   font-weight: 400;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 1.25rem 0;
   text-align: center;
-  letter-spacing: 1px;
+  letter-spacing: 0px;
   flex-shrink: 0;
-  height: 2.5rem;
-  line-height: 2.5rem;
 }
 
 @media (min-width: 768px) {
   .recipes-header h2 {
-    font-size: 1.75rem;
-    margin-bottom: 0.5rem;
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .recipes-header h2 {
-    font-size: 2rem;
-    height: 2.75rem;
-    line-height: 2.75rem;
-    margin-bottom: 0.5rem;
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
   }
 }
 
@@ -927,215 +926,159 @@ body {
   border-color: var(--color-accent-olive);
 }
 
-/* Recipe Index Tabs - Horizontal scroll, single row */
+/* Recipe Index Tabs - Horizontal scroll, transparent pills */
 .recipe-index-tabs {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  flex-wrap: nowrap;
-  justify-content: flex-start;
-  height: 2.5rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.25rem 0.5rem;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
   flex-shrink: 0;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.recipe-index-tabs::-webkit-scrollbar {
-  display: none;
 }
 
 .recipe-index-tab {
-  background: white;
-  border: 2px solid var(--color-recipe-border);
-  border-radius: 16px;
-  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: 1px solid var(--forest);
+  color: var(--forest);
+  padding: 8px 20px;
+  font-family: 'Space Mono', monospace;
   font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.2s;
+  border-radius: 30px;
+  transition: all 0.3s ease;
   white-space: nowrap;
-  flex-shrink: 0;
-  height: 2rem;
-  display: flex;
-  align-items: center;
 }
 
-.recipe-index-tab:hover {
-  background: rgba(241, 195, 56, 0.1);
-  border-color: #F1C338;
-}
-
+.recipe-index-tab:hover,
 .recipe-index-tab.active {
-  background: #F1C338;
-  border-color: #F1C338;
-  color: white;
-  font-weight: 600;
+  background: var(--forest);
+  color: var(--buttermilk);
 }
 
-/* Recipe Stack Container - Card is the hero with strict height budget */
+/* Recipe Stack Container - Simple wrapper */
 .recipe-card-stack-container {
   position: relative;
   width: 100%;
   max-width: 500px;
-  height: calc(100dvh - 9rem);
+  height: calc(100dvh - 12rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  perspective: 1500px;
-  margin: 0 auto;
-  padding: 0.5rem 0;
-  overflow: visible;
+  margin: 0 auto 30px 0;
+  padding: 0;
   flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
   .recipe-card-stack-container {
     max-width: 550px;
-    height: calc(100dvh - 9.5rem);
   }
 }
 
 @media (min-width: 1024px) {
   .recipe-card-stack-container {
     max-width: 600px;
-    height: calc(100dvh - 10rem);
   }
 }
 
-/* Stack Effect - Back Cards (Visual Only - showing only top edges) */
+/* Hide old back card divs - using ::after instead */
 .recipe-card-stack-back-3,
 .recipe-card-stack-back-2,
 .recipe-card-stack-back-1 {
-  position: absolute;
-  width: 100%;
-  height: 50px;
-  background: var(--color-card-bg);
-  border: 2px solid var(--color-recipe-border);
-  border-radius: 12px 12px 0 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
+  display: none;
 }
 
-.recipe-card-stack-back-3 {
-  top: -24px;
-  left: 50%;
-  transform: translateX(-50%) scale(0.92);
-  opacity: 0.5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.recipe-card-stack-back-2 {
-  top: -16px;
-  left: 50%;
-  transform: translateX(-50%) scale(0.96);
-  opacity: 0.7;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.recipe-card-stack-back-1 {
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%) scale(0.98);
-  opacity: 0.85;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
-
-/* Front Card - Active Recipe - Fits within strict container */
+/* Front Card - Active Recipe with Stacked Effect */
 .recipe-card-stack-front {
   position: relative;
-  z-index: 10;
-  background: var(--color-card-bg);
-  border: 2px solid var(--color-recipe-border);
-  border-radius: 12px;
-  padding: 0.75rem;
-  height: 100%;
-  overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-  transition: transform 0.3s ease;
+  width: 100%;
+  background-color: var(--buttermilk);
+  padding: 40px;
+  box-shadow: 2px 2px 15px rgba(0,0,0,0.05);
+  border-radius: 2px;
+  color: var(--forest);
+  background-image: repeating-linear-gradient(45deg, var(--linen-texture) 0px, var(--linen-texture) 1px, transparent 1px, transparent 2px);
+  border: 1px solid var(--color-recipe-border);
+  box-sizing: border-box;
+  margin-bottom: 15px;
+  margin-right: 15px;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* The Stack Effect using ::after */
+.recipe-card-stack-front::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--buttermilk);
+  border: 1px solid var(--color-recipe-border);
+  z-index: -1;
+  box-shadow:
+    4px 4px 0 -1px var(--buttermilk), 4px 4px 0 0 var(--color-recipe-border),
+    8px 8px 0 -2px var(--buttermilk), 8px 8px 0 -1px var(--color-recipe-border),
+    12px 12px 0 -3px var(--buttermilk), 12px 12px 0 -2px var(--color-recipe-border);
+  transform: rotate(1.2deg);
 }
 
 @media (min-width: 768px) {
   .recipe-card-stack-front {
-    padding: 1rem;
+    padding: 45px;
   }
 }
 
 @media (min-width: 1024px) {
   .recipe-card-stack-front {
-    padding: 1.25rem;
+    padding: 50px;
   }
-}
-
-.recipe-card-stack-front:hover {
-  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.2);
 }
 
 /* Recipe Card Elements */
 .recipe-card-id {
+  font-family: 'Space Mono', monospace;
   font-size: 0.6rem;
-  color: #8a9a7d;
-  font-weight: 400;
-  margin-bottom: 0.3rem;
-  letter-spacing: 2px;
   text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--clay-warm);
   text-align: center;
-  font-family: "Lato", sans-serif;
+  margin-bottom: 0.5rem;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--color-recipe-border);
   flex-shrink: 0;
 }
 
 .recipe-card-title {
-  font-size: 1.4rem;
-  font-family: "Dancing Script", cursive;
-  color: #3d5a40;
-  margin-bottom: 0.5rem;
+  font-family: 'Crimson Pro', serif;
   font-weight: 600;
-  line-height: 1.2;
+  font-size: 1.8rem;
+  margin: 5px 0 1rem 0;
+  font-style: italic;
+  color: var(--forest);
   text-align: center;
-  padding-bottom: 0;
-  border-bottom: none;
   flex-shrink: 0;
 }
 
 @media (min-width: 768px) {
   .recipe-card-title {
-    font-size: 1.6rem;
-    margin-bottom: 0.6rem;
+    font-size: 2rem;
   }
 }
 
 @media (min-width: 1024px) {
   .recipe-card-title {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
   }
 }
 
 .recipe-card-meta {
-  text-align: center;
-  margin: 0.4rem 0;
-  padding: 0.4rem;
-  background: rgba(122, 148, 125, 0.08);
-  border-radius: 6px;
-  font-size: 0.75rem;
-  color: var(--color-text-primary);
-  flex-shrink: 0;
-}
-
-.recipe-card-meta strong {
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.meta-sep {
-  color: var(--color-recipe-accent);
-  font-weight: bold;
-  margin: 0 0.75rem;
+  display: none;
 }
 
 /* Single Column Layout: Ingredients then Preparation vertically */
@@ -1157,54 +1100,55 @@ body {
 }
 
 .recipe-card-column h3 {
-  font-size: 1rem;
+  font-family: 'Caveat', cursive;
+  font-size: 1.5rem;
+  color: var(--clay-warm);
+  margin-bottom: 10px;
   font-weight: 600;
-  text-transform: none;
-  letter-spacing: 0.5px;
-  color: #5a7a5d;
-  margin-bottom: 0.4rem;
-  padding-bottom: 0;
-  border-bottom: none;
-  font-family: "Dancing Script", cursive;
 }
 
 @media (min-width: 768px) {
   .recipe-card-column h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.6rem;
   }
 }
 
 @media (min-width: 1024px) {
   .recipe-card-column h3 {
-    font-size: 1.2rem;
+    font-size: 1.7rem;
   }
 }
 
 .recipe-card-column ul {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 0 25px 0;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
 }
 
 .recipe-card-column ul li {
-  padding: 0.3rem 0;
-  border-bottom: 1px solid rgba(122, 148, 125, 0.15);
-  color: var(--color-text-primary);
-  font-size: 0.8rem;
-  line-height: 1.4;
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #4a4a4a;
 }
 
-.recipe-card-column ul li:before {
-  content: "🍄 ";
-  font-size: 0.9rem;
-  margin-right: 0.4rem;
+.recipe-card-column ul li::before {
+  content: "🍄";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1rem;
+  filter: sepia(0.5) hue-rotate(90deg);
 }
 
 .recipe-method {
-  color: var(--color-text-primary);
-  font-size: 0.85rem;
-  line-height: 1.5;
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4a4a4a;
   white-space: pre-wrap;
 }
 
@@ -1256,16 +1200,15 @@ body {
   box-shadow: 0 6px 20px rgba(200, 107, 107, 0.3);
 }
 
-/* Navigation Buttons Container - Fixed height, always visible */
+/* Navigation Buttons Container - Centered below card */
 .recipe-nav-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
   max-width: 500px;
-  height: 2.5rem;
-  margin: 0.5rem auto 0;
-  padding: 0 1rem;
+  margin: 1rem auto 0;
+  padding: 0 20px;
   flex-shrink: 0;
 }
 
@@ -1281,35 +1224,24 @@ body {
   }
 }
 
-/* Navigation Buttons - Left and Right */
+/* Navigation Buttons - Simple text links */
 .recipe-nav-btn {
   background: transparent;
   border: none;
-  color: #5a7a5d;
-  font-size: 0.8rem;
-  font-weight: 600;
+  color: var(--forest);
+  font-size: 0.75rem;
+  font-weight: 400;
+  font-family: 'Crimson Pro', serif;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
   cursor: pointer;
-  padding: 0.5rem 0;
+  padding: 0.5rem;
   transition: all 0.2s;
-  font-family: "Lato", sans-serif;
-  text-decoration: underline;
-  text-decoration-color: rgba(90, 122, 93, 0.4);
+  opacity: 0.7;
 }
 
 .recipe-nav-btn:hover {
-  color: #2d8a4e;
-  text-decoration-color: #2d8a4e;
-  transform: translateX(0);
-}
-
-.recipe-nav-prev:hover {
-  transform: translateX(-3px);
-}
-
-.recipe-nav-next:hover {
-  transform: translateX(3px);
+  opacity: 1;
+  text-decoration: underline;
 }
 
 /* Hidden recipe list (used by app.js) */
