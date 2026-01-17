@@ -175,25 +175,90 @@ body {
 
 
 /* -------------------------------------------------------------------
-   4. LAYOUT (Sidebar + Main Content)
+   4. LAYOUT (Navigation + Main Content)
    ------------------------------------------------------------------- */
-.shopping-sidebar {
-  position: fixed;
-  left: 10px;
-  top: 79px;
-  width: 340px;
-  height: calc(90dvh);
-  background: var(--parchment);
-  border: 3px solid var(--tape);
-  box-shadow: 1px 0 10px var(--ink);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  z-index: 100;
+
+/* Hidden radio inputs for CSS-only navigation */
+.section-nav-input {
+  display: none;
 }
 
+/* LEFT SIDEBAR NAVIGATION (Desktop) */
+.sidebar-nav {
+  position: fixed;
+  left: 0;
+  top: 70px;
+  width: 80px;
+  height: calc(100vh - 70px);
+  background: var(--color-header-purple);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  z-index: 150;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+}
+
+/* BOTTOM NAVIGATION (Mobile) - Hidden on desktop */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background: var(--color-header-purple);
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 150;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.15);
+}
+
+/* Navigation Button Styling */
+.nav-btn {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s;
+  background: transparent;
+  opacity: 0.6;
+}
+
+.nav-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+/* Active state - when radio is checked */
+#nav-recipes:checked ~ .sidebar-nav label[for="nav-recipes"],
+#nav-pantry:checked ~ .sidebar-nav label[for="nav-pantry"],
+#nav-shopping:checked ~ .sidebar-nav label[for="nav-shopping"],
+#nav-meal-planning:checked ~ .sidebar-nav label[for="nav-meal-planning"],
+#nav-recipes:checked ~ .bottom-nav label[for="nav-recipes"],
+#nav-pantry:checked ~ .bottom-nav label[for="nav-pantry"],
+#nav-shopping:checked ~ .bottom-nav label[for="nav-shopping"],
+#nav-meal-planning:checked ~ .bottom-nav label[for="nav-meal-planning"] {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.15);
+}
+
+/* OLD SHOPPING SIDEBAR - Now hidden, content moved to section */
+.shopping-sidebar {
+  display: none;
+}
+
+/* Main content - adjusted for left nav */
 .main-content {
-  margin-left: 340px;
+  margin-left: 80px;
   flex: 1;
   min-width: 0;
   position: relative;
@@ -201,36 +266,52 @@ body {
   padding: 0;
 }
 
+/* Section visibility - Hide all by default */
+.main-content > section {
+  display: none;
+}
+
+/* Show section when corresponding radio is checked */
+#nav-recipes:checked ~ .main-content .recipes-section {
+  display: flex;
+}
+
+#nav-pantry:checked ~ .main-content .pantry-section {
+  display: flex;
+}
+
+#nav-shopping:checked ~ .main-content .shopping-section {
+  display: flex;
+}
+
+#nav-meal-planning:checked ~ .main-content .meal-planning-section {
+  display: flex;
+}
+
 
 /* -------------------------------------------------------------------
-   5. SHOPPING LIST (Left Sidebar)
+   5. SHOPPING LIST SECTION (Now in Main Content)
    ------------------------------------------------------------------- */
-.sidebar-section {
-  padding: 1.5rem;
-  flex-shrink: 0;
-}
-
 .shopping-section {
-  flex: 1;
-  display: flex;
+  min-height: 100dvh;
   flex-direction: column;
-  height: 100%;
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.sidebar-header {
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(125,102,122,0.15);
+.shopping-header {
+  margin-bottom: 1.5rem;
 }
 
-.sidebar-header h2 {
-  font-size: 0.95rem;
-  color: var(--color-pantry-header);
+.shopping-header h2 {
+  font-size: 1.75rem;
+  color: var(--color-text-primary);
+  font-family: "Libre Baskerville", Georgia, serif;
   margin: 0;
-  font-family: "Lato", sans-serif;
-  font-weight: 600;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
 }
 
 /* Shopping List Add Input */
@@ -1653,17 +1734,34 @@ body {
 
 
 /* -------------------------------------------------------------------
-   10. FLOATING ACTION BUTTON
+   10. FLOATING ACTION BUTTON (Context-Aware)
    ------------------------------------------------------------------- */
 .floating-action-menu {
   position: fixed;
   bottom: 2.5rem;
   right: 2.5rem;
   z-index: 1001;
-  display: flex;
+  display: none; /* Hidden by default */
   flex-direction: column;
   align-items: flex-end;
   gap: 1rem;
+}
+
+/* Show appropriate FAB based on active section */
+#nav-recipes:checked ~ .main-content .fab-recipes {
+  display: flex;
+}
+
+#nav-pantry:checked ~ .main-content .fab-pantry {
+  display: flex;
+}
+
+#nav-shopping:checked ~ .main-content .fab-shopping {
+  display: flex;
+}
+
+#nav-meal-planning:checked ~ .main-content .fab-meal-planning {
+  display: flex;
 }
 
 .floating-action-btn {
@@ -1856,6 +1954,38 @@ body {
   font-family: "Libre Baskerville", Georgia, serif;
 }
 
+
+/* -------------------------------------------------------------------
+   6.5 MEAL PLANNING SECTION (Main Content)
+   ------------------------------------------------------------------- */
+.meal-planning-section {
+  min-height: 100dvh;
+  flex-direction: column;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.meal-planning-header {
+  margin-bottom: 1.5rem;
+}
+
+.meal-planning-header h2 {
+  font-size: 1.75rem;
+  color: var(--color-text-primary);
+  font-family: "Libre Baskerville", Georgia, serif;
+  margin: 0;
+}
+
+.meal-planning-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 /* -------------------------------------------------------------------
    11.5 MEAL PLANNER / CALENDAR
@@ -2093,6 +2223,21 @@ body {
     padding-top: 70px;
   }
 
+  /* Keep sidebar nav on tablet */
+  .sidebar-nav {
+    width: 70px;
+  }
+
+  .main-content {
+    margin-left: 70px;
+  }
+
+  .nav-btn {
+    font-size: 1.8rem;
+    width: 55px;
+    height: 55px;
+  }
+
   /* Unified Ledger Tablet Adjustments */
   .unified-ledger {
     max-height: calc(100vh - 200px);
@@ -2144,24 +2289,14 @@ body {
     font-size: 1.1rem;
   }
 
-  .shopping-sidebar {
-    position: relative;
-    left: 2.5%;
-    width: 95%;
-    height: auto;
-    border-right: none;
-    border-top: 3px solid rgba(156,175,136,0.2);
-    order: 2;
-    box-shadow: 0 -4px 20px rgba(156,175,136,0.12);
-  }
-
   .main-content {
-    margin-left: 0;
-    order: 1;
+    margin-left: 70px;
   }
 
   .recipes-section,
-  .pantry-section {
+  .pantry-section,
+  .shopping-section,
+  .meal-planning-section {
     padding: 1.5rem 1rem;
     margin: 1rem auto;
     max-width: 95%;
@@ -2183,6 +2318,27 @@ body {
 @media (max-width: 768px) {
   body {
     padding-top: 80px;
+    padding-bottom: 70px; /* Space for bottom nav */
+  }
+
+  /* Hide sidebar nav, show bottom nav */
+  .sidebar-nav {
+    display: none;
+  }
+
+  .bottom-nav {
+    display: flex;
+  }
+
+  .main-content {
+    margin-left: 0;
+    margin-bottom: 0;
+  }
+
+  .nav-btn {
+    font-size: 1.5rem;
+    width: 50px;
+    height: 50px;
   }
 
   .site-header {
@@ -2199,19 +2355,15 @@ body {
     font-size: 1rem;
   }
 
-  .sidebar-section {
-    padding: 1rem;
-  }
-
   /* Main Content Sections - Mobile */
   .recipes-section,
-  .pantry-section {
-    position: relative;
-    left: 2.5%;
-    width: 95%;
+  .pantry-section,
+  .shopping-section,
+  .meal-planning-section {
     padding: 1.5rem 1rem;
     margin: 1rem auto;
     max-width: 95%;
+    width: 95%;
   }
 
   /* Recipe Card Responsive */

@@ -19,37 +19,46 @@
 </head>
 <body>
 
-  <!-- SHOPPING LIST SIDEBAR -->
-  <aside class="shopping-sidebar" id="shopping-sidebar">
+  <!-- SECTION NAVIGATION - Hidden Radio Inputs (CSS-only approach) -->
+  <input type="radio" name="section-nav" id="nav-recipes" class="section-nav-input" checked>
+  <input type="radio" name="section-nav" id="nav-pantry" class="section-nav-input">
+  <input type="radio" name="section-nav" id="nav-shopping" class="section-nav-input">
+  <input type="radio" name="section-nav" id="nav-meal-planning" class="section-nav-input">
 
-    <!-- SHOPPING LIST SECTION -->
-    <section class="sidebar-section shopping-section">
-      <div class="sidebar-header">
-        <h2>SHOPPING LIST</h2>
-      </div>
+  <!-- LEFT SIDEBAR NAVIGATION (Desktop) -->
+  <nav class="sidebar-nav">
+    <label for="nav-recipes" class="nav-btn" title="Recipes">
+      🍳
+    </label>
+    <label for="nav-pantry" class="nav-btn" title="Pantry">
+      🏺
+    </label>
+    <label for="nav-shopping" class="nav-btn" title="Shopping">
+      🛒
+    </label>
+    <label for="nav-meal-planning" class="nav-btn" title="Meal Planning">
+      📅
+    </label>
+  </nav>
 
-      <div class="shopping-add-inline">
-        <input
-          type="text"
-          id="user-item-name"
-          placeholder="Add item..."
-        >
-        <button class="btn-add-icon" id="btn-add-custom-item" title="Add custom item">
-          +
-        </button>
-      </div>
+  <!-- BOTTOM NAVIGATION (Mobile) -->
+  <nav class="bottom-nav">
+    <label for="nav-recipes" class="nav-btn" title="Recipes">
+      🍳
+    </label>
+    <label for="nav-pantry" class="nav-btn" title="Pantry">
+      🏺
+    </label>
+    <label for="nav-shopping" class="nav-btn" title="Shopping">
+      🛒
+    </label>
+    <label for="nav-meal-planning" class="nav-btn" title="Meal Planning">
+      📅
+    </label>
+  </nav>
 
-      <div id="shopping-list" class="shopping-list">
-        <!-- Shopping items injected here -->
-      </div>
-
-      <div class="shopping-actions">
-        <button class="btn btn-primary btn-block" id="btn-checkout">
-          Checkout
-        </button>
-      </div>
-    </section>
-
+  <!-- SHOPPING LIST SIDEBAR - Now hidden, moved to main content -->
+  <aside class="shopping-sidebar" id="shopping-sidebar" style="display: none;">
   </aside>
 
   <!-- UNIFIED PURPLE HEADER BAR -->
@@ -78,22 +87,39 @@
   <!-- MAIN CONTENT AREA -->
   <div class="main-content">
 
-    <!-- FLOATING ACTION BUTTON -->
-    <div class="floating-action-menu" id="floating-action-menu">
-      <button class="floating-action-btn" id="floating-action-btn" title="Quick Add">
+    <!-- FLOATING ACTION BUTTON - Recipes -->
+    <div class="floating-action-menu fab-recipes" id="fab-recipes">
+      <button class="floating-action-btn" id="fab-btn-recipe" title="Add Recipe" onclick="document.getElementById('fab-add-recipe').click()">
         +
       </button>
-      <div class="floating-action-options" id="floating-action-options">
-        <button class="floating-action-option" id="fab-add-ingredient" title="Add Ingredient">
-          🥬 <span>Add Ingredient</span>
-        </button>
-        <button class="floating-action-option" id="fab-add-recipe" title="Add Recipe">
-          🍳 <span>Add Recipe</span>
-        </button>
-        <button class="floating-action-option" id="fab-add-meal" title="Plan Meal">
-          📅 <span>Plan Meal</span>
-        </button>
-      </div>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON - Pantry -->
+    <div class="floating-action-menu fab-pantry" id="fab-pantry">
+      <button class="floating-action-btn" id="fab-btn-pantry" title="Add Pantry Item" onclick="document.getElementById('btn-new-pantry-entry').click()">
+        +
+      </button>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON - Shopping -->
+    <div class="floating-action-menu fab-shopping" id="fab-shopping">
+      <button class="floating-action-btn" id="fab-btn-shopping" title="Add Shopping Item" onclick="document.getElementById('btn-add-custom-item').click()">
+        +
+      </button>
+    </div>
+
+    <!-- FLOATING ACTION BUTTON - Meal Planning -->
+    <div class="floating-action-menu fab-meal-planning" id="fab-meal-planning">
+      <button class="floating-action-btn" id="fab-btn-meal" title="Plan Meal" onclick="document.getElementById('btn-open-planner').click()">
+        +
+      </button>
+    </div>
+
+    <!-- Hidden global FAB options for functionality -->
+    <div style="display: none;">
+      <button id="fab-add-ingredient"></button>
+      <button id="fab-add-recipe"></button>
+      <button id="fab-add-meal"></button>
     </div>
 
     <!-- RECIPES SECTION -->
@@ -172,6 +198,51 @@
 
       <button class="btn btn-new-entry" id="btn-new-pantry-entry">
         + NEW ENTRY
+      </button>
+    </section>
+
+    <!-- SHOPPING LIST SECTION -->
+    <section class="shopping-section" id="shopping-section">
+      <div class="shopping-header">
+        <h2>SHOPPING LIST</h2>
+      </div>
+
+      <div class="shopping-add-inline">
+        <input
+          type="text"
+          id="user-item-name"
+          placeholder="Add item..."
+        >
+        <button class="btn-add-icon" id="btn-add-custom-item" title="Add custom item">
+          +
+        </button>
+      </div>
+
+      <div id="shopping-list" class="shopping-list">
+        <!-- Shopping items injected here -->
+      </div>
+
+      <div class="shopping-actions">
+        <button class="btn btn-primary btn-block" id="btn-checkout">
+          Checkout
+        </button>
+      </div>
+    </section>
+
+    <!-- MEAL PLANNING SECTION -->
+    <section class="meal-planning-section" id="meal-planning-section">
+      <div class="meal-planning-header">
+        <h2>MEAL PLANNER</h2>
+      </div>
+
+      <div class="meal-planning-content">
+        <p style="text-align: center; opacity: 0.6; padding: 3rem;">
+          Meal planning interface coming soon. Click the dashboard icon (📊) in the header to view your meal plan.
+        </p>
+      </div>
+
+      <button class="btn btn-primary" id="btn-open-planner-section" style="max-width: 300px; margin: 2rem auto;">
+        Open Full Meal Planner
       </button>
     </section>
 
@@ -417,6 +488,20 @@
         setupRecipeObserver();
       }
     })();
+  </script>
+
+  <!-- Meal Planning Section Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const btnOpenPlannerSection = document.getElementById('btn-open-planner-section');
+      const btnOpenPlanner = document.getElementById('btn-open-planner');
+
+      if (btnOpenPlannerSection && btnOpenPlanner) {
+        btnOpenPlannerSection.onclick = function() {
+          btnOpenPlanner.click();
+        };
+      }
+    });
   </script>
 
   <!-- Pantry Ledger Table Script -->
