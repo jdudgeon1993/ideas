@@ -316,8 +316,13 @@
           const servings = recipe.servings || recipe.yield || '4';
           const time = recipe.cookTime || recipe.time || '30min';
 
+          // Use photo if available, otherwise show emoji
+          const thumbnailHTML = recipe.photo
+            ? `<div class="recipe-card-thumbnail" style="background-image: url('${recipe.photo}'); background-size: cover; background-position: center;"></div>`
+            : `<div class="recipe-card-thumbnail">${emoji}</div>`;
+
           card.innerHTML = `
-            <div class="recipe-card-thumbnail">${emoji}</div>
+            ${thumbnailHTML}
             <div class="recipe-card-content">
               ${recipe.category ? `<div class="recipe-card-category">${recipe.category}</div>` : ''}
               <div class="recipe-card-name">${recipe.name || 'Untitled Recipe'}</div>

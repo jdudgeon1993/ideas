@@ -12,48 +12,76 @@
  */
 async function compressImage(file, maxWidth = 1200, quality = 0.85) {
   return new Promise((resolve, reject) => {
+    // Add timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      reject(new Error('Image compression timed out after 30s'));
+    }, 30000);
+
     const reader = new FileReader();
 
     reader.onload = (e) => {
       const img = new Image();
 
       img.onload = () => {
-        // Calculate new dimensions
-        let width = img.width;
-        let height = img.height;
+        try {
+          // Calculate new dimensions
+          let width = img.width;
+          let height = img.height;
 
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
+          console.log(`Original image size: ${width}x${height}`);
+
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          console.log(`Resized image size: ${width}x${height}`);
+
+          // Create canvas for compression
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            throw new Error('Failed to get canvas context');
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Convert to blob with timeout handling
+          canvas.toBlob(
+            (blob) => {
+              clearTimeout(timeout);
+              if (blob) {
+                console.log(`✅ Compressed blob size: ${(blob.size / 1024).toFixed(2)}KB`);
+                resolve(blob);
+              } else {
+                reject(new Error('Failed to compress image - blob is null'));
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        } catch (err) {
+          clearTimeout(timeout);
+          reject(err);
         }
-
-        // Create canvas for compression
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert to blob
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              resolve(blob);
-            } else {
-              reject(new Error('Failed to compress image'));
-            }
-          },
-          'image/jpeg',
-          quality
-        );
       };
 
-      img.onerror = () => reject(new Error('Failed to load image'));
+      img.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('Failed to load image for compression'));
+      };
+
       img.src = e.target.result;
     };
 
-    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error('Failed to read file'));
+    };
+
     reader.readAsDataURL(file);
   });
 }
