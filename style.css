@@ -944,57 +944,40 @@ body {
 
 
 /* -------------------------------------------------------------------
-   7. RECIPE STACK VIEW (Main Content)
+   7. RECIPES SECTION (Unified Grid View)
    ------------------------------------------------------------------- */
-/* Full viewport dedicated section */
 .recipes-section {
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  overflow: hidden;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.recipes-header {
+  margin-bottom: 1.5rem;
 }
 
 .recipes-header h2 {
-  font-size: 2.5rem;
-  color: var(--forest);
-  font-family: "Playfair Display", serif;
-  font-style: italic;
-  font-weight: 400;
-  margin: 0 0 1.25rem 0;
-  text-align: center;
-  letter-spacing: 0px;
-  flex-shrink: 0;
+  font-size: 1.75rem;
+  color: var(--color-text-primary);
+  font-family: "Libre Baskerville", Georgia, serif;
+  margin: 0;
 }
 
-@media (min-width: 768px) {
-  .recipes-header h2 {
-    font-size: 3rem;
-    margin-bottom: 1.5rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .recipes-header h2 {
-    font-size: 3.5rem;
-    margin-bottom: 1.5rem;
-  }
-}
-
-/* Recipe Search - Hidden to focus on card */
+/* Recipe Search */
 .recipes-controls {
-  display: none;
+  margin-bottom: 1rem;
 }
 
 .recipe-search-input {
-  flex: 1;
-  min-width: 250px;
+  width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid var(--color-recipe-border);
+  border: 1px solid rgba(197,184,165,0.3);
   border-radius: 8px;
   font-size: 0.95rem;
   background: white;
@@ -1005,6 +988,127 @@ body {
 .recipe-search-input:focus {
   outline: none;
   border-color: var(--color-accent-olive);
+}
+
+/* Recipe Filter Pills (Horizontal Scroll) */
+.recipe-filters-container {
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.recipe-filter-pills {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent-olive) transparent;
+}
+
+.recipe-filter-pills::-webkit-scrollbar {
+  height: 6px;
+}
+
+.recipe-filter-pills::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.recipe-filter-pills::-webkit-scrollbar-thumb {
+  background: var(--color-accent-olive);
+  border-radius: 3px;
+}
+
+.recipe-filter-pill {
+  background: white;
+  border: 2px solid var(--color-accent-olive);
+  color: var(--color-accent-olive);
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.recipe-filter-pill:hover {
+  background: rgba(139, 147, 118, 0.1);
+  transform: translateY(-2px);
+}
+
+.recipe-filter-pill.active {
+  background: var(--color-accent-olive);
+  color: white;
+}
+
+/* Recipe Grid */
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Recipe Card (Grid Item) */
+.recipe-grid-card {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-recipe-border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.recipe-grid-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-accent-olive);
+}
+
+.recipe-card-thumbnail {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  border-bottom: 2px solid var(--color-recipe-border);
+}
+
+.recipe-card-content {
+  padding: 1.25rem;
+}
+
+.recipe-card-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-pantry-header);
+  font-family: "Libre Baskerville", Georgia, serif;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.recipe-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.75rem;
+}
+
+.recipe-card-category {
+  display: inline-block;
+  background: rgba(139, 147, 118, 0.15);
+  color: var(--color-accent-olive);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
 /* Recipe Index Tabs - Horizontal scroll, transparent pills */
@@ -1395,6 +1499,191 @@ body {
   width: 100%;
 }
 
+
+/* -------------------------------------------------------------------
+   7.5 VINTAGE RECIPE CARD MODAL
+   ------------------------------------------------------------------- */
+/* Recipe Detail Modal - Contains vintage card */
+.recipe-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.recipe-detail-modal-content {
+  position: relative;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* Vintage Recipe Card (Inside Modal) */
+.recipe-vintage-card {
+  position: relative;
+  width: 100%;
+  background-color: var(--buttermilk);
+  padding: 40px;
+  box-shadow: 2px 2px 15px rgba(0,0,0,0.2);
+  border-radius: 2px;
+  color: var(--forest);
+  background-image: repeating-linear-gradient(45deg, var(--linen-texture) 0px, var(--linen-texture) 1px, transparent 1px, transparent 2px);
+  border: 1px solid var(--color-recipe-border);
+  box-sizing: border-box;
+  margin-bottom: 15px;
+  margin-right: 15px;
+}
+
+/* The Stack Effect using ::after */
+.recipe-vintage-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--buttermilk);
+  border: 1px solid var(--color-recipe-border);
+  z-index: -1;
+  box-shadow:
+    4px 4px 0 -1px var(--buttermilk), 4px 4px 0 0 var(--color-recipe-border),
+    8px 8px 0 -2px var(--buttermilk), 8px 8px 0 -1px var(--color-recipe-border),
+    12px 12px 0 -3px var(--buttermilk), 12px 12px 0 -2px var(--color-recipe-border);
+  transform: rotate(1.2deg);
+}
+
+.recipe-vintage-card-id {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--clay-warm);
+  text-align: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--color-recipe-border);
+}
+
+.recipe-vintage-card-title {
+  font-family: 'Crimson Pro', serif;
+  font-weight: 600;
+  font-size: 2rem;
+  margin: 5px 0 1rem 0;
+  font-style: italic;
+  color: var(--forest);
+  text-align: center;
+}
+
+.recipe-vintage-card-meta {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.recipe-vintage-card-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.recipe-vintage-card-column h3 {
+  font-family: 'Caveat', cursive;
+  font-size: 1.6rem;
+  color: var(--clay-warm);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.recipe-vintage-card-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 25px 0;
+  font-family: 'Crimson Pro', serif;
+  font-size: 1rem;
+}
+
+.recipe-vintage-card-column ul li {
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 8px;
+  line-height: 1.5;
+  color: #4a4a4a;
+}
+
+.recipe-vintage-card-column ul li::before {
+  content: "🍄";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1rem;
+  filter: sepia(0.5) hue-rotate(90deg);
+}
+
+.recipe-vintage-method {
+  font-family: 'Crimson Pro', serif;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #4a4a4a;
+  white-space: pre-wrap;
+}
+
+.recipe-vintage-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(122, 148, 125, 0.2);
+}
+
+.recipe-vintage-card-actions .btn {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+/* Modal Close Button */
+.recipe-modal-close {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: white;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 2001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.recipe-modal-close:hover {
+  transform: scale(1.1);
+  background: #f5f5f5;
+}
 
 /* -------------------------------------------------------------------
    9. MODALS (Global)
@@ -2317,7 +2606,7 @@ body {
 /* Mobile */
 @media (max-width: 768px) {
   body {
-    padding-top: 80px;
+    padding-top: 110px; /* Increased for header wrapping */
     padding-bottom: 70px; /* Space for bottom nav */
   }
 

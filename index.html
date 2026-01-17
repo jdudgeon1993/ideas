@@ -125,7 +125,7 @@
     <!-- RECIPES SECTION -->
     <section class="recipes-section" id="recipes-section">
       <div class="recipes-header">
-        <h2>Recipe Box</h2>
+        <h2>RECIPE BOX</h2>
       </div>
 
       <!-- Recipe search bar -->
@@ -133,28 +133,16 @@
         <input type="text" id="recipe-search-ledger" placeholder="Search recipes..." class="recipe-search-input">
       </div>
 
-      <!-- Recipe index tabs -->
-      <div class="recipe-index-tabs" id="recipe-index-tabs">
-        <!-- Tabs will be rendered here -->
-      </div>
-
-      <!-- Single recipe card display with stack effect -->
-      <div class="recipe-card-stack-container">
-        <!-- Stack effect cards (visual only) -->
-        <div class="recipe-card-stack-back-3"></div>
-        <div class="recipe-card-stack-back-2"></div>
-        <div class="recipe-card-stack-back-1"></div>
-
-        <!-- Front card (active recipe) -->
-        <div class="recipe-card-stack-front" id="recipe-card-front">
-          <!-- Recipe details will be rendered here -->
+      <!-- Horizontal scrolling category filters -->
+      <div class="recipe-filters-container">
+        <div class="recipe-filter-pills" id="recipe-filter-pills">
+          <!-- Filter pills will be rendered here -->
         </div>
       </div>
 
-      <!-- Navigation buttons - Outside container -->
-      <div class="recipe-nav-container">
-        <button class="recipe-nav-btn recipe-nav-prev" id="recipe-nav-prev" title="Previous Recipe">← Previous</button>
-        <button class="recipe-nav-btn recipe-nav-next" id="recipe-nav-next" title="Next Recipe">Next →</button>
+      <!-- Recipe grid -->
+      <div class="recipes-grid" id="recipes-grid">
+        <!-- Recipe cards will be rendered here -->
       </div>
 
       <!-- Hidden: App.js renders recipe cards here (for data only) -->
@@ -312,143 +300,191 @@
     <!-- JS will inject modals here -->
   </div>
 
-  <!-- Recipe Stack View Script -->
+  <!-- Recipe Grid View Script -->
   <script>
     (function() {
-      let currentRecipeIndex = 0;
       let filteredRecipes = [];
+      let currentFilter = 'All';
+      let recipeDetailModal = null;
 
-      function initRecipeStackView() {
+      function initRecipeGridView() {
         // Wait for window.recipes to be available
         if (!window.recipes || window.recipes.length === 0) {
-          setTimeout(initRecipeStackView, 500);
+          setTimeout(initRecipeGridView, 500);
           return;
         }
 
         filteredRecipes = [...window.recipes];
-        renderIndexTabs();
-        renderCurrentRecipe();
-        setupNavigation();
+        renderFilterPills();
+        renderRecipesGrid();
         setupSearch();
       }
 
-      function renderIndexTabs() {
-        const tabsContainer = document.getElementById('recipe-index-tabs');
-        if (!tabsContainer) return;
+      function renderFilterPills() {
+        const pillsContainer = document.getElementById('recipe-filter-pills');
+        if (!pillsContainer) return;
 
-        tabsContainer.innerHTML = '';
+        // Get unique categories
+        const categories = ['All', ...new Set(window.recipes.map(r => r.category || 'Uncategorized').filter(Boolean))];
 
-        if (filteredRecipes.length === 0) {
-          tabsContainer.innerHTML = '<p style="text-align: center; opacity: 0.6; padding: 1rem;">No recipes yet. Click + to add your first recipe!</p>';
-          return;
-        }
-
-        // Sort tabs A-Z for easy viewing
-        const sortedRecipes = [...filteredRecipes].sort((a, b) => a.name.localeCompare(b.name));
-
-        sortedRecipes.forEach((recipe, index) => {
-          const tab = document.createElement('button');
-          tab.className = 'recipe-index-tab';
-          if (recipe.id === filteredRecipes[currentRecipeIndex]?.id) tab.classList.add('active');
-          tab.textContent = recipe.name;
-          tab.onclick = () => {
-            // Find the index in the unsorted filteredRecipes array
-            currentRecipeIndex = filteredRecipes.findIndex(r => r.id === recipe.id);
-            renderCurrentRecipe();
-            renderIndexTabs();
+        pillsContainer.innerHTML = '';
+        categories.forEach(category => {
+          const pill = document.createElement('button');
+          pill.className = 'recipe-filter-pill';
+          if (category === currentFilter) pill.classList.add('active');
+          pill.textContent = category;
+          pill.onclick = () => {
+            currentFilter = category;
+            filterRecipes();
           };
-          tabsContainer.appendChild(tab);
+          pillsContainer.appendChild(pill);
         });
       }
 
-      function renderCurrentRecipe() {
-        const frontCard = document.getElementById('recipe-card-front');
-        if (!frontCard || filteredRecipes.length === 0) {
-          if (frontCard) {
-            frontCard.innerHTML = '<p style="text-align: center; opacity: 0.6; padding: 3rem;">No recipes to display</p>';
-          }
+      function filterRecipes() {
+        const searchInput = document.getElementById('recipe-search-ledger');
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+        filteredRecipes = window.recipes.filter(recipe => {
+          const matchesCategory = currentFilter === 'All' || (recipe.category || 'Uncategorized') === currentFilter;
+          const matchesSearch = !query ||
+            recipe.name.toLowerCase().includes(query) ||
+            (recipe.ingredients && recipe.ingredients.some(ing => ing.name.toLowerCase().includes(query)));
+          return matchesCategory && matchesSearch;
+        });
+
+        renderFilterPills();
+        renderRecipesGrid();
+      }
+
+      function renderRecipesGrid() {
+        const gridContainer = document.getElementById('recipes-grid');
+        if (!gridContainer) return;
+
+        gridContainer.innerHTML = '';
+
+        if (filteredRecipes.length === 0) {
+          gridContainer.innerHTML = '<p style="text-align: center; opacity: 0.6; padding: 3rem; grid-column: 1 / -1;">No recipes found. Click + to add your first recipe!</p>';
           return;
         }
 
-        const recipe = filteredRecipes[currentRecipeIndex];
+        // Sort alphabetically
+        const sortedRecipes = [...filteredRecipes].sort((a, b) => a.name.localeCompare(b.name));
+
+        sortedRecipes.forEach(recipe => {
+          const card = document.createElement('div');
+          card.className = 'recipe-grid-card';
+          card.onclick = () => openRecipeDetailModal(recipe);
+
+          const emoji = getRecipeEmoji(recipe);
+          const servings = recipe.servings || recipe.yield || '4';
+          const time = recipe.cookTime || recipe.time || '30min';
+
+          card.innerHTML = `
+            <div class="recipe-card-thumbnail">${emoji}</div>
+            <div class="recipe-card-content">
+              ${recipe.category ? `<div class="recipe-card-category">${recipe.category}</div>` : ''}
+              <div class="recipe-card-name">${recipe.name || 'Untitled Recipe'}</div>
+              <div class="recipe-card-meta">
+                <span>${servings} servings</span>
+                <span>${time}</span>
+              </div>
+            </div>
+          `;
+
+          gridContainer.appendChild(card);
+        });
+      }
+
+      function getRecipeEmoji(recipe) {
+        const category = (recipe.category || '').toLowerCase();
+        const emojis = {
+          'dinner': '🍝',
+          'lunch': '🥗',
+          'breakfast': '🍳',
+          'dessert': '🍰',
+          'snack': '🍪',
+          'appetizer': '🥙',
+          'soup': '🍲',
+          'salad': '🥗',
+          'pasta': '🍝',
+          'pizza': '🍕',
+          'burger': '🍔',
+          'sandwich': '🥪',
+          'seafood': '🦞',
+          'chicken': '🍗',
+          'beef': '🥩',
+          'pork': '🥓',
+          'vegetarian': '🥬',
+          'vegan': '🌱',
+          'bread': '🥖',
+          'cake': '🎂',
+          'cookie': '🍪'
+        };
+
+        for (const [key, emoji] of Object.entries(emojis)) {
+          if (category.includes(key)) return emoji;
+        }
+
+        return '🍽️';
+      }
+
+      function openRecipeDetailModal(recipe) {
+        // Create modal
+        recipeDetailModal = document.createElement('div');
+        recipeDetailModal.className = 'recipe-detail-modal';
 
         const ingredientsHTML = recipe.ingredients && recipe.ingredients.length > 0
           ? recipe.ingredients.map(ing => `<li>${ing.qty || ''} ${ing.unit || ''} ${ing.name || ''}</li>`).join('')
           : '<li style="opacity: 0.6;">No ingredients listed</li>';
 
         const instructionsHTML = recipe.instructions || recipe.method || 'No instructions provided';
+        const servings = recipe.servings || recipe.yield || '4';
+        const time = recipe.cookTime || recipe.time || '30min';
 
-        frontCard.innerHTML = `
-          <div class="recipe-card-id">FROM THE ARCHIVE OF THE HEARTH</div>
-          <h1 class="recipe-card-title">${recipe.name || 'Untitled Recipe'}</h1>
-
-          <div class="recipe-card-meta">
-            <span><strong>YIELD:</strong> ${recipe.servings || recipe.yield || '4'}</span>
-            <span class="meta-sep">|</span>
-            <span><strong>TIME:</strong> ${recipe.cookTime || recipe.time || '30min'}</span>
-          </div>
-
-          <div class="recipe-card-columns">
-            <div class="recipe-card-column">
-              <h3>Ingredients</h3>
-              <ul>${ingredientsHTML}</ul>
+        recipeDetailModal.innerHTML = `
+          <button class="recipe-modal-close" onclick="this.closest('.recipe-detail-modal').remove()">✕</button>
+          <div class="recipe-detail-modal-content">
+            <div class="recipe-vintage-card">
+              <div class="recipe-vintage-card-id">FROM THE ARCHIVE OF THE HEARTH</div>
+              <h1 class="recipe-vintage-card-title">${recipe.name || 'Untitled Recipe'}</h1>
+              <div class="recipe-vintage-card-meta">
+                <span><strong>YIELD:</strong> ${servings}</span>
+                <span><strong>TIME:</strong> ${time}</span>
+              </div>
+              <div class="recipe-vintage-card-columns">
+                <div class="recipe-vintage-card-column">
+                  <h3>Ingredients</h3>
+                  <ul>${ingredientsHTML}</ul>
+                </div>
+                <div class="recipe-vintage-card-column">
+                  <h3>Preparation</h3>
+                  <div class="recipe-vintage-method">${instructionsHTML}</div>
+                </div>
+              </div>
+              <div class="recipe-vintage-card-actions">
+                <button class="btn btn-edit-recipe" onclick="window.openRecipeModal(${JSON.stringify(recipe).replace(/"/g, '&quot;')}); document.querySelector('.recipe-detail-modal')?.remove();">EDIT LEDGER</button>
+                <button class="btn btn-delete-recipe" onclick="if(window.deleteRecipe) { window.deleteRecipe(${JSON.stringify(recipe).replace(/"/g, '&quot;')}); document.querySelector('.recipe-detail-modal')?.remove(); }">[ BURN CARD ]</button>
+              </div>
             </div>
-            <div class="recipe-card-column">
-              <h3>Preparation</h3>
-              <div class="recipe-method">${instructionsHTML}</div>
-            </div>
-          </div>
-
-          <div class="recipe-card-actions">
-            <button class="btn btn-edit-recipe" onclick="window.openRecipeModal(${JSON.stringify(recipe).replace(/"/g, '&quot;')})">EDIT LEDGER</button>
-            <button class="btn btn-delete-recipe" onclick="if(window.deleteRecipe) window.deleteRecipe(${JSON.stringify(recipe).replace(/"/g, '&quot;')})">[ BURN CARD ]</button>
           </div>
         `;
-      }
 
-      function setupNavigation() {
-        const prevBtn = document.getElementById('recipe-nav-prev');
-        const nextBtn = document.getElementById('recipe-nav-next');
+        // Close on background click
+        recipeDetailModal.onclick = (e) => {
+          if (e.target === recipeDetailModal) {
+            recipeDetailModal.remove();
+          }
+        };
 
-        if (prevBtn) {
-          prevBtn.onclick = () => {
-            if (filteredRecipes.length === 0) return;
-            currentRecipeIndex = (currentRecipeIndex - 1 + filteredRecipes.length) % filteredRecipes.length;
-            renderCurrentRecipe();
-            renderIndexTabs();
-          };
-        }
-
-        if (nextBtn) {
-          nextBtn.onclick = () => {
-            if (filteredRecipes.length === 0) return;
-            currentRecipeIndex = (currentRecipeIndex + 1) % filteredRecipes.length;
-            renderCurrentRecipe();
-            renderIndexTabs();
-          };
-        }
+        document.body.appendChild(recipeDetailModal);
       }
 
       function setupSearch() {
         const searchInput = document.getElementById('recipe-search-ledger');
         if (!searchInput) return;
 
-        searchInput.addEventListener('input', function(e) {
-          const query = e.target.value.toLowerCase().trim();
-
-          if (!query) {
-            filteredRecipes = [...window.recipes];
-          } else {
-            filteredRecipes = window.recipes.filter(recipe =>
-              recipe.name.toLowerCase().includes(query) ||
-              (recipe.ingredients && recipe.ingredients.some(ing => ing.name.toLowerCase().includes(query)))
-            );
-          }
-
-          currentRecipeIndex = 0;
-          renderIndexTabs();
-          renderCurrentRecipe();
-        });
+        searchInput.addEventListener('input', filterRecipes);
       }
 
       // Watch for recipe changes using MutationObserver
@@ -459,15 +495,10 @@
           return;
         }
 
-        // Observe changes to #recipe-list (app.js renders here)
         const observer = new MutationObserver(() => {
-          // When app.js updates the hidden recipe list, re-render our stack
           filteredRecipes = [...window.recipes];
-          if (currentRecipeIndex >= filteredRecipes.length) {
-            currentRecipeIndex = Math.max(0, filteredRecipes.length - 1);
-          }
-          renderIndexTabs();
-          renderCurrentRecipe();
+          renderFilterPills();
+          renderRecipesGrid();
         });
 
         observer.observe(recipeList, {
@@ -480,11 +511,11 @@
       // Initialize when DOM is ready
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-          initRecipeStackView();
+          initRecipeGridView();
           setupRecipeObserver();
         });
       } else {
-        initRecipeStackView();
+        initRecipeGridView();
         setupRecipeObserver();
       }
     })();
