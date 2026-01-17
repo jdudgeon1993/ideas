@@ -1059,6 +1059,16 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.recipe-card-favorite-star {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  font-size: 1.5rem;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 .recipe-grid-card:hover {
@@ -1109,6 +1119,47 @@ body {
   font-size: 0.75rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+}
+
+/* Recipe Tags */
+.recipe-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.recipe-tag-pill {
+  background: rgba(125, 102, 122, 0.1);
+  color: var(--color-header-purple);
+  padding: 0.2rem 0.6rem;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.recipe-tag-pill::before {
+  content: '#';
+  opacity: 0.6;
+}
+
+.recipe-tag-remove {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  padding: 0;
+  margin-left: 0.15rem;
+}
+
+.recipe-tag-remove:hover {
+  opacity: 1;
 }
 
 /* Recipe Index Tabs - Horizontal scroll, transparent pills */
@@ -2152,8 +2203,254 @@ body {
 .meal-planning-content {
   flex: 1;
   display: flex;
+  flex-direction: column;
+}
+
+/* Calendar Navigation */
+.calendar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-recipe-border);
+}
+
+.btn-calendar-nav {
+  background: var(--btn-primary);
+  color: white;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-calendar-nav:hover {
+  background: var(--btn-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 147, 118, 0.3);
+}
+
+.calendar-period-label {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 1.4rem;
+  color: var(--color-pantry-header);
+  margin: 0;
+}
+
+/* Calendar Container - Desktop Month View */
+.calendar-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+/* Calendar Day Cell */
+.calendar-day {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-recipe-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  min-height: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-day:hover {
+  border-color: var(--color-accent-olive);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-day.disabled {
+  background: rgba(0, 0, 0, 0.02);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.calendar-day.disabled:hover {
+  transform: none;
+  border-color: var(--color-recipe-border);
+  box-shadow: none;
+}
+
+.calendar-day.today {
+  border-color: var(--color-accent-olive);
+  background: rgba(139, 147, 118, 0.1);
+  box-shadow: 0 0 0 2px rgba(139, 147, 118, 0.2);
+}
+
+.calendar-day.past {
+  background: rgba(0, 0, 0, 0.02);
+  opacity: 0.5;
+}
+
+.calendar-day.has-meal {
+  border-color: var(--btn-primary);
+  background: rgba(139, 147, 118, 0.05);
+}
+
+.calendar-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.calendar-day-number {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-pantry-header);
+}
+
+.calendar-day-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendar-day-meals {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.calendar-meal-item {
+  font-size: 0.8rem;
+  color: var(--color-accent-olive);
+  background: rgba(139, 147, 118, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-day-empty {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  font-style: italic;
+}
+
+/* Scheduled Recipes Section */
+.scheduled-recipes-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--color-recipe-border);
+}
+
+.scheduled-recipes-section h3 {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 1.4rem;
+  color: var(--color-pantry-header);
+  margin-bottom: 1.5rem;
+}
+
+.scheduled-recipes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scheduled-recipe-card {
+  background: var(--color-card-bg);
+  border: 2px solid var(--color-recipe-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.2s;
+}
+
+.scheduled-recipe-card:hover {
+  border-color: var(--color-accent-olive);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.scheduled-recipe-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.scheduled-recipe-emoji {
+  font-size: 2.5rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #f5f0e8 0%, #e8dcc8 100%);
+  border-radius: 8px;
+  border: 2px solid var(--color-recipe-border);
+}
+
+.scheduled-recipe-details {
+  flex: 1;
+}
+
+.scheduled-recipe-name {
+  font-family: "Libre Baskerville", Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-pantry-header);
+  margin-bottom: 0.25rem;
+}
+
+.scheduled-recipe-date {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.scheduled-recipe-date.past-date {
+  color: #B36A5E;
+  font-weight: 600;
+}
+
+.btn-cook-now {
+  background: var(--btn-primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-cook-now:hover {
+  background: var(--btn-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 147, 118, 0.3);
+}
+
+.btn-cook-now:disabled {
+  background: rgba(139, 147, 118, 0.3);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.scheduled-recipes-empty {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+  font-style: italic;
 }
 
 /* -------------------------------------------------------------------
@@ -2710,5 +3007,61 @@ body {
     width: 40px;
     height: 40px;
     font-size: 1.25rem;
+  }
+
+  /* Calendar - Mobile Week View */
+  .calendar-container {
+    grid-template-columns: 1fr; /* Single column for mobile */
+    gap: 0.5rem;
+  }
+
+  .calendar-day {
+    min-height: auto;
+    padding: 1rem;
+  }
+
+  .calendar-day-header {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .calendar-day-name {
+    font-size: 0.8rem;
+  }
+
+  .calendar-day-number {
+    font-size: 1.2rem;
+  }
+
+  .calendar-period-label {
+    font-size: 1.1rem;
+  }
+
+  .btn-calendar-nav {
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  /* Scheduled Recipes Mobile */
+  .scheduled-recipe-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scheduled-recipe-info {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .scheduled-recipe-emoji {
+    width: 50px;
+    height: 50px;
+    font-size: 2rem;
+  }
+
+  .btn-cook-now {
+    width: 100%;
+    padding: 0.75rem;
   }
 }

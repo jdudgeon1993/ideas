@@ -127,15 +127,28 @@
         <h2>RECIPE BOX</h2>
       </div>
 
-      <!-- Recipe search bar -->
-      <div class="recipes-controls">
+      <!-- Recipe search bar and sort -->
+      <div class="recipes-controls" style="display: grid; grid-template-columns: 1fr auto; gap: 0.75rem; margin-bottom: 1rem;">
         <input type="text" id="recipe-search-ledger" placeholder="Search recipes..." class="recipe-search-input">
+        <select id="recipe-sort-select" class="recipe-sort-select" style="padding: 0.75rem 1rem; border: 1px solid rgba(197,184,165,0.3); border-radius: 8px; font-size: 0.9rem; background: white; color: var(--color-text-primary); font-family: inherit; cursor: pointer;">
+          <option value="a-z">Sort: A-Z</option>
+          <option value="z-a">Sort: Z-A</option>
+          <option value="favorites">Sort: Favorites First</option>
+          <option value="recent">Sort: Recent</option>
+        </select>
       </div>
 
       <!-- Horizontal scrolling category filters -->
       <div class="recipe-filters-container">
         <div class="recipe-filter-pills" id="recipe-filter-pills">
-          <!-- Filter pills will be rendered here -->
+          <!-- Category filter pills will be rendered here -->
+        </div>
+      </div>
+
+      <!-- Tag filters -->
+      <div class="recipe-tag-filters-container" style="margin-bottom: 1rem;">
+        <div class="recipe-tag-filter-pills" id="recipe-tag-filter-pills" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <!-- Tag filter pills will be rendered here -->
         </div>
       </div>
 
@@ -222,10 +235,24 @@
         <h2>MEAL PLANNER</h2>
       </div>
 
-      <div class="meal-planning-content">
-        <p style="text-align: center; opacity: 0.6; padding: 3rem;">
-          Meal planning calendar view coming soon!
-        </p>
+      <!-- Calendar Navigation -->
+      <div class="calendar-nav">
+        <button class="btn-calendar-nav" id="btn-prev-period">← Prev</button>
+        <h3 class="calendar-period-label" id="calendar-period-label">Loading...</h3>
+        <button class="btn-calendar-nav" id="btn-next-period">Next →</button>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="calendar-container" id="calendar-container">
+        <!-- Calendar will be rendered here -->
+      </div>
+
+      <!-- Scheduled Recipes List -->
+      <div class="scheduled-recipes-section">
+        <h3>Scheduled Meals</h3>
+        <div id="scheduled-recipes-list" class="scheduled-recipes-list">
+          <!-- Scheduled recipes will be rendered here -->
+        </div>
       </div>
     </section>
 
@@ -243,6 +270,8 @@
       let currentFilter = 'All';
       let recipeDetailModal = null;
 
+      let selectedTags = []; // Track selected tag filters
+
       function initRecipeGridView() {
         // Wait for window.recipes to be available
         if (!window.recipes || window.recipes.length === 0) {
@@ -252,8 +281,17 @@
 
         filteredRecipes = [...window.recipes];
         renderFilterPills();
+        renderTagFilterPills();
         renderRecipesGrid();
         setupSearch();
+        setupSortDropdown();
+      }
+
+      function setupSortDropdown() {
+        const sortSelect = document.getElementById('recipe-sort-select');
+        if (sortSelect) {
+          sortSelect.addEventListener('change', renderRecipesGrid);
+        }
       }
 
       function renderFilterPills() {
@@ -277,6 +315,58 @@
         });
       }
 
+      function renderTagFilterPills() {
+        const pillsContainer = document.getElementById('recipe-tag-filter-pills');
+        if (!pillsContainer) return;
+
+        // Get all unique tags from all recipes
+        const allTags = new Set();
+        window.recipes.forEach(recipe => {
+          if (recipe.tags && Array.isArray(recipe.tags)) {
+            recipe.tags.forEach(tag => allTags.add(tag));
+          }
+        });
+
+        if (allTags.size === 0) {
+          pillsContainer.innerHTML = '<span style="opacity: 0.5; font-size: 0.85rem;">No tags yet. Add tags to recipes to filter by them!</span>';
+          return;
+        }
+
+        pillsContainer.innerHTML = '';
+        allTags.forEach(tag => {
+          const pill = document.createElement('button');
+          pill.className = 'recipe-filter-pill';
+          if (selectedTags.includes(tag)) pill.classList.add('active');
+          pill.innerHTML = `#${tag}`;
+          pill.onclick = () => {
+            if (selectedTags.includes(tag)) {
+              selectedTags = selectedTags.filter(t => t !== tag);
+            } else {
+              selectedTags.push(tag);
+            }
+            renderTagFilterPills();
+            filterRecipes();
+          };
+          pillsContainer.appendChild(pill);
+        });
+
+        // Add "Clear Tags" button if any tags are selected
+        if (selectedTags.length > 0) {
+          const clearBtn = document.createElement('button');
+          clearBtn.className = 'recipe-filter-pill';
+          clearBtn.style.background = 'var(--btn-danger)';
+          clearBtn.style.color = 'white';
+          clearBtn.style.border = 'none';
+          clearBtn.textContent = 'Clear Tags';
+          clearBtn.onclick = () => {
+            selectedTags = [];
+            renderTagFilterPills();
+            filterRecipes();
+          };
+          pillsContainer.appendChild(clearBtn);
+        }
+      }
+
       function filterRecipes() {
         const searchInput = document.getElementById('recipe-search-ledger');
         const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -286,10 +376,16 @@
           const matchesSearch = !query ||
             recipe.name.toLowerCase().includes(query) ||
             (recipe.ingredients && recipe.ingredients.some(ing => ing.name.toLowerCase().includes(query)));
-          return matchesCategory && matchesSearch;
+
+          // Tag filtering: recipe must have ALL selected tags (AND logic)
+          const matchesTags = selectedTags.length === 0 ||
+            (recipe.tags && selectedTags.every(tag => recipe.tags.includes(tag)));
+
+          return matchesCategory && matchesSearch && matchesTags;
         });
 
         renderFilterPills();
+        renderTagFilterPills();
         renderRecipesGrid();
       }
 
@@ -304,8 +400,32 @@
           return;
         }
 
-        // Sort alphabetically
-        const sortedRecipes = [...filteredRecipes].sort((a, b) => a.name.localeCompare(b.name));
+        // Sort recipes based on current sort option
+        const sortSelect = document.getElementById('recipe-sort-select');
+        const sortOption = sortSelect ? sortSelect.value : 'a-z';
+
+        let sortedRecipes = [...filteredRecipes];
+
+        switch (sortOption) {
+          case 'z-a':
+            sortedRecipes.sort((a, b) => b.name.localeCompare(a.name));
+            break;
+          case 'favorites':
+            sortedRecipes.sort((a, b) => {
+              if (a.isFavorite && !b.isFavorite) return -1;
+              if (!a.isFavorite && b.isFavorite) return 1;
+              return a.name.localeCompare(b.name);
+            });
+            break;
+          case 'recent':
+            // Sort by ID descending (newest first) - assumes higher IDs are newer
+            sortedRecipes.sort((a, b) => (b.id || 0) - (a.id || 0));
+            break;
+          case 'a-z':
+          default:
+            sortedRecipes.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+        }
 
         sortedRecipes.forEach(recipe => {
           const card = document.createElement('div');
@@ -321,7 +441,19 @@
             ? `<div class="recipe-card-thumbnail" style="background-image: url('${recipe.photo}'); background-size: cover; background-position: center;"></div>`
             : `<div class="recipe-card-thumbnail">${emoji}</div>`;
 
+          // Tags HTML
+          const tagsHTML = recipe.tags && recipe.tags.length > 0
+            ? `<div class="recipe-card-tags">
+                ${recipe.tags.slice(0, 3).map(tag => `<span class="recipe-tag-pill">${tag}</span>`).join('')}
+                ${recipe.tags.length > 3 ? '<span class="recipe-tag-pill" style="opacity: 0.6;">+' + (recipe.tags.length - 3) + '</span>' : ''}
+              </div>`
+            : '';
+
+          // Favorite star
+          const favoriteHTML = recipe.isFavorite ? '<div class="recipe-card-favorite-star">⭐</div>' : '';
+
           card.innerHTML = `
+            ${favoriteHTML}
             ${thumbnailHTML}
             <div class="recipe-card-content">
               ${recipe.category ? `<div class="recipe-card-category">${recipe.category}</div>` : ''}
@@ -330,6 +462,7 @@
                 <span>${servings} servings</span>
                 <span>${time}</span>
               </div>
+              ${tagsHTML}
             </div>
           `;
 
@@ -371,6 +504,10 @@
       }
 
       function openRecipeDetailModal(recipe) {
+        // Initialize tags and favorite if not present
+        if (!recipe.tags) recipe.tags = [];
+        if (recipe.isFavorite === undefined) recipe.isFavorite = false;
+
         // Create modal
         recipeDetailModal = document.createElement('div');
         recipeDetailModal.className = 'recipe-detail-modal';
@@ -383,16 +520,43 @@
         const servings = recipe.servings || recipe.yield || '4';
         const time = recipe.cookTime || recipe.time || '30min';
 
+        const tagsHTML = recipe.tags.map(tag => `
+          <span class="recipe-tag-pill" data-tag="${tag}">
+            ${tag}
+            <button class="recipe-tag-remove" onclick="event.stopPropagation(); removeTag('${tag.replace(/'/g, "\\'")}', ${JSON.stringify(recipe).replace(/"/g, '&quot;')})">×</button>
+          </span>
+        `).join('');
+
         recipeDetailModal.innerHTML = `
           <button class="recipe-modal-close" onclick="this.closest('.recipe-detail-modal').remove()">✕</button>
           <div class="recipe-detail-modal-content">
             <div class="recipe-vintage-card">
-              <div class="recipe-vintage-card-id">FROM THE ARCHIVE OF THE HEARTH</div>
+              <div class="recipe-vintage-card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div class="recipe-vintage-card-id" style="flex: 1; border: none; padding: 0; margin: 0;">FROM THE ARCHIVE OF THE HEARTH</div>
+                <button class="btn-favorite-toggle" style="background: none; border: none; font-size: 2rem; cursor: pointer; padding: 0.25rem;" onclick="toggleFavorite(${JSON.stringify(recipe).replace(/"/g, '&quot;')})" title="${recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
+                  ${recipe.isFavorite ? '⭐' : '☆'}
+                </button>
+              </div>
               <h1 class="recipe-vintage-card-title">${recipe.name || 'Untitled Recipe'}</h1>
               <div class="recipe-vintage-card-meta">
                 <span><strong>YIELD:</strong> ${servings}</span>
                 <span><strong>TIME:</strong> ${time}</span>
               </div>
+
+              <!-- Tags Section -->
+              <div class="recipe-tags-section" style="margin: 1rem 0; padding: 1rem 0; border-top: 1px solid var(--color-recipe-border); border-bottom: 1px solid var(--color-recipe-border);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                  <span style="font-family: 'Caveat', cursive; font-size: 1.2rem; color: var(--clay-warm); font-weight: 600;">Tags:</span>
+                  <div class="recipe-tags-display" style="display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1;">
+                    ${tagsHTML || '<span style="opacity: 0.5; font-size: 0.85rem;">No tags yet</span>'}
+                  </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="text" class="recipe-tag-input" placeholder="Add tag (e.g., #quick, #italian)" style="flex: 1; padding: 0.5rem; border: 1px solid var(--color-recipe-border); border-radius: 4px; font-size: 0.85rem;" onkeypress="if(event.key === 'Enter') { addTag(this.value, ${JSON.stringify(recipe).replace(/"/g, '&quot;')}); this.value = ''; }">
+                  <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;" onclick="const input = this.previousElementSibling; addTag(input.value, ${JSON.stringify(recipe).replace(/"/g, '&quot;')}); input.value = '';">Add</button>
+                </div>
+              </div>
+
               <div class="recipe-vintage-card-columns">
                 <div class="recipe-vintage-card-column">
                   <h3>Ingredients</h3>
@@ -421,6 +585,98 @@
         document.body.appendChild(recipeDetailModal);
       }
 
+      // Toggle favorite status
+      window.toggleFavorite = function(recipe) {
+        if (!window.recipes) return;
+
+        const recipeIndex = window.recipes.findIndex(r =>
+          r.id === recipe.id || r.name === recipe.name
+        );
+
+        if (recipeIndex !== -1) {
+          window.recipes[recipeIndex].isFavorite = !window.recipes[recipeIndex].isFavorite;
+
+          // Save to storage if function exists
+          if (window.saveRecipes) {
+            window.saveRecipes();
+          }
+
+          // Re-render modal and grid
+          const modal = document.querySelector('.recipe-detail-modal');
+          if (modal) {
+            modal.remove();
+            openRecipeDetailModal(window.recipes[recipeIndex]);
+          }
+          renderRecipesGrid();
+        }
+      };
+
+      // Add tag to recipe
+      window.addTag = function(tagValue, recipe) {
+        if (!tagValue || !window.recipes) return;
+
+        // Clean up tag value (remove # if present, trim whitespace)
+        let tag = tagValue.trim();
+        if (tag.startsWith('#')) {
+          tag = tag.substring(1);
+        }
+        if (!tag) return;
+
+        const recipeIndex = window.recipes.findIndex(r =>
+          r.id === recipe.id || r.name === recipe.name
+        );
+
+        if (recipeIndex !== -1) {
+          if (!window.recipes[recipeIndex].tags) {
+            window.recipes[recipeIndex].tags = [];
+          }
+
+          // Don't add duplicate tags
+          if (!window.recipes[recipeIndex].tags.includes(tag)) {
+            window.recipes[recipeIndex].tags.push(tag);
+
+            // Save to storage if function exists
+            if (window.saveRecipes) {
+              window.saveRecipes();
+            }
+
+            // Re-render modal and grid
+            const modal = document.querySelector('.recipe-detail-modal');
+            if (modal) {
+              modal.remove();
+              openRecipeDetailModal(window.recipes[recipeIndex]);
+            }
+            renderRecipesGrid();
+          }
+        }
+      };
+
+      // Remove tag from recipe
+      window.removeTag = function(tag, recipe) {
+        if (!window.recipes) return;
+
+        const recipeIndex = window.recipes.findIndex(r =>
+          r.id === recipe.id || r.name === recipe.name
+        );
+
+        if (recipeIndex !== -1 && window.recipes[recipeIndex].tags) {
+          window.recipes[recipeIndex].tags = window.recipes[recipeIndex].tags.filter(t => t !== tag);
+
+          // Save to storage if function exists
+          if (window.saveRecipes) {
+            window.saveRecipes();
+          }
+
+          // Re-render modal and grid
+          const modal = document.querySelector('.recipe-detail-modal');
+          if (modal) {
+            modal.remove();
+            openRecipeDetailModal(window.recipes[recipeIndex]);
+          }
+          renderRecipesGrid();
+        }
+      };
+
       function setupSearch() {
         const searchInput = document.getElementById('recipe-search-ledger');
         if (!searchInput) return;
@@ -439,6 +695,7 @@
         const observer = new MutationObserver(() => {
           filteredRecipes = [...window.recipes];
           renderFilterPills();
+          renderTagFilterPills();
           renderRecipesGrid();
         });
 
@@ -874,6 +1131,429 @@
         initPantryLedger();
         setupPantryObserver();
       }
+    })();
+  </script>
+
+  <!-- Meal Planning Calendar Script -->
+  <script>
+    (function() {
+      let currentDate = new Date();
+      let viewMode = 'month'; // 'month' for desktop, 'week' for mobile
+      let scheduledMeals = {}; // Format: { 'YYYY-MM-DD': [recipeIds] }
+
+      function initCalendar() {
+        updateViewMode();
+        loadScheduledMeals();
+        renderCalendar();
+        renderScheduledRecipesList();
+        setupEventListeners();
+
+        // Re-check view mode on window resize
+        window.addEventListener('resize', () => {
+          updateViewMode();
+          renderCalendar();
+        });
+      }
+
+      function updateViewMode() {
+        viewMode = window.innerWidth <= 768 ? 'week' : 'month';
+      }
+
+      async function loadScheduledMeals() {
+        // Load scheduled meals from Supabase or localStorage
+        // For now, check if mealPlan exists in window (from app.js)
+        if (window.mealPlan && Array.isArray(window.mealPlan)) {
+          scheduledMeals = {};
+          window.mealPlan.forEach(meal => {
+            const dateKey = meal.date;
+            if (!scheduledMeals[dateKey]) {
+              scheduledMeals[dateKey] = [];
+            }
+            scheduledMeals[dateKey].push({
+              recipeId: meal.recipeId,
+              recipeName: meal.recipeName || 'Unknown Recipe',
+              cooked: meal.cooked || false
+            });
+          });
+        }
+      }
+
+      function renderCalendar() {
+        const container = document.getElementById('calendar-container');
+        const periodLabel = document.getElementById('calendar-period-label');
+
+        if (!container || !periodLabel) return;
+
+        container.innerHTML = '';
+
+        if (viewMode === 'month') {
+          renderMonthView(container, periodLabel);
+        } else {
+          renderWeekView(container, periodLabel);
+        }
+      }
+
+      function renderMonthView(container, periodLabel) {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // Update period label
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                            'July', 'August', 'September', 'October', 'November', 'December'];
+        periodLabel.textContent = `${monthNames[month]} ${year}`;
+
+        // Get first and last day of month
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+
+        // Get day of week for first day (0 = Sunday)
+        const firstDayOfWeek = firstDay.getDay();
+
+        // Render empty cells for days before month starts
+        for (let i = 0; i < firstDayOfWeek; i++) {
+          const emptyCell = document.createElement('div');
+          emptyCell.className = 'calendar-day disabled';
+          container.appendChild(emptyCell);
+        }
+
+        // Render each day of the month
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(year, month, day);
+          date.setHours(0, 0, 0, 0);
+          const dateKey = formatDateKey(date);
+
+          const dayCell = createDayCell(date, dateKey, today);
+          container.appendChild(dayCell);
+        }
+      }
+
+      function renderWeekView(container, periodLabel) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Get start of current week (Sunday)
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        // Get end of week (Saturday)
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        // Update period label
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const startMonth = monthNames[startOfWeek.getMonth()];
+        const endMonth = monthNames[endOfWeek.getMonth()];
+        const startDay = startOfWeek.getDate();
+        const endDay = endOfWeek.getDate();
+
+        if (startMonth === endMonth) {
+          periodLabel.textContent = `Week of ${startMonth} ${startDay}-${endDay}`;
+        } else {
+          periodLabel.textContent = `Week of ${startMonth} ${startDay} - ${endMonth} ${endDay}`;
+        }
+
+        // Render 7 days
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(startOfWeek);
+          date.setDate(startOfWeek.getDate() + i);
+          const dateKey = formatDateKey(date);
+
+          const dayCell = createDayCell(date, dateKey, today);
+          container.appendChild(dayCell);
+        }
+      }
+
+      function createDayCell(date, dateKey, today) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'calendar-day';
+
+        const isPast = date < today;
+        const isToday = date.getTime() === today.getTime();
+        const meals = scheduledMeals[dateKey] || [];
+        const hasMeals = meals.length > 0;
+
+        if (isPast) dayCell.classList.add('past');
+        if (isToday) dayCell.classList.add('today');
+        if (hasMeals) dayCell.classList.add('has-meal');
+
+        // Day header
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-day-header';
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'calendar-day-number';
+        dayNumber.textContent = date.getDate();
+
+        const dayName = document.createElement('div');
+        dayName.className = 'calendar-day-name';
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        dayName.textContent = dayNames[date.getDay()];
+
+        dayHeader.appendChild(dayNumber);
+        if (viewMode === 'week') {
+          dayHeader.appendChild(dayName);
+        }
+
+        dayCell.appendChild(dayHeader);
+
+        // Meals list
+        const mealsContainer = document.createElement('div');
+        mealsContainer.className = 'calendar-day-meals';
+
+        if (meals.length > 0) {
+          meals.forEach(meal => {
+            const mealItem = document.createElement('div');
+            mealItem.className = 'calendar-meal-item';
+            mealItem.textContent = meal.recipeName;
+            if (isPast && !meal.cooked) {
+              mealItem.style.color = '#B36A5E';
+              mealItem.style.fontWeight = '600';
+            }
+            mealsContainer.appendChild(mealItem);
+          });
+        } else {
+          const emptyMsg = document.createElement('div');
+          emptyMsg.className = 'calendar-day-empty';
+          emptyMsg.textContent = 'No meals';
+          mealsContainer.appendChild(emptyMsg);
+        }
+
+        dayCell.appendChild(mealsContainer);
+
+        // Click handler to schedule meal
+        if (!isPast || hasMeals) {
+          dayCell.addEventListener('click', () => {
+            openMealScheduleModal(date, dateKey);
+          });
+        }
+
+        return dayCell;
+      }
+
+      function openMealScheduleModal(date, dateKey) {
+        // Open modal to select recipe for this date
+        // For now, alert - will be implemented with proper modal in next step
+        const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+        alert(`Meal scheduling modal for ${dateStr} - To be implemented`);
+
+        // TODO: Show modal with recipe selection
+        // After selection, update scheduledMeals and re-render
+      }
+
+      function renderScheduledRecipesList() {
+        const listContainer = document.getElementById('scheduled-recipes-list');
+        if (!listContainer) return;
+
+        listContainer.innerHTML = '';
+
+        // Get all scheduled meals sorted by date
+        const allMeals = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        Object.keys(scheduledMeals).forEach(dateKey => {
+          const date = new Date(dateKey);
+          scheduledMeals[dateKey].forEach(meal => {
+            allMeals.push({
+              date: date,
+              dateKey: dateKey,
+              ...meal
+            });
+          });
+        });
+
+        // Sort by date
+        allMeals.sort((a, b) => a.date - b.date);
+
+        if (allMeals.length === 0) {
+          listContainer.innerHTML = '<div class="scheduled-recipes-empty">No scheduled meals yet. Click a date on the calendar to schedule a meal!</div>';
+          return;
+        }
+
+        allMeals.forEach(meal => {
+          const card = createScheduledRecipeCard(meal, today);
+          listContainer.appendChild(card);
+        });
+      }
+
+      function createScheduledRecipeCard(meal, today) {
+        const card = document.createElement('div');
+        card.className = 'scheduled-recipe-card';
+
+        const info = document.createElement('div');
+        info.className = 'scheduled-recipe-info';
+
+        // Emoji/photo
+        const emoji = document.createElement('div');
+        emoji.className = 'scheduled-recipe-emoji';
+
+        // Try to find recipe in window.recipes to get emoji
+        let recipeEmoji = '🍽️';
+        if (window.recipes) {
+          const recipe = window.recipes.find(r => r.id === meal.recipeId || r.name === meal.recipeName);
+          if (recipe) {
+            recipeEmoji = getRecipeEmojiFromCategory(recipe.category) || '🍽️';
+          }
+        }
+        emoji.textContent = recipeEmoji;
+
+        const details = document.createElement('div');
+        details.className = 'scheduled-recipe-details';
+
+        const name = document.createElement('div');
+        name.className = 'scheduled-recipe-name';
+        name.textContent = meal.recipeName;
+
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'scheduled-recipe-date';
+        const isPast = meal.date < today;
+        if (isPast) {
+          dateDiv.classList.add('past-date');
+          dateDiv.textContent = meal.cooked ?
+            `${meal.date.toLocaleDateString()} - Cooked ✓` :
+            `${meal.date.toLocaleDateString()} - Not cooked yet!`;
+        } else {
+          dateDiv.textContent = meal.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        }
+
+        details.appendChild(name);
+        details.appendChild(dateDiv);
+
+        info.appendChild(emoji);
+        info.appendChild(details);
+
+        card.appendChild(info);
+
+        // Cook Now button
+        const cookBtn = document.createElement('button');
+        cookBtn.className = 'btn-cook-now';
+        cookBtn.textContent = meal.cooked ? 'Cooked ✓' : 'Cook Now';
+        cookBtn.disabled = meal.cooked;
+
+        cookBtn.addEventListener('click', () => {
+          cookNow(meal);
+        });
+
+        card.appendChild(cookBtn);
+
+        return card;
+      }
+
+      function cookNow(meal) {
+        // Find the recipe
+        if (!window.recipes) {
+          alert('Recipes not loaded yet');
+          return;
+        }
+
+        const recipe = window.recipes.find(r => r.id === meal.recipeId || r.name === meal.recipeName);
+        if (!recipe) {
+          alert('Recipe not found');
+          return;
+        }
+
+        // Use existing Cook Now functionality from app.js
+        // This should deplete pantry ingredients
+        if (window.openCookingModal) {
+          window.openCookingModal(recipe);
+        } else {
+          alert('Cooking functionality not available. Please ensure app.js is loaded.');
+        }
+
+        // Mark as cooked
+        meal.cooked = true;
+        saveMealToStorage(meal);
+        renderScheduledRecipesList();
+        renderCalendar();
+      }
+
+      function saveMealToStorage(meal) {
+        // Update mealPlan in storage
+        if (window.mealPlan) {
+          const mealIndex = window.mealPlan.findIndex(m =>
+            m.date === meal.dateKey && (m.recipeId === meal.recipeId || m.recipeName === meal.recipeName)
+          );
+          if (mealIndex !== -1) {
+            window.mealPlan[mealIndex].cooked = meal.cooked;
+
+            // Save to Supabase if available
+            if (window.saveMealPlan) {
+              window.saveMealPlan();
+            }
+          }
+        }
+      }
+
+      function getRecipeEmojiFromCategory(category) {
+        const emojis = {
+          'Breakfast': '🍳',
+          'Lunch': '🥗',
+          'Dinner': '🍝',
+          'Dessert': '🍰',
+          'Snack': '🍿',
+          'Appetizer': '🥟',
+          'Soup': '🍲',
+          'Salad': '🥗',
+          'Main': '🍽️',
+          'Side': '🥘'
+        };
+        return emojis[category] || '🍽️';
+      }
+
+      function formatDateKey(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function setupEventListeners() {
+        const prevBtn = document.getElementById('btn-prev-period');
+        const nextBtn = document.getElementById('btn-next-period');
+
+        if (prevBtn) {
+          prevBtn.addEventListener('click', () => {
+            if (viewMode === 'month') {
+              currentDate.setMonth(currentDate.getMonth() - 1);
+            } else {
+              currentDate.setDate(currentDate.getDate() - 7);
+            }
+            renderCalendar();
+          });
+        }
+
+        if (nextBtn) {
+          nextBtn.addEventListener('click', () => {
+            if (viewMode === 'month') {
+              currentDate.setMonth(currentDate.getMonth() + 1);
+            } else {
+              currentDate.setDate(currentDate.getDate() + 7);
+            }
+            renderCalendar();
+          });
+        }
+      }
+
+      // Initialize when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initCalendar);
+      } else {
+        // DOM already loaded, but wait a bit for window.recipes to load
+        setTimeout(initCalendar, 1000);
+      }
+
+      // Expose reload function for external use
+      window.reloadCalendar = function() {
+        loadScheduledMeals();
+        renderCalendar();
+        renderScheduledRecipesList();
+      };
     })();
   </script>
 
