@@ -571,7 +571,7 @@ async function saveIngredient(existing) {
   ] = values;
 
   if (!name) {
-    alert("Ingredient name is required.");
+    showToast("❌ Ingredient name is required");
     return;
   }
 
@@ -589,17 +589,41 @@ async function saveIngredient(existing) {
 
   const totalQty = locations.reduce((sum, loc) => sum + loc.qty, 0);
 
+  // Validate and sanitize input using validation module
+  const validationResult = window.validation.validatePantryItem({
+    name: name,
+    unit: unit || 'unit',
+    totalQty: totalQty,
+    quantity: totalQty,
+    category: category || 'Uncategorized',
+    min: Number(min || 0),
+    locations: locations
+  });
+
+  if (!validationResult.valid) {
+    showToast(`❌ ${validationResult.error}`);
+    return;
+  }
+
+  // Use sanitized values
+  const sanitized = validationResult.sanitized;
+  const sanitizedName = sanitized.name;
+  const sanitizedUnit = sanitized.unit;
+  const sanitizedCategory = sanitized.category;
+  const sanitizedLocations = sanitized.locations;
+  const sanitizedTotalQty = sanitized.totalQty;
+
   // Check for duplicates (same name + unit)
   const duplicate = pantry.find(p =>
-    p.name.toLowerCase() === name.toLowerCase() &&
-    p.unit.toLowerCase() === unit.toLowerCase() &&
+    p.name.toLowerCase() === sanitizedName.toLowerCase() &&
+    p.unit.toLowerCase() === sanitizedUnit.toLowerCase() &&
     (!existing || p.id !== existing.id)
   );
 
   if (duplicate) {
     if (confirm(`An item "${duplicate.name}" (${duplicate.unit}) already exists in your pantry. Do you want to merge these items together?`)) {
       // Merge locations
-      locations.forEach(newLoc => {
+      sanitizedLocations.forEach(newLoc => {
         const existingLoc = duplicate.locations.find(l => l.location === newLoc.location);
         if (existingLoc) {
           existingLoc.qty += newLoc.qty;
@@ -648,22 +672,22 @@ async function saveIngredient(existing) {
   let itemToSync;
 
   if (existing) {
-    existing.name = name;
-    existing.unit = unit;
+    existing.name = sanitizedName;
+    existing.unit = sanitizedUnit;
     existing.min = Number(min || 0);
-    existing.category = category;
-    existing.locations = locations;
-    existing.totalQty = totalQty;
+    existing.category = sanitizedCategory;
+    existing.locations = sanitizedLocations;
+    existing.totalQty = sanitizedTotalQty;
     itemToSync = existing;
   } else {
     const newItem = {
       id: uid(),
-      name,
-      unit,
-      category,
+      name: sanitizedName,
+      unit: sanitizedUnit,
+      category: sanitizedCategory,
       min: Number(min || 0),
-      locations,
-      totalQty,
+      locations: sanitizedLocations,
+      totalQty: sanitizedTotalQty,
       notes: ""
     };
     pantry.push(newItem);
@@ -1038,7 +1062,7 @@ async function saveRecipe(existing) {
   ] = values;
 
   if (!name) {
-    alert("Recipe name is required.");
+    showToast("❌ Recipe name is required");
     return;
   }
 
@@ -1055,27 +1079,47 @@ async function saveRecipe(existing) {
     return { name, qty, unit };
   }).filter(ing => ing.name && ing.unit); // Must have both name AND unit
 
+  // Validate and sanitize recipe using validation module
+  const validationResult = window.validation.validateRecipe({
+    name: name,
+    servings: servings,
+    instructions: instructions,
+    ingredients: ingredients,
+    photo: tempRecipePhotoUrl || "",
+    notes: existing ? existing.notes : "",
+    tags: existing ? existing.tags : [],
+    isFavorite: existing ? existing.isFavorite : false
+  });
+
+  if (!validationResult.valid) {
+    showToast(`❌ ${validationResult.error}`);
+    return;
+  }
+
+  // Use sanitized values
+  const sanitized = validationResult.sanitized;
+
   let recipeToSync;
 
   if (existing) {
-    existing.name = name;
-    existing.servings = Number(servings || 0);
+    existing.name = sanitized.name;
+    existing.servings = sanitized.servings;
     existing.photo = tempRecipePhotoUrl || "";
-    existing.instructions = instructions;
-    existing.ingredients = ingredients;
+    existing.instructions = sanitized.instructions;
+    existing.ingredients = sanitized.ingredients;
     existing.notes = existing.notes || "";  // Preserve existing notes
-    existing.tags = existing.tags || [];    // Preserve existing tags
+    existing.tags = sanitized.tags;         // Use sanitized tags
     recipeToSync = existing;
   } else {
     const newRecipe = {
       id: uid(),
-      name,
-      servings: Number(servings || 0),
+      name: sanitized.name,
+      servings: sanitized.servings,
       photo: tempRecipePhotoUrl || "",
-      instructions,
-      ingredients,
-      notes: "",   // Add notes field
-      tags: []     // Add tags field
+      instructions: sanitized.instructions,
+      ingredients: sanitized.ingredients,
+      notes: "",
+      tags: sanitized.tags
     };
     recipes.push(newRecipe);
     recipeToSync = newRecipe;
