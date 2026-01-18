@@ -52,6 +52,7 @@ body.landing-active .main-content {
   font-size: 4rem;
   margin-bottom: 1rem;
   animation: float 3s ease-in-out infinite;
+  will-change: transform;
 }
 
 @keyframes float {
@@ -582,9 +583,12 @@ body.landing-active .main-content {
   text-align: center;
   font-size: 0.95rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 9999;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 10002; /* Above modal (10001) */
   animation: slideDown 0.3s ease;
 }
 
@@ -614,9 +618,24 @@ body.landing-active .main-content {
   opacity: 0.8;
 }
 
+/* Push content down when demo banner is visible */
+body.demo-mode-active .site-header {
+  margin-top: 50px;
+}
+
+body.demo-mode-active .main-content {
+  padding-top: 50px;
+}
+
 @media (max-width: 768px) {
   .demo-banner {
     font-size: 0.85rem;
     padding: 0.6rem 0.5rem;
+  }
+
+  body.demo-mode-active .site-header,
+  body.demo-mode-active .main-content {
+    margin-top: 40px;
+    padding-top: 40px;
   }
 }

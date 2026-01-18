@@ -324,6 +324,7 @@ function loadDemoAccount() {
     const demoBanner = document.getElementById('demo-banner');
     if (demoBanner) {
       demoBanner.style.display = 'block';
+      document.body.classList.add('demo-mode-active');
     }
 
     // Show toast notification
@@ -370,6 +371,7 @@ function exitDemoMode() {
     const demoBanner = document.getElementById('demo-banner');
     if (demoBanner) {
       demoBanner.style.display = 'none';
+      document.body.classList.remove('demo-mode-active');
     }
 
     // Show landing page
@@ -645,6 +647,7 @@ function initLandingPage() {
     const demoBanner = document.getElementById('demo-banner');
     if (demoBanner) {
       demoBanner.style.display = 'block';
+      document.body.classList.add('demo-mode-active');
     }
   }
 
