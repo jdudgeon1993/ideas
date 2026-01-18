@@ -3275,6 +3275,14 @@ async function saveQuickDeplete(item) {
 --------------------------------------------------- */
 
 function openSigninModal() {
+  // If in demo mode, offer to exit demo mode first
+  if (window.landing && window.landing.isDemoMode && window.landing.isDemoMode()) {
+    if (confirm('You are currently in demo mode. Exit demo mode to sign in with a real account?')) {
+      window.landing.exitDemoMode();
+    }
+    return;
+  }
+
   // If already signed in, show account info instead
   if (window.auth && window.auth.isAuthenticated()) {
     openAccountModal();
@@ -4580,6 +4588,11 @@ async function init() {
   // Initialize authentication first
   if (window.auth) {
     await window.auth.initAuth();
+  }
+
+  // Initialize landing page
+  if (window.landing) {
+    window.landing.initLandingPage();
   }
 
   // Check for pending invite from sessionStorage (user just signed in)

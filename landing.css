@@ -1,0 +1,460 @@
+/* ===================================================================
+   LANDING PAGE STYLES
+   =================================================================== */
+
+/* Landing page container */
+.landing-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: var(--parchment);
+  /* Same gingham pattern as main app */
+  background-image:
+    linear-gradient(90deg, rgba(139, 168, 142, 0.15) 50%, transparent 50%),
+    linear-gradient(rgba(139, 168, 142, 0.15) 50%, transparent 50%);
+  background-size: 70px 70px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none; /* Hidden by default, shown when not authenticated */
+}
+
+.landing-page.show {
+  display: block;
+}
+
+/* Hide app content when landing page is shown */
+body.landing-active .site-header,
+body.landing-active .sidebar-nav,
+body.landing-active .bottom-nav,
+body.landing-active .main-content {
+  display: none !important;
+}
+
+/* ===================================================================
+   HERO SECTION
+   =================================================================== */
+
+.landing-hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.landing-logo {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.landing-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 3rem;
+  color: var(--color-header-purple);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.landing-tagline {
+  font-family: "Caveat", cursive;
+  font-size: 1.8rem;
+  color: var(--color-accent-olive);
+  margin-bottom: 3rem;
+  font-weight: 600;
+}
+
+.landing-cta-group {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 3rem;
+}
+
+.landing-btn {
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 2px solid;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.landing-btn-primary {
+  background: var(--color-header-purple);
+  color: white;
+  border-color: var(--color-header-purple);
+}
+
+.landing-btn-primary:hover {
+  background: #6a5668;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(125, 102, 122, 0.3);
+}
+
+.landing-btn-secondary {
+  background: white;
+  color: var(--color-header-purple);
+  border-color: var(--color-header-purple);
+}
+
+.landing-btn-secondary:hover {
+  background: var(--color-header-purple);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(125, 102, 122, 0.3);
+}
+
+.landing-btn-demo {
+  background: var(--color-accent-olive);
+  color: white;
+  border-color: var(--color-accent-olive);
+  font-size: 0.95rem;
+  padding: 0.8rem 2rem;
+}
+
+.landing-btn-demo:hover {
+  background: #7a8367;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 147, 118, 0.3);
+}
+
+.landing-scroll-hint {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+/* ===================================================================
+   FEATURES SECTION
+   =================================================================== */
+
+.landing-features {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-section-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2.5rem;
+  color: var(--color-header-purple);
+  text-align: center;
+  margin-bottom: 3rem;
+  font-weight: 600;
+}
+
+.landing-features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.landing-feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.landing-feature-card:nth-child(1) { animation-delay: 0.1s; }
+.landing-feature-card:nth-child(2) { animation-delay: 0.2s; }
+.landing-feature-card:nth-child(3) { animation-delay: 0.3s; }
+.landing-feature-card:nth-child(4) { animation-delay: 0.4s; }
+.landing-feature-card:nth-child(5) { animation-delay: 0.5s; }
+.landing-feature-card:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  border-color: var(--color-accent-olive);
+}
+
+.landing-feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.landing-feature-card:hover .landing-feature-icon {
+  animation: bounce 0.6s ease;
+}
+
+.landing-feature-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.4rem;
+  color: var(--color-header-purple);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.landing-feature-description {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* ===================================================================
+   HOW IT WORKS SECTION
+   =================================================================== */
+
+.landing-how-it-works {
+  background: rgba(255, 255, 255, 0.6);
+  padding: 4rem 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.landing-steps {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+}
+
+.landing-step {
+  text-align: center;
+  padding: 2rem;
+  position: relative;
+}
+
+.landing-step-number {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--color-header-purple);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 0 auto 1.5rem;
+  font-family: "Playfair Display", Georgia, serif;
+}
+
+.landing-step-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 1.3rem;
+  color: var(--color-header-purple);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.landing-step-description {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+/* ===================================================================
+   FOOTER SECTION
+   =================================================================== */
+
+.landing-footer {
+  padding: 3rem 2rem;
+  text-align: center;
+  background: rgba(125, 102, 122, 0.05);
+}
+
+.landing-footer-cta {
+  margin-bottom: 2rem;
+}
+
+.landing-footer-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 2rem;
+  color: var(--color-header-purple);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.landing-footer-text {
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.landing-footer-links {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(125, 102, 122, 0.2);
+}
+
+.landing-footer-link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.landing-footer-link:hover {
+  color: var(--color-header-purple);
+}
+
+/* ===================================================================
+   MOBILE RESPONSIVE
+   =================================================================== */
+
+@media (max-width: 768px) {
+  .landing-title {
+    font-size: 2rem;
+  }
+
+  .landing-tagline {
+    font-size: 1.3rem;
+  }
+
+  .landing-logo {
+    font-size: 3rem;
+  }
+
+  .landing-cta-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .landing-btn {
+    width: 100%;
+  }
+
+  .landing-section-title {
+    font-size: 1.8rem;
+  }
+
+  .landing-features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===================================================================
+   SPECIAL EFFECTS
+   =================================================================== */
+
+/* Shimmer effect for special elements */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Badge/pill for "Free" indicators */
+.landing-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--color-accent-olive);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* ===================================================================
+   DEMO MODE BANNER
+   =================================================================== */
+
+.demo-banner {
+  background: linear-gradient(135deg, #8a9a5b 0%, #7a8a4b 100%);
+  color: white;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 9999;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.demo-banner-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.demo-banner a {
+  transition: opacity 0.2s ease;
+}
+
+.demo-banner a:hover {
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .demo-banner {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.5rem;
+  }
+}

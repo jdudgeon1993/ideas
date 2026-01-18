@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="landing.css">
 
   <!-- Supabase Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -16,10 +17,191 @@
   <script src="storage.js"></script>
   <script src="realtime.js"></script>
   <script src="onboarding.js"></script>
+  <script src="landing.js"></script>
   <script src="validation.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
+
+  <!-- LANDING PAGE (shown when not authenticated) -->
+  <div class="landing-page" id="landing-page">
+
+    <!-- HERO SECTION -->
+    <section class="landing-hero">
+      <div class="landing-logo">🍳</div>
+      <h1 class="landing-title">Chef's Kiss</h1>
+      <p class="landing-tagline">simple tools for the heart of your home</p>
+
+      <div class="landing-cta-group">
+        <button class="landing-btn landing-btn-primary" id="landing-get-started">Get Started</button>
+        <button class="landing-btn landing-btn-demo" id="landing-try-demo">Try Demo Account</button>
+      </div>
+
+      <p class="landing-scroll-hint">↓ Scroll to explore features ↓</p>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="landing-features">
+      <h2 class="landing-section-title">Everything You Need to Run Your Kitchen</h2>
+
+      <div class="landing-features-grid">
+
+        <!-- Feature 1: Pantry Tracking -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">🏺</span>
+          <h3 class="landing-feature-title">Smart Pantry</h3>
+          <p class="landing-feature-description">
+            Track ingredients across multiple locations (pantry, fridge, freezer). Never forget what you have or where it is.
+          </p>
+        </div>
+
+        <!-- Feature 2: Recipe Box -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">📖</span>
+          <h3 class="landing-feature-title">Recipe Box</h3>
+          <p class="landing-feature-description">
+            Save your favorite recipes with photos, tags, and notes. Beautiful vintage recipe card design.
+          </p>
+        </div>
+
+        <!-- Feature 3: Meal Planning -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">📅</span>
+          <h3 class="landing-feature-title">Meal Planner</h3>
+          <p class="landing-feature-description">
+            Plan your week on a visual calendar. Schedule breakfast, lunch, dinner, and snacks with ease.
+          </p>
+        </div>
+
+        <!-- Feature 4: Shopping List -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">🛒</span>
+          <h3 class="landing-feature-title">Auto Shopping List</h3>
+          <p class="landing-feature-description">
+            Generate shopping lists automatically from your meal plan and pantry stock. Never forget an ingredient.
+          </p>
+        </div>
+
+        <!-- Feature 5: Real-time Sync -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">🔄</span>
+          <h3 class="landing-feature-title">Multi-Device Sync</h3>
+          <p class="landing-feature-description">
+            Work on phone, tablet, or desktop. All your data syncs in real-time across devices.
+          </p>
+        </div>
+
+        <!-- Feature 6: Household Sharing -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">👥</span>
+          <h3 class="landing-feature-title">Household Sharing</h3>
+          <p class="landing-feature-description">
+            Share your kitchen with family members. Everyone stays in sync with the same pantry and meal plan.
+          </p>
+        </div>
+
+        <!-- Feature 7: Offline Mode -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">📡</span>
+          <h3 class="landing-feature-title">Offline-First</h3>
+          <p class="landing-feature-description">
+            Works without internet. Add items offline and they'll sync automatically when you're back online.
+          </p>
+        </div>
+
+        <!-- Feature 8: Bulk Entry -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">⚡</span>
+          <h3 class="landing-feature-title">Quick Setup</h3>
+          <p class="landing-feature-description">
+            Bulk entry tool for adding many items at once. Perfect for initial pantry setup or after big shopping trips.
+          </p>
+        </div>
+
+        <!-- Feature 9: Recipe Tags -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">🏷️</span>
+          <h3 class="landing-feature-title">Smart Tags</h3>
+          <p class="landing-feature-description">
+            Organize recipes with custom tags. Filter by cuisine, dietary needs, cook time, or your own categories.
+          </p>
+        </div>
+
+        <!-- Feature 10: Ready Recipes -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">✨</span>
+          <h3 class="landing-feature-title">Ready to Cook</h3>
+          <p class="landing-feature-description">
+            See which recipes you can make right now with your current pantry stock. No guessing!
+          </p>
+        </div>
+
+        <!-- Feature 11: Photos -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">📸</span>
+          <h3 class="landing-feature-title">Recipe Photos</h3>
+          <p class="landing-feature-description">
+            Upload photos of your dishes. Auto-compressed and stored in the cloud for quick loading.
+          </p>
+        </div>
+
+        <!-- Feature 12: Free -->
+        <div class="landing-feature-card">
+          <span class="landing-feature-icon">💝</span>
+          <h3 class="landing-feature-title">100% Free</h3>
+          <p class="landing-feature-description">
+            No subscription, no trial period, no hidden fees. All features available to everyone, always.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS SECTION -->
+    <section class="landing-how-it-works">
+      <h2 class="landing-section-title">How It Works</h2>
+
+      <div class="landing-steps">
+        <div class="landing-step">
+          <div class="landing-step-number">1</div>
+          <h3 class="landing-step-title">Create Account</h3>
+          <p class="landing-step-description">
+            Sign up with email. Create or join a household to share with family.
+          </p>
+        </div>
+
+        <div class="landing-step">
+          <div class="landing-step-number">2</div>
+          <h3 class="landing-step-title">Add Your Pantry</h3>
+          <p class="landing-step-description">
+            Use quick setup to add items in bulk, or add them one by one as you cook.
+          </p>
+        </div>
+
+        <div class="landing-step">
+          <div class="landing-step-number">3</div>
+          <h3 class="landing-step-title">Plan & Cook</h3>
+          <p class="landing-step-description">
+            Add recipes, plan meals on the calendar, and let us generate your shopping list.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER SECTION -->
+    <section class="landing-footer">
+      <div class="landing-footer-cta">
+        <h2 class="landing-footer-title">Ready to get started?</h2>
+        <p class="landing-footer-text">Join thousands of households managing their kitchens with Chef's Kiss</p>
+        <button class="landing-btn landing-btn-primary" id="landing-footer-cta">Get Started Free</button>
+      </div>
+
+      <div class="landing-footer-links">
+        <a href="#" class="landing-footer-link" id="landing-footer-signin">Already have an account? Sign in</a>
+      </div>
+    </section>
+
+  </div>
 
   <!-- OFFLINE INDICATOR BANNER -->
   <div id="offline-banner" class="offline-banner" style="display: none;">
@@ -90,6 +272,14 @@
       </nav>
     </div>
   </header>
+
+  <!-- DEMO MODE BANNER (shown only in demo mode) -->
+  <div id="demo-banner" class="demo-banner" style="display: none;">
+    <span class="demo-banner-text">
+      🎉 <strong>Demo Mode</strong> — You're exploring with sample data.
+      <a href="#" id="demo-exit-link" style="color: white; text-decoration: underline; margin-left: 0.5rem;">Exit Demo</a>
+    </span>
+  </div>
 
   <!-- MAIN CONTENT AREA -->
   <div class="main-content">

@@ -296,6 +296,11 @@ function updateAuthUI(user) {
     btnSignin.title = 'Sign In';
     btnSignin.style.opacity = '0.6';
   }
+
+  // Update landing page visibility
+  if (window.landing && window.landing.updateLandingPageVisibility) {
+    window.landing.updateLandingPageVisibility(user !== null);
+  }
 }
 
 /* ---------------------------------------------------
