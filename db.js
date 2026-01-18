@@ -1066,6 +1066,149 @@ async function getHouseholdName() {
 }
 
 /* ---------------------------------------------------
+   BULK ENTRY DRAFTS OPERATIONS
+--------------------------------------------------- */
+
+/**
+ * Load all bulk entry draft rows for current household
+ */
+async function loadBulkEntryDrafts() {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    console.log('Not authenticated - cannot load bulk entry drafts');
+    return [];
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    console.warn('No household ID found');
+    return [];
+  }
+
+  try {
+    const { data, error } = await window.supabaseClient
+      .from('bulk_entry_drafts')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('row_number', { ascending: true });
+
+    if (error) throw error;
+
+    console.log(`📥 Loaded ${data.length} bulk entry draft rows`);
+    return data || [];
+
+  } catch (err) {
+    console.error('Error loading bulk entry drafts:', err);
+    return [];
+  }
+}
+
+/**
+ * Save or update a bulk entry draft row
+ */
+async function saveBulkEntryDraftRow(rowNumber, rowData) {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    console.log('Not authenticated - cannot save bulk entry draft');
+    return false;
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    console.warn('No household ID found');
+    return false;
+  }
+
+  const userId = window.auth.getCurrentUser()?.id;
+
+  try {
+    const draftRow = {
+      household_id: householdId,
+      row_number: rowNumber,
+      item_name: rowData.name || null,
+      quantity: rowData.quantity || null,
+      unit: rowData.unit || null,
+      category: rowData.category || null,
+      location: rowData.location || null,
+      created_by: userId
+    };
+
+    // Upsert based on household_id + row_number unique constraint
+    const { error } = await window.supabaseClient
+      .from('bulk_entry_drafts')
+      .upsert(draftRow, {
+        onConflict: 'household_id,row_number'
+      });
+
+    if (error) throw error;
+
+    return true;
+
+  } catch (err) {
+    console.error('Error saving bulk entry draft row:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete a specific bulk entry draft row
+ */
+async function deleteBulkEntryDraftRow(rowNumber) {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return false;
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    return false;
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('bulk_entry_drafts')
+      .delete()
+      .eq('household_id', householdId)
+      .eq('row_number', rowNumber);
+
+    if (error) throw error;
+
+    return true;
+
+  } catch (err) {
+    console.error('Error deleting bulk entry draft row:', err);
+    return false;
+  }
+}
+
+/**
+ * Clear all bulk entry drafts for current household
+ */
+async function clearAllBulkEntryDrafts() {
+  if (!window.auth || !window.auth.isAuthenticated()) {
+    return false;
+  }
+
+  const householdId = window.auth.getCurrentHouseholdId();
+  if (!householdId) {
+    return false;
+  }
+
+  try {
+    const { error } = await window.supabaseClient
+      .from('bulk_entry_drafts')
+      .delete()
+      .eq('household_id', householdId);
+
+    if (error) throw error;
+
+    console.log('🗑️ Cleared all bulk entry drafts');
+    return true;
+
+  } catch (err) {
+    console.error('Error clearing bulk entry drafts:', err);
+    return false;
+  }
+}
+
+/* ---------------------------------------------------
    EXPORTS (attached to window for global access)
 --------------------------------------------------- */
 
@@ -1110,6 +1253,12 @@ window.db = {
   removeHouseholdMember,
   leaveHousehold,
   getHouseholdName,
+
+  // Bulk Entry Drafts
+  loadBulkEntryDrafts,
+  saveBulkEntryDraftRow,
+  deleteBulkEntryDraftRow,
+  clearAllBulkEntryDrafts,
 
   // Sync
   syncAllData

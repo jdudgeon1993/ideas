@@ -10,7 +10,8 @@ const lastLocalUpdate = {
   pantry: 0,
   recipes: 0,
   mealPlans: 0,
-  shopping: 0
+  shopping: 0,
+  bulkEntry: 0
 };
 
 // Debounce delay in milliseconds
@@ -209,6 +210,33 @@ async function initRealtimeSync() {
 
   realtimeSubscriptions.push(shoppingChannel);
 
+  // Subscribe to bulk_entry_drafts changes
+  const bulkEntryChannel = window.supabaseClient
+    .channel('bulk_entry_drafts_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'bulk_entry_drafts',
+        filter: `household_id=eq.${householdId}`
+      },
+      (payload) => handleBulkEntryChange(payload)
+    )
+    .subscribe((status, err) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('✅ Subscribed to bulk_entry_drafts changes');
+      } else if (status === 'CLOSED') {
+        console.warn('⚠️ Bulk entry subscription closed');
+        attemptReconnection();
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Bulk entry subscription error:', err);
+        attemptReconnection();
+      }
+    });
+
+  realtimeSubscriptions.push(bulkEntryChannel);
+
   // Mark reconnection as complete
   isReconnecting = false;
   console.log('✅ Realtime sync initialized successfully');
@@ -344,6 +372,34 @@ async function handleShoppingChange(payload) {
     window.customShoppingItems = dbShopping;
     generateShoppingList();
     showRealtimeToast('Shopping list updated by another user');
+  }
+}
+
+/**
+ * Handle bulk entry draft changes from other users
+ */
+async function handleBulkEntryChange(payload) {
+  console.log('📡 Bulk entry draft change detected:', payload.eventType);
+
+  // Debounce: Skip if this is our own change (within debounce window)
+  const now = Date.now();
+  if (now - lastLocalUpdate.bulkEntry < DEBOUNCE_DELAY) {
+    console.log('⏭️  Skipping own bulk entry change (debounced)');
+    return;
+  }
+
+  // Notify onboarding component if it exists
+  if (window.onBulkEntryDraftChange) {
+    window.onBulkEntryDraftChange(payload);
+  }
+
+  // Show toast notification
+  if (payload.eventType === 'INSERT') {
+    showRealtimeToast('Row added by another user');
+  } else if (payload.eventType === 'UPDATE') {
+    showRealtimeToast('Row updated by another user');
+  } else if (payload.eventType === 'DELETE') {
+    showRealtimeToast('Row deleted by another user');
   }
 }
 
