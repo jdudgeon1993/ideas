@@ -43,12 +43,7 @@ window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
-    // Reduce lock timeout to prevent hanging
-    lock: {
-      acquireTimeout: 5000, // 5 seconds instead of default 30
-      retryInterval: 100
-    }
+    flowType: 'pkce'
   },
   db: {
     schema: 'public'
