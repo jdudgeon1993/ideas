@@ -1457,7 +1457,7 @@ function openDayModal(dateStr) {
             renderPantry();
             updateDashboard();
             closeModal();
-            setTimeout(() => openPlannerModal(), 100);
+            // Calendar auto-refreshes via window.reloadCalendar()
           }
         }
       },
@@ -1466,7 +1466,7 @@ function openDayModal(dateStr) {
         class: "btn-secondary",
         onClick: () => {
           closeModal();
-          setTimeout(() => openPlannerModal(), 100);
+          // Calendar auto-refreshes via window.reloadCalendar()
         }
       }
     ]
@@ -1526,6 +1526,9 @@ function saveAddMeal(dateStr) {
   generateShoppingList();
   renderPantry();
   updateDashboard();
+
+  // Keep modal open after adding so user can add more meals
+  // Just refresh the day modal to show the newly added meal
   closeModal();
   setTimeout(() => openDayModal(dateStr), 100);
 }
