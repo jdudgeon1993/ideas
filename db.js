@@ -204,7 +204,8 @@ async function loadRecipes() {
       ingredients: recipe.ingredients || [],
       instructions: recipe.instructions || '',
       notes: recipe.notes || '',
-      tags: recipe.tags || []
+      tags: recipe.tags || [],
+      isFavorite: recipe.is_favorite || false
     }));
 
     console.log(`📥 Loaded ${recipesData.length} recipes from database`);
@@ -240,7 +241,8 @@ async function saveRecipe(recipe) {
       ingredients: recipe.ingredients || [],
       instructions: recipe.instructions || '',
       notes: recipe.notes || '',
-      tags: recipe.tags || []
+      tags: recipe.tags || [],
+      is_favorite: recipe.isFavorite || false
     };
 
     const { error } = await window.supabaseClient
