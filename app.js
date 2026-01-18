@@ -4611,22 +4611,28 @@ async function init() {
     btnReset.addEventListener("click", resetAllData);
   }
 
-  // Sign-in button
-  const btnSignin = document.getElementById("btn-signin");
-  if (btnSignin) {
-    btnSignin.addEventListener("click", openSigninModal);
+  // Account button (sign-in or account management)
+  const btnAccount = document.getElementById("btn-account");
+  if (btnAccount) {
+    btnAccount.addEventListener("click", openSigninModal); // Opens account modal if authenticated
+  }
+
+  // Onboarding button (bulk entry & quick setup)
+  const btnOnboarding = document.getElementById("btn-onboarding");
+  if (btnOnboarding) {
+    btnOnboarding.addEventListener("click", () => {
+      if (window.openOnboardingModal) {
+        window.openOnboardingModal();
+      } else {
+        console.error('Onboarding module not loaded');
+      }
+    });
   }
 
   // Settings button
   const btnSettings = document.getElementById("btn-settings");
   if (btnSettings) {
     btnSettings.addEventListener("click", openSettingsModal);
-  }
-
-  // Household button (opens settings since it's account/household settings)
-  const btnHousehold = document.getElementById("btn-household");
-  if (btnHousehold) {
-    btnHousehold.addEventListener("click", openSettingsModal);
   }
 
   // New Pantry Entry button
