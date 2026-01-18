@@ -39,10 +39,10 @@ const DEMO_DATA = {
       name: 'Eggs',
       unit: 'unit',
       category: 'Dairy',
-      min: 6,
-      totalQty: 12,
+      min: 12,
+      totalQty: 4,
       locations: [
-        { id: 'demo-loc-4', location: 'Fridge', qty: 12, expiry: '2026-02-01' }
+        { id: 'demo-loc-4', location: 'Fridge', qty: 4, expiry: '2026-02-01' }
       ],
       notes: ''
     },
@@ -51,10 +51,10 @@ const DEMO_DATA = {
       name: 'Milk',
       unit: 'gal',
       category: 'Dairy',
-      min: 0.5,
-      totalQty: 1,
+      min: 1,
+      totalQty: 0.25,
       locations: [
-        { id: 'demo-loc-5', location: 'Fridge', qty: 1, expiry: '2026-01-25' }
+        { id: 'demo-loc-5', location: 'Fridge', qty: 0.25, expiry: '2026-01-25' }
       ],
       notes: ''
     },
@@ -63,10 +63,10 @@ const DEMO_DATA = {
       name: 'Butter',
       unit: 'lb',
       category: 'Dairy',
-      min: 0.5,
-      totalQty: 1,
+      min: 1,
+      totalQty: 0.25,
       locations: [
-        { id: 'demo-loc-6', location: 'Fridge', qty: 1, expiry: '' }
+        { id: 'demo-loc-6', location: 'Fridge', qty: 0.25, expiry: '' }
       ],
       notes: ''
     },
@@ -87,10 +87,10 @@ const DEMO_DATA = {
       name: 'Tomatoes',
       unit: 'unit',
       category: 'Produce',
-      min: 3,
-      totalQty: 6,
+      min: 6,
+      totalQty: 2,
       locations: [
-        { id: 'demo-loc-8', location: 'Counter', qty: 6, expiry: '' }
+        { id: 'demo-loc-8', location: 'Counter', qty: 2, expiry: '' }
       ],
       notes: ''
     },
@@ -104,6 +104,40 @@ const DEMO_DATA = {
       locations: [
         { id: 'demo-loc-9', location: 'Pantry', qty: 2, expiry: '' }
       ],
+      notes: ''
+    },
+    {
+      id: 'demo-pantry-9',
+      name: 'Olive Oil',
+      unit: 'bottle',
+      category: 'Oils',
+      min: 2,
+      totalQty: 0.5,
+      locations: [
+        { id: 'demo-loc-10', location: 'Pantry', qty: 0.5, expiry: '' }
+      ],
+      notes: ''
+    },
+    {
+      id: 'demo-pantry-10',
+      name: 'Garlic',
+      unit: 'bulb',
+      category: 'Produce',
+      min: 3,
+      totalQty: 1,
+      locations: [
+        { id: 'demo-loc-11', location: 'Counter', qty: 1, expiry: '' }
+      ],
+      notes: ''
+    },
+    {
+      id: 'demo-pantry-11',
+      name: 'Chocolate Chips',
+      unit: 'bag',
+      category: 'Baking',
+      min: 1,
+      totalQty: 0,
+      locations: [],
       notes: ''
     }
   ],
@@ -157,15 +191,15 @@ const DEMO_DATA = {
     }
   ],
   planner: {
-    '2026-01-20': [
+    '2026-01-19': [
       {
         id: 'demo-meal-1',
         recipeId: 'demo-recipe-2',
         mealType: 'dinner',
-        cooked: false
+        cooked: true
       }
     ],
-    '2026-01-21': [
+    '2026-01-20': [
       {
         id: 'demo-meal-2',
         recipeId: 'demo-recipe-3',
@@ -173,11 +207,49 @@ const DEMO_DATA = {
         cooked: false
       }
     ],
-    '2026-01-22': [
+    '2026-01-21': [
       {
         id: 'demo-meal-3',
+        recipeId: 'demo-recipe-2',
+        mealType: 'dinner',
+        cooked: false
+      }
+    ],
+    '2026-01-22': [
+      {
+        id: 'demo-meal-4',
         recipeId: 'demo-recipe-1',
         mealType: 'snack',
+        cooked: false
+      }
+    ],
+    '2026-01-23': [
+      {
+        id: 'demo-meal-5',
+        recipeId: 'demo-recipe-3',
+        mealType: 'lunch',
+        cooked: false
+      },
+      {
+        id: 'demo-meal-6',
+        recipeId: 'demo-recipe-2',
+        mealType: 'dinner',
+        cooked: false
+      }
+    ],
+    '2026-01-24': [
+      {
+        id: 'demo-meal-7',
+        recipeId: 'demo-recipe-1',
+        mealType: 'dessert',
+        cooked: false
+      }
+    ],
+    '2026-01-25': [
+      {
+        id: 'demo-meal-8',
+        recipeId: 'demo-recipe-3',
+        mealType: 'dinner',
         cooked: false
       }
     ]
@@ -322,11 +394,51 @@ function isDemoMode() {
  * Handle "Get Started" button click
  */
 function handleGetStarted() {
+  // Temporarily hide landing page so modal is visible
+  const landingPage = document.getElementById('landing-page');
+  const body = document.body;
+
+  if (landingPage) {
+    landingPage.classList.remove('show');
+    body.classList.remove('landing-active');
+  }
+
   // Open the sign-in modal (defined in app.js)
   if (window.openSigninModal) {
     window.openSigninModal();
+
+    // Set up a check to restore landing page if modal closes without auth
+    // We'll poll every 500ms to check if modal is closed
+    const checkModalClosed = setInterval(() => {
+      const modal = document.getElementById('card-modal');
+      const isAuthenticated = window.auth && window.auth.isAuthenticated && window.auth.isAuthenticated();
+
+      // If modal is closed (or doesn't exist) and user is still not authenticated
+      if ((!modal || !modal.classList.contains('show')) && !isAuthenticated && !isDemoMode()) {
+        clearInterval(checkModalClosed);
+        // Show landing page again after a short delay
+        setTimeout(() => {
+          if (!window.auth || !window.auth.isAuthenticated()) {
+            updateLandingPageVisibility(false);
+          }
+        }, 100);
+      }
+
+      // If user is now authenticated, stop checking
+      if (isAuthenticated) {
+        clearInterval(checkModalClosed);
+      }
+
+      // Safety: stop checking after 30 seconds
+      setTimeout(() => clearInterval(checkModalClosed), 30000);
+    }, 500);
   } else {
     console.error('Sign-in modal function not found');
+    // Restore landing page if modal can't open
+    if (landingPage) {
+      landingPage.classList.add('show');
+      body.classList.add('landing-active');
+    }
   }
 }
 
