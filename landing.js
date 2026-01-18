@@ -408,30 +408,40 @@ function handleGetStarted() {
     window.openSigninModal();
 
     // Set up a check to restore landing page if modal closes without auth
-    // We'll poll every 500ms to check if modal is closed
-    const checkModalClosed = setInterval(() => {
-      const modal = document.getElementById('card-modal');
-      const isAuthenticated = window.auth && window.auth.isAuthenticated && window.auth.isAuthenticated();
+    // Wait 1 second before starting to poll, to give modal time to fully open
+    setTimeout(() => {
+      let pollCount = 0;
+      const maxPolls = 60; // Stop after 30 seconds (60 checks * 500ms)
 
-      // If modal is closed (or doesn't exist) and user is still not authenticated
-      if ((!modal || !modal.classList.contains('show')) && !isAuthenticated && !isDemoMode()) {
-        clearInterval(checkModalClosed);
-        // Show landing page again after a short delay
-        setTimeout(() => {
-          if (!window.auth || !window.auth.isAuthenticated()) {
-            updateLandingPageVisibility(false);
-          }
-        }, 100);
-      }
+      const checkModalClosed = setInterval(() => {
+        pollCount++;
+        const modal = document.getElementById('card-modal');
+        const isAuthenticated = window.auth && window.auth.isAuthenticated && window.auth.isAuthenticated();
 
-      // If user is now authenticated, stop checking
-      if (isAuthenticated) {
-        clearInterval(checkModalClosed);
-      }
+        // If user is now authenticated, stop checking
+        if (isAuthenticated) {
+          clearInterval(checkModalClosed);
+          return;
+        }
 
-      // Safety: stop checking after 30 seconds
-      setTimeout(() => clearInterval(checkModalClosed), 30000);
-    }, 500);
+        // If modal is closed (or doesn't exist) and user is still not authenticated
+        if ((!modal || !modal.classList.contains('show')) && !isAuthenticated && !isDemoMode()) {
+          clearInterval(checkModalClosed);
+          // Show landing page again after a short delay
+          setTimeout(() => {
+            if (!window.auth || !window.auth.isAuthenticated()) {
+              updateLandingPageVisibility(false);
+            }
+          }, 100);
+          return;
+        }
+
+        // Safety: stop checking after max polls
+        if (pollCount >= maxPolls) {
+          clearInterval(checkModalClosed);
+        }
+      }, 500);
+    }, 1000);
   } else {
     console.error('Sign-in modal function not found');
     // Restore landing page if modal can't open
