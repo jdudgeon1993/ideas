@@ -448,14 +448,8 @@ async function handleLandingSignIn() {
     const result = await window.auth.signIn(email, password);
 
     if (result.success) {
-      // Success! Landing page will automatically hide via updateAuthUI
-      if (window.showToast) {
-        window.showToast('✅ Welcome back!');
-      }
-      // Reload data
-      if (window.loadUserData) {
-        await window.loadUserData();
-      }
+      // Success! Reload page to show app with fresh data
+      window.location.reload();
     } else {
       errorDiv.textContent = result.error || 'Sign in failed';
       signInBtn.disabled = false;
@@ -517,10 +511,8 @@ async function handleLandingSignUp() {
     const result = await window.auth.signUp(email, password);
 
     if (result.success) {
-      // Success! Landing page will automatically hide via updateAuthUI
-      if (window.showToast) {
-        window.showToast('✅ Account created! Welcome to Chef\'s Kiss!');
-      }
+      // Success! Reload page to show app with fresh data
+      window.location.reload();
     } else {
       errorDiv.textContent = result.error || 'Sign up failed';
       signUpBtn.disabled = false;
