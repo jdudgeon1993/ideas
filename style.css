@@ -1787,7 +1787,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 5000;
+  z-index: 10001; /* Higher than landing page (10000) */
 }
 
 /* Modal Card */

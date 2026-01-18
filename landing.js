@@ -394,61 +394,12 @@ function isDemoMode() {
  * Handle "Get Started" button click
  */
 function handleGetStarted() {
-  // Temporarily hide landing page so modal is visible
-  const landingPage = document.getElementById('landing-page');
-  const body = document.body;
-
-  if (landingPage) {
-    landingPage.classList.remove('show');
-    body.classList.remove('landing-active');
-  }
-
-  // Open the sign-in modal (defined in app.js)
+  // Simply open the sign-in modal
+  // Modal has z-index: 10001, higher than landing page (10000), so it will appear on top
   if (window.openSigninModal) {
     window.openSigninModal();
-
-    // Set up a check to restore landing page if modal closes without auth
-    // Wait 1 second before starting to poll, to give modal time to fully open
-    setTimeout(() => {
-      let pollCount = 0;
-      const maxPolls = 60; // Stop after 30 seconds (60 checks * 500ms)
-
-      const checkModalClosed = setInterval(() => {
-        pollCount++;
-        const modal = document.getElementById('card-modal');
-        const isAuthenticated = window.auth && window.auth.isAuthenticated && window.auth.isAuthenticated();
-
-        // If user is now authenticated, stop checking
-        if (isAuthenticated) {
-          clearInterval(checkModalClosed);
-          return;
-        }
-
-        // If modal is closed (or doesn't exist) and user is still not authenticated
-        if ((!modal || !modal.classList.contains('show')) && !isAuthenticated && !isDemoMode()) {
-          clearInterval(checkModalClosed);
-          // Show landing page again after a short delay
-          setTimeout(() => {
-            if (!window.auth || !window.auth.isAuthenticated()) {
-              updateLandingPageVisibility(false);
-            }
-          }, 100);
-          return;
-        }
-
-        // Safety: stop checking after max polls
-        if (pollCount >= maxPolls) {
-          clearInterval(checkModalClosed);
-        }
-      }, 500);
-    }, 1000);
   } else {
     console.error('Sign-in modal function not found');
-    // Restore landing page if modal can't open
-    if (landingPage) {
-      landingPage.classList.add('show');
-      body.classList.add('landing-active');
-    }
   }
 }
 
