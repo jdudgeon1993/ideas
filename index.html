@@ -601,6 +601,13 @@
             window.saveRecipes();
           }
 
+          // Sync to database if authenticated
+          if (window.db && window.auth && window.auth.isAuthenticated()) {
+            window.db.saveRecipe(window.recipes[recipeIndex]).catch(err => {
+              console.error('Error syncing recipe to database:', err);
+            });
+          }
+
           // Re-render modal and grid
           const modal = document.querySelector('.recipe-detail-modal');
           if (modal) {
@@ -640,6 +647,13 @@
               window.saveRecipes();
             }
 
+            // Sync to database if authenticated
+            if (window.db && window.auth && window.auth.isAuthenticated()) {
+              window.db.saveRecipe(window.recipes[recipeIndex]).catch(err => {
+                console.error('Error syncing recipe to database:', err);
+              });
+            }
+
             // Re-render modal and grid
             const modal = document.querySelector('.recipe-detail-modal');
             if (modal) {
@@ -665,6 +679,13 @@
           // Save to storage if function exists
           if (window.saveRecipes) {
             window.saveRecipes();
+          }
+
+          // Sync to database if authenticated
+          if (window.db && window.auth && window.auth.isAuthenticated()) {
+            window.db.saveRecipe(window.recipes[recipeIndex]).catch(err => {
+              console.error('Error syncing recipe to database:', err);
+            });
           }
 
           // Re-render modal and grid
