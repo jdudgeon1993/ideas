@@ -32,9 +32,68 @@
       <h1 class="landing-title">Chef's Kiss</h1>
       <p class="landing-tagline">simple tools for the heart of your home</p>
 
-      <div class="landing-cta-group">
-        <button class="landing-btn landing-btn-primary" id="landing-get-started">Get Started</button>
-        <button class="landing-btn landing-btn-demo" id="landing-try-demo">Try Demo Account</button>
+      <!-- AUTH FORM -->
+      <div class="landing-auth-card">
+        <!-- Sign In Form (default) -->
+        <div class="landing-auth-form" id="landing-signin-form">
+          <h3 class="landing-auth-title">Welcome Back</h3>
+
+          <div class="landing-form-group">
+            <label for="landing-email">Email</label>
+            <input type="email" id="landing-email" placeholder="your@email.com" autocomplete="email">
+          </div>
+
+          <div class="landing-form-group">
+            <label for="landing-password">Password</label>
+            <input type="password" id="landing-password" placeholder="Enter your password" autocomplete="current-password">
+          </div>
+
+          <div id="landing-auth-error" class="landing-auth-error"></div>
+
+          <button class="landing-btn landing-btn-primary" id="landing-signin-btn">Sign In</button>
+
+          <p class="landing-auth-toggle">
+            Don't have an account? <a href="#" id="landing-show-signup">Create one</a>
+          </p>
+        </div>
+
+        <!-- Create Account Form (hidden by default) -->
+        <div class="landing-auth-form" id="landing-signup-form" style="display: none;">
+          <h3 class="landing-auth-title">Create Account</h3>
+
+          <div class="landing-form-group">
+            <label for="landing-signup-email">Email</label>
+            <input type="email" id="landing-signup-email" placeholder="your@email.com" autocomplete="email">
+          </div>
+
+          <div class="landing-form-group">
+            <label for="landing-signup-password">Password</label>
+            <input type="password" id="landing-signup-password" placeholder="Create a password" autocomplete="new-password">
+          </div>
+
+          <div class="landing-form-group">
+            <label for="landing-signup-confirm">Confirm Password</label>
+            <input type="password" id="landing-signup-confirm" placeholder="Confirm your password" autocomplete="new-password">
+          </div>
+
+          <div id="landing-signup-error" class="landing-auth-error"></div>
+
+          <button class="landing-btn landing-btn-primary" id="landing-signup-btn">Create Account</button>
+
+          <p class="landing-auth-toggle">
+            Already have an account? <a href="#" id="landing-show-signin">Sign in</a>
+          </p>
+        </div>
+
+        <!-- Demo Option -->
+        <div class="landing-divider">
+          <span>or</span>
+        </div>
+
+        <button class="landing-btn landing-btn-demo" id="landing-try-demo">
+          <span class="landing-demo-icon">🎮</span>
+          Try Demo Account
+        </button>
       </div>
 
       <p class="landing-scroll-hint">↓ Scroll to explore features ↓</p>
@@ -193,11 +252,7 @@
       <div class="landing-footer-cta">
         <h2 class="landing-footer-title">Ready to get started?</h2>
         <p class="landing-footer-text">Join thousands of households managing their kitchens with Chef's Kiss</p>
-        <button class="landing-btn landing-btn-primary" id="landing-footer-cta">Get Started Free</button>
-      </div>
-
-      <div class="landing-footer-links">
-        <a href="#" class="landing-footer-link" id="landing-footer-signin">Already have an account? Sign in</a>
+        <a href="#" class="landing-scroll-to-top" id="landing-scroll-top">↑ Sign In or Try Demo</a>
       </div>
     </section>
 

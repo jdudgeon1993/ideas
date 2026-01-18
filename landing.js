@@ -387,20 +387,158 @@ function isDemoMode() {
 }
 
 /* ===================================================================
-   BUTTON HANDLERS
+   AUTH FORM HANDLERS
    =================================================================== */
 
 /**
- * Handle "Get Started" button click
+ * Toggle between sign-in and sign-up forms
  */
-function handleGetStarted() {
-  // Simply open the sign-in modal
-  // Modal has z-index: 10001, higher than landing page (10000), so it will appear on top
-  if (window.openSigninModal) {
-    window.openSigninModal();
-  } else {
-    console.error('Sign-in modal function not found');
+function showSignInForm() {
+  document.getElementById('landing-signin-form').style.display = 'block';
+  document.getElementById('landing-signup-form').style.display = 'none';
+  clearErrors();
+}
+
+function showSignUpForm() {
+  document.getElementById('landing-signin-form').style.display = 'none';
+  document.getElementById('landing-signup-form').style.display = 'block';
+  clearErrors();
+}
+
+function clearErrors() {
+  const signinError = document.getElementById('landing-auth-error');
+  const signupError = document.getElementById('landing-signup-error');
+  if (signinError) signinError.textContent = '';
+  if (signupError) signupError.textContent = '';
+}
+
+/**
+ * Handle sign-in form submission
+ */
+async function handleLandingSignIn() {
+  const emailInput = document.getElementById('landing-email');
+  const passwordInput = document.getElementById('landing-password');
+  const errorDiv = document.getElementById('landing-auth-error');
+  const signInBtn = document.getElementById('landing-signin-btn');
+
+  const email = emailInput?.value.trim();
+  const password = passwordInput?.value;
+
+  // Clear previous errors
+  errorDiv.textContent = '';
+
+  // Validation
+  if (!email || !password) {
+    errorDiv.textContent = 'Please enter both email and password';
+    return;
   }
+
+  if (!isValidEmail(email)) {
+    errorDiv.textContent = 'Please enter a valid email address';
+    return;
+  }
+
+  // Disable button during sign in
+  const originalText = signInBtn.textContent;
+  signInBtn.disabled = true;
+  signInBtn.textContent = 'Signing in...';
+
+  try {
+    // Use the auth system
+    const result = await window.auth.signIn(email, password);
+
+    if (result.success) {
+      // Success! Landing page will automatically hide via updateAuthUI
+      if (window.showToast) {
+        window.showToast('✅ Welcome back!');
+      }
+      // Reload data
+      if (window.loadUserData) {
+        await window.loadUserData();
+      }
+    } else {
+      errorDiv.textContent = result.error || 'Sign in failed';
+      signInBtn.disabled = false;
+      signInBtn.textContent = originalText;
+    }
+  } catch (err) {
+    console.error('Sign in error:', err);
+    errorDiv.textContent = 'An error occurred. Please try again.';
+    signInBtn.disabled = false;
+    signInBtn.textContent = originalText;
+  }
+}
+
+/**
+ * Handle sign-up form submission
+ */
+async function handleLandingSignUp() {
+  const emailInput = document.getElementById('landing-signup-email');
+  const passwordInput = document.getElementById('landing-signup-password');
+  const confirmInput = document.getElementById('landing-signup-confirm');
+  const errorDiv = document.getElementById('landing-signup-error');
+  const signUpBtn = document.getElementById('landing-signup-btn');
+
+  const email = emailInput?.value.trim();
+  const password = passwordInput?.value;
+  const confirm = confirmInput?.value;
+
+  // Clear previous errors
+  errorDiv.textContent = '';
+
+  // Validation
+  if (!email || !password || !confirm) {
+    errorDiv.textContent = 'Please fill in all fields';
+    return;
+  }
+
+  if (!isValidEmail(email)) {
+    errorDiv.textContent = 'Please enter a valid email address';
+    return;
+  }
+
+  if (password.length < 6) {
+    errorDiv.textContent = 'Password must be at least 6 characters';
+    return;
+  }
+
+  if (password !== confirm) {
+    errorDiv.textContent = 'Passwords do not match';
+    return;
+  }
+
+  // Disable button during sign up
+  const originalText = signUpBtn.textContent;
+  signUpBtn.disabled = true;
+  signUpBtn.textContent = 'Creating account...';
+
+  try {
+    // Use the auth system
+    const result = await window.auth.signUp(email, password);
+
+    if (result.success) {
+      // Success! Landing page will automatically hide via updateAuthUI
+      if (window.showToast) {
+        window.showToast('✅ Account created! Welcome to Chef\'s Kiss!');
+      }
+    } else {
+      errorDiv.textContent = result.error || 'Sign up failed';
+      signUpBtn.disabled = false;
+      signUpBtn.textContent = originalText;
+    }
+  } catch (err) {
+    console.error('Sign up error:', err);
+    errorDiv.textContent = 'An error occurred. Please try again.';
+    signUpBtn.disabled = false;
+    signUpBtn.textContent = originalText;
+  }
+}
+
+/**
+ * Email validation helper
+ */
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 /**
@@ -411,11 +549,11 @@ function handleTryDemo() {
 }
 
 /**
- * Handle "Already have an account? Sign in" link click
+ * Scroll to top of page
  */
-function handleSignInLink(e) {
+function scrollToTop(e) {
   e.preventDefault();
-  handleGetStarted();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ===================================================================
@@ -426,30 +564,79 @@ function handleSignInLink(e) {
  * Initialize landing page - wire up event listeners
  */
 function initLandingPage() {
-  // Get button elements
-  const btnGetStarted = document.getElementById('landing-get-started');
-  const btnTryDemo = document.getElementById('landing-try-demo');
-  const btnFooterCTA = document.getElementById('landing-footer-cta');
-  const linkFooterSignin = document.getElementById('landing-footer-signin');
-  const linkDemoExit = document.getElementById('demo-exit-link');
+  // Auth form toggles
+  const linkShowSignup = document.getElementById('landing-show-signup');
+  const linkShowSignin = document.getElementById('landing-show-signin');
 
-  // Wire up click handlers
-  if (btnGetStarted) {
-    btnGetStarted.addEventListener('click', handleGetStarted);
+  if (linkShowSignup) {
+    linkShowSignup.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSignUpForm();
+    });
   }
 
+  if (linkShowSignin) {
+    linkShowSignin.addEventListener('click', (e) => {
+      e.preventDefault();
+      showSignInForm();
+    });
+  }
+
+  // Sign in button
+  const btnSignIn = document.getElementById('landing-signin-btn');
+  if (btnSignIn) {
+    btnSignIn.addEventListener('click', handleLandingSignIn);
+  }
+
+  // Sign up button
+  const btnSignUp = document.getElementById('landing-signup-btn');
+  if (btnSignUp) {
+    btnSignUp.addEventListener('click', handleLandingSignUp);
+  }
+
+  // Enter key support for sign-in form
+  const signinEmail = document.getElementById('landing-email');
+  const signinPassword = document.getElementById('landing-password');
+  [signinEmail, signinPassword].forEach(input => {
+    if (input) {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleLandingSignIn();
+        }
+      });
+    }
+  });
+
+  // Enter key support for sign-up form
+  const signupEmail = document.getElementById('landing-signup-email');
+  const signupPassword = document.getElementById('landing-signup-password');
+  const signupConfirm = document.getElementById('landing-signup-confirm');
+  [signupEmail, signupPassword, signupConfirm].forEach(input => {
+    if (input) {
+      input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleLandingSignUp();
+        }
+      });
+    }
+  });
+
+  // Demo button
+  const btnTryDemo = document.getElementById('landing-try-demo');
   if (btnTryDemo) {
     btnTryDemo.addEventListener('click', handleTryDemo);
   }
 
-  if (btnFooterCTA) {
-    btnFooterCTA.addEventListener('click', handleGetStarted);
+  // Scroll to top link
+  const linkScrollTop = document.getElementById('landing-scroll-top');
+  if (linkScrollTop) {
+    linkScrollTop.addEventListener('click', scrollToTop);
   }
 
-  if (linkFooterSignin) {
-    linkFooterSignin.addEventListener('click', handleSignInLink);
-  }
-
+  // Demo exit link
+  const linkDemoExit = document.getElementById('demo-exit-link');
   if (linkDemoExit) {
     linkDemoExit.addEventListener('click', (e) => {
       e.preventDefault();
