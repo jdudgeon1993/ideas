@@ -80,7 +80,37 @@ body {
 
 
 /* -------------------------------------------------------------------
-   3. HEADER (Fixed Purple Bar)
+   3. OFFLINE INDICATOR BANNER
+   ------------------------------------------------------------------- */
+.offline-banner {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  background: #B36A5E;
+  color: white;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  z-index: 199;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* -------------------------------------------------------------------
+   4. HEADER (Fixed Purple Bar)
    ------------------------------------------------------------------- */
 .site-header {
   position: fixed;
@@ -3238,6 +3268,64 @@ body {
   opacity: 1;
   color: #B36A5E;
   transform: scale(1.1);
+}
+
+/* Mobile responsiveness for bulk entry table */
+@media (max-width: 768px) {
+  .bulk-entry-table-wrapper {
+    max-height: calc(100vh - 400px);
+    /* Add scroll indicator on mobile */
+    background:
+      linear-gradient(90deg, var(--color-card-bg) 30%, rgba(255,255,255,0)),
+      linear-gradient(90deg, rgba(255,255,255,0), var(--color-card-bg) 70%) 100% 0,
+      radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.1), rgba(0,0,0,0)),
+      radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.1), rgba(0,0,0,0)) 100% 0;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+
+  .bulk-entry-table {
+    font-size: 0.8rem;
+    min-width: 800px; /* Force horizontal scroll on mobile */
+  }
+
+  .bulk-entry-table th,
+  .bulk-entry-table td {
+    min-width: 80px;
+  }
+
+  .bulk-entry-table th:first-child,
+  .bulk-entry-table td:first-child {
+    min-width: 150px; /* Item name column wider */
+  }
+
+  .bulk-entry-table th,
+  .bulk-entry-table td {
+    padding: 0.5rem;
+  }
+
+  .bulk-entry-table input {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .onboarding-section {
+    padding: 1rem;
+  }
+
+  .onboarding-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .onboarding-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .onboarding-actions button {
+    width: 100%;
+  }
 }
 
 .onboarding-actions {

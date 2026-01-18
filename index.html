@@ -20,6 +20,11 @@
 </head>
 <body>
 
+  <!-- OFFLINE INDICATOR BANNER -->
+  <div id="offline-banner" class="offline-banner" style="display: none;">
+    📡 Offline Mode — Changes will sync when you're back online
+  </div>
+
   <!-- SECTION NAVIGATION - Hidden Radio Inputs (CSS-only approach) -->
   <input type="radio" name="section-nav" id="nav-recipes" class="section-nav-input" checked>
   <input type="radio" name="section-nav" id="nav-pantry" class="section-nav-input">
@@ -577,7 +582,7 @@
         const tagsHTML = recipe.tags.map(tag => `
           <span class="recipe-tag-pill" data-tag="${tag}">
             ${tag}
-            <button class="recipe-tag-remove" onclick="event.stopPropagation(); removeTag('${tag.replace(/'/g, "\\'")}', ${JSON.stringify(recipe).replace(/"/g, '&quot;')})">×</button>
+            <button class="recipe-tag-remove" onclick="event.stopPropagation(); removeTag('${tag.replace(/'/g, "\\'")}', '${recipe.id}')">×</button>
           </span>
         `).join('');
 
@@ -587,7 +592,7 @@
             <div class="recipe-vintage-card">
               <div class="recipe-vintage-card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <div class="recipe-vintage-card-id" style="flex: 1; border: none; padding: 0; margin: 0;">FROM THE ARCHIVE OF THE HEARTH</div>
-                <button class="btn-favorite-toggle" style="background: none; border: none; font-size: 2rem; cursor: pointer; padding: 0.25rem;" onclick="toggleFavorite(${JSON.stringify(recipe).replace(/"/g, '&quot;')})" title="${recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
+                <button class="btn-favorite-toggle" style="background: none; border: none; font-size: 2rem; cursor: pointer; padding: 0.25rem;" onclick="toggleFavorite('${recipe.id}')" title="${recipe.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">
                   ${recipe.isFavorite ? '⭐' : '☆'}
                 </button>
               </div>
@@ -606,8 +611,8 @@
                   </div>
                 </div>
                 <div style="display: flex; gap: 0.5rem;">
-                  <input type="text" class="recipe-tag-input" placeholder="Add tag (e.g., #quick, #italian)" style="flex: 1; padding: 0.5rem; border: 1px solid var(--color-recipe-border); border-radius: 4px; font-size: 0.85rem;" onkeypress="if(event.key === 'Enter') { addTag(this.value, ${JSON.stringify(recipe).replace(/"/g, '&quot;')}); this.value = ''; }">
-                  <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;" onclick="const input = this.previousElementSibling; addTag(input.value, ${JSON.stringify(recipe).replace(/"/g, '&quot;')}); input.value = '';">Add</button>
+                  <input type="text" class="recipe-tag-input" placeholder="Add tag (e.g., #quick, #italian)" style="flex: 1; padding: 0.5rem; border: 1px solid var(--color-recipe-border); border-radius: 4px; font-size: 0.85rem;" onkeypress="if(event.key === 'Enter') { addTag(this.value, '${recipe.id}'); this.value = ''; }">
+                  <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;" onclick="const input = this.previousElementSibling; addTag(input.value, '${recipe.id}'); input.value = '';">Add</button>
                 </div>
               </div>
 
@@ -622,8 +627,8 @@
                 </div>
               </div>
               <div class="recipe-vintage-card-actions">
-                <button class="btn btn-edit-recipe" onclick="window.openRecipeModal(${JSON.stringify(recipe).replace(/"/g, '&quot;')}); document.querySelector('.recipe-detail-modal')?.remove();">EDIT LEDGER</button>
-                <button class="btn btn-delete-recipe" onclick="if(window.deleteRecipe) { window.deleteRecipe(${JSON.stringify(recipe).replace(/"/g, '&quot;')}); document.querySelector('.recipe-detail-modal')?.remove(); }">[ BURN CARD ]</button>
+                <button class="btn btn-edit-recipe" onclick="window.openRecipeModal('${recipe.id}'); document.querySelector('.recipe-detail-modal')?.remove();">EDIT LEDGER</button>
+                <button class="btn btn-delete-recipe" onclick="if(window.deleteRecipe) { window.deleteRecipe('${recipe.id}'); document.querySelector('.recipe-detail-modal')?.remove(); }">[ BURN CARD ]</button>
               </div>
             </div>
           </div>
@@ -640,11 +645,11 @@
       }
 
       // Toggle favorite status
-      window.toggleFavorite = function(recipe) {
+      window.toggleFavorite = function(recipeId) {
         if (!window.recipes) return;
 
         const recipeIndex = window.recipes.findIndex(r =>
-          r.id === recipe.id || r.name === recipe.name
+          r.id === recipeId || r.id === recipeId.id
         );
 
         if (recipeIndex !== -1) {
@@ -673,7 +678,7 @@
       };
 
       // Add tag to recipe
-      window.addTag = function(tagValue, recipe) {
+      window.addTag = function(tagValue, recipeId) {
         if (!tagValue || !window.recipes) return;
 
         // Clean up tag value (remove # if present, trim whitespace)
@@ -684,7 +689,7 @@
         if (!tag) return;
 
         const recipeIndex = window.recipes.findIndex(r =>
-          r.id === recipe.id || r.name === recipe.name
+          r.id === recipeId || r.id === recipeId.id
         );
 
         if (recipeIndex !== -1) {
@@ -720,11 +725,11 @@
       };
 
       // Remove tag from recipe
-      window.removeTag = function(tag, recipe) {
+      window.removeTag = function(tag, recipeId) {
         if (!window.recipes) return;
 
         const recipeIndex = window.recipes.findIndex(r =>
-          r.id === recipe.id || r.name === recipe.name
+          r.id === recipeId || r.id === recipeId.id
         );
 
         if (recipeIndex !== -1 && window.recipes[recipeIndex].tags) {

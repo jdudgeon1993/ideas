@@ -679,7 +679,7 @@ async function saveIngredient(existing) {
       window.realtime.lastLocalUpdate.pantry = Date.now();
     }
     await window.db.savePantryItem(itemToSync).catch(err => {
-      console.error('Error syncing pantry item to database:', err);
+      handleSyncError(err, 'pantry item', true);
     });
   }
 
@@ -726,6 +726,12 @@ async function renderPantry() {
 --------------------------------------------------- */
 
 function openRecipeModal(existing = null) {
+  // Handle both recipe objects and recipe IDs
+  if (typeof existing === 'string') {
+    const recipe = window.recipes?.find(r => r.id === existing);
+    existing = recipe || null;
+  }
+
   const isEdit = !!existing;
 
   const title = isEdit ? "Edit Recipe" : "New Recipe";
@@ -922,16 +928,29 @@ async function handlePhotoFile(file, existingRecipe) {
   const uploadArea = document.getElementById("photo-upload-area");
   const progressDiv = document.getElementById("photo-upload-progress");
   if (uploadArea) uploadArea.style.display = 'none';
-  if (progressDiv) progressDiv.style.display = 'block';
+  if (progressDiv) {
+    progressDiv.style.display = 'block';
+    progressDiv.innerHTML = '<p style="margin:0; opacity:0.7; font-size:0.85rem;">📦 Compressing image...</p>';
+  }
 
   try {
     // Generate temporary ID if new recipe
     const recipeId = existingRecipe?.id || uid();
 
+    // Update progress
+    if (progressDiv) {
+      progressDiv.innerHTML = '<p style="margin:0; opacity:0.7; font-size:0.85rem;">☁️ Uploading to cloud...</p>';
+    }
+
     // Upload to Supabase Storage
     const photoUrl = await window.storage.uploadRecipePhoto(file, recipeId);
 
     if (photoUrl) {
+      // Update progress
+      if (progressDiv) {
+        progressDiv.innerHTML = '<p style="margin:0; color:#8B9376; font-size:0.85rem;">✅ Upload complete!</p>';
+      }
+
       // Store URL temporarily
       tempRecipePhotoUrl = photoUrl;
 
@@ -942,7 +961,20 @@ async function handlePhotoFile(file, existingRecipe) {
     }
   } catch (err) {
     console.error('Photo upload error:', err);
-    alert('Failed to upload photo. Please try again.');
+
+    // Show user-friendly error message
+    let errorMsg = '❌ Upload failed. ';
+    if (!navigator.onLine) {
+      errorMsg += 'Please check your internet connection.';
+    } else if (err.message?.includes('timeout')) {
+      errorMsg += 'Upload took too long - file may be too large.';
+    } else if (err.message?.includes('size')) {
+      errorMsg += 'Image is too large (max 10MB).';
+    } else {
+      errorMsg += 'Please try again or use a smaller image.';
+    }
+
+    showToast(errorMsg);
 
     // Reset UI
     if (uploadArea) uploadArea.style.display = 'block';
@@ -1058,7 +1090,7 @@ async function saveRecipe(existing) {
       window.realtime.lastLocalUpdate.recipes = Date.now();
     }
     await window.db.saveRecipe(recipeToSync).catch(err => {
-      console.error('Error syncing recipe to database:', err);
+      handleSyncError(err, 'recipe', true);
     });
   }
 
@@ -1246,6 +1278,12 @@ function openRecipeViewModal(recipe) {
 }
 
 async function deleteRecipe(recipe) {
+  // Handle both recipe objects and recipe IDs
+  if (typeof recipe === 'string') {
+    const recipeObj = window.recipes?.find(r => r.id === recipe);
+    recipe = recipeObj || { id: recipe, name: 'this recipe' };
+  }
+
   if (!confirm(`Delete "${recipe.name}"? This will also remove it from your meal plan.`)) {
     return;
   }
@@ -1263,9 +1301,13 @@ async function deleteRecipe(recipe) {
 
       // Check if it's a foreign key error (recipe is in meal plan)
       if (err.code === '23503' || (err.message && err.message.includes('meal_plans'))) {
-        alert(`Cannot delete "${recipe.name}" because it's planned in your meal planner.\n\nPlease remove it from your meal plan first, then try deleting again.`);
+        showToast(`❌ Cannot delete "${recipe.name}" — it's scheduled in your meal plan. Remove it from the planner first.`);
+      } else if (!navigator.onLine) {
+        showToast(`❌ Cannot delete while offline. Please check your connection.`);
+      } else if (err.code === '42501') {
+        showToast(`❌ Permission denied. Please check your household access.`);
       } else {
-        alert(`Error deleting recipe: ${err.message || 'Unknown error'}`);
+        showToast(`❌ Failed to delete recipe. Please try again.`);
       }
       return; // Don't delete locally if database delete failed
     }
@@ -3646,6 +3688,32 @@ function showToast(message) {
   }, 3000);
 }
 
+/**
+ * Handle database sync errors gracefully with user-friendly messages
+ * @param {Error} err - The error object
+ * @param {string} itemType - Type of item being synced (pantry, recipe, meal plan, etc.)
+ * @param {boolean} showNotification - Whether to show a toast notification to the user
+ */
+function handleSyncError(err, itemType = 'item', showNotification = false) {
+  console.error(`Error syncing ${itemType} to database:`, err);
+
+  if (showNotification) {
+    if (!navigator.onLine) {
+      showToast(`⚠️ Offline: ${itemType} will sync when you're back online`);
+    } else if (err.message?.includes('timeout')) {
+      showToast(`⚠️ Sync timeout: ${itemType} saved locally, will retry`);
+    } else if (err.code === '23503') {
+      // Foreign key constraint
+      showToast(`❌ Cannot sync: related data missing`);
+    } else if (err.code === '42501') {
+      // Permission denied
+      showToast(`❌ Permission denied: please check your household access`);
+    } else {
+      showToast(`⚠️ Sync failed: ${itemType} saved locally`);
+    }
+  }
+}
+
 function clearLocalData() {
   // Unsubscribe from realtime channels
   if (window.realtime) {
@@ -4645,7 +4713,41 @@ async function init() {
 
   // Setup smooth scroll
   setupSmoothScroll();
+
+  // Setup offline/online indicators
+  setupOfflineIndicator();
 }
+
+/* ---------------------------------------------------
+   OFFLINE INDICATOR
+---------------------------------------------------- */
+
+function setupOfflineIndicator() {
+  const offlineBanner = document.getElementById('offline-banner');
+  if (!offlineBanner) return;
+
+  // Check initial status
+  updateOfflineStatus();
+
+  // Listen for online/offline events
+  window.addEventListener('online', updateOfflineStatus);
+  window.addEventListener('offline', updateOfflineStatus);
+}
+
+function updateOfflineStatus() {
+  const offlineBanner = document.getElementById('offline-banner');
+  if (!offlineBanner) return;
+
+  if (!navigator.onLine) {
+    offlineBanner.style.display = 'block';
+  } else {
+    offlineBanner.style.display = 'none';
+  }
+}
+
+/* ---------------------------------------------------
+   RESET DATA
+---------------------------------------------------- */
 
 function resetAllData() {
   if (!confirm("Are you sure you want to clear ALL data? This will delete your pantry, recipes, meal plan, and shopping list. This cannot be undone.")) {
