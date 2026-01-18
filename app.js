@@ -153,6 +153,11 @@ async function addPlannedMeal(date, recipeId, mealType = "Dinner") {
       console.error('Error syncing meal plans to database:', err);
     });
   }
+
+  // Refresh calendar view
+  if (window.reloadCalendar) {
+    window.reloadCalendar();
+  }
 }
 
 async function removePlannedMeal(date, mealId) {
@@ -177,6 +182,11 @@ async function removePlannedMeal(date, mealId) {
       console.error('Error syncing meal plans to database:', err);
     });
   }
+
+  // Refresh calendar view
+  if (window.reloadCalendar) {
+    window.reloadCalendar();
+  }
 }
 
 async function clearPlannedDay(date) {
@@ -188,6 +198,11 @@ async function clearPlannedDay(date) {
     await window.db.saveMealPlansForDate(date, []).catch(err => {
       console.error('Error syncing meal plans to database:', err);
     });
+  }
+
+  // Refresh calendar view
+  if (window.reloadCalendar) {
+    window.reloadCalendar();
   }
 }
 
@@ -208,6 +223,11 @@ async function markMealCooked(date, mealId) {
       await window.db.saveMealPlansForDate(date, planner[date]).catch(err => {
         console.error('Error syncing meal plans to database:', err);
       });
+    }
+
+    // Refresh calendar view
+    if (window.reloadCalendar) {
+      window.reloadCalendar();
     }
   }
 }

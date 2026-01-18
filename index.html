@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Chef's Kiss — Cozy Kitchen Management</title>
-  <meta name="version" content="2.5">
+  <meta name="version" content="4.0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link rel="stylesheet" href="style.css">
@@ -76,7 +76,6 @@
         <span id="utility-time">09:39 AM</span>
       </div>
       <nav class="header-nav">
-        <button class="btn-header-icon" id="btn-signin" title="Sign In">👤</button>
         <button class="btn-header-icon" id="btn-household" title="Accounts & Households">📁</button>
         <button class="btn-header-icon" id="btn-settings" title="Settings">⚙️</button>
       </nav>
@@ -107,8 +106,8 @@
       </button>
     </div>
 
-    <!-- FLOATING ACTION BUTTON - Meal Planning -->
-    <div class="floating-action-menu fab-meal-planning" id="fab-meal-planning">
+    <!-- FLOATING ACTION BUTTON - Meal Planning (Hidden - use main calendar section) -->
+    <div class="floating-action-menu fab-meal-planning" id="fab-meal-planning" style="display: none;">
       <button class="floating-action-btn" id="fab-btn-meal" title="Plan Meal" onclick="if(window.openPlannerModal) window.openPlannerModal()">
         +
       </button>
@@ -1358,13 +1357,12 @@
       }
 
       function openMealScheduleModal(date, dateKey) {
-        // Open modal to select recipe for this date
-        // For now, alert - will be implemented with proper modal in next step
-        const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-        alert(`Meal scheduling modal for ${dateStr} - To be implemented`);
-
-        // TODO: Show modal with recipe selection
-        // After selection, update scheduledMeals and re-render
+        // Use the existing openDayModal function from app.js
+        if (window.openDayModal) {
+          window.openDayModal(dateKey);
+        } else {
+          console.error('openDayModal function not found');
+        }
       }
 
       function renderScheduledRecipesList() {
