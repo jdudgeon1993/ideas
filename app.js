@@ -137,7 +137,7 @@ function getPlannedMeals(date) {
   return planner[date] || [];
 }
 
-async function addPlannedMeal(date, recipeId, mealType = "Dinner") {
+async function addPlannedMeal(date, recipeId, mealType = "Dinner", servingMultiplier = 1) {
   if (!planner[date]) {
     planner[date] = [];
   }
@@ -146,7 +146,8 @@ async function addPlannedMeal(date, recipeId, mealType = "Dinner") {
     id: uid(),
     recipeId,
     mealType,
-    cooked: false
+    cooked: false,
+    servingMultiplier: servingMultiplier || 1
   });
 
   savePlanner();
@@ -1309,6 +1310,11 @@ function openRecipeViewModal(recipe) {
     slideout: true,
     actions: [
       {
+        label: "🛒 Add to Shopping",
+        class: "btn-secondary",
+        onClick: () => addRecipeMissingToShopping(recipe)
+      },
+      {
         label: "Cook Now",
         class: "btn-primary",
         onClick: () => openCookModal(recipe)
@@ -1487,11 +1493,13 @@ function openDayModal(dateStr) {
         const recipe = getRecipe(meal.recipeId);
         const recipeName = recipe ? recipe.name : "Unknown";
         const cookedBadge = meal.cooked ? `<span class="meal-cooked-badge">✓ Cooked</span>` : "";
+        const multiplier = meal.servingMultiplier || 1;
+        const servingsBadge = multiplier > 1 ? `<span style="opacity:0.7; font-size:0.9em;">(${multiplier}x)</span>` : "";
 
         return `
           <div class="day-meal-row" data-meal-id="${meal.id}">
             <div class="day-meal-info">
-              <strong>${meal.mealType}:</strong> ${recipeName} ${cookedBadge}
+              <strong>${meal.mealType}:</strong> ${recipeName} ${servingsBadge} ${cookedBadge}
             </div>
             <div class="day-meal-actions">
               ${!meal.cooked ? `<button class="btn-cook-meal" data-meal-id="${meal.id}">Cook Now</button>` : ""}
@@ -1525,6 +1533,14 @@ function openDayModal(dateStr) {
             label: "Recipe",
             type: "select",
             options: recipes.length > 0 ? recipeOptions : ["No recipes available"]
+          })
+        ])}
+        ${modalRow([
+          modalField({
+            label: "Servings",
+            type: "select",
+            options: ["1x (Original)", "2x (Double)", "3x (Triple)", "4x (Quadruple)"],
+            value: "1x (Original)"
           })
         ])}
       </div>
@@ -1604,6 +1620,10 @@ function saveAddMeal(dateStr) {
 
   const mealType = selects[0].value;
   const recipeName = selects[1].value;
+  const servingsText = selects[2].value;
+
+  // Extract multiplier from text like "2x (Double)"
+  const multiplier = parseInt(servingsText.match(/\d+/)[0]);
 
   if (recipeName === "No recipes available") {
     alert("Please create a recipe first before adding it to your meal plan.");
@@ -1616,7 +1636,7 @@ function saveAddMeal(dateStr) {
     return;
   }
 
-  addPlannedMeal(dateStr, recipe.id, mealType);
+  addPlannedMeal(dateStr, recipe.id, mealType, multiplier);
   generateShoppingList();
   renderPantry();
   updateDashboard();
@@ -1885,6 +1905,83 @@ function generateShoppingList() {
 
   saveShopping();
   renderShoppingList();
+}
+
+/**
+ * Add missing ingredients from a recipe directly to shopping list
+ * Bypasses meal planning - useful for "I want to cook this tonight"
+ * @param {Object} recipe - The recipe to check
+ * @param {Number} multiplier - Serving multiplier (default 1)
+ */
+function addRecipeMissingToShopping(recipe, multiplier = 1) {
+  const reserved = calculateReservedIngredients();
+  const missingItems = [];
+  let itemsAdded = 0;
+
+  recipe.ingredients.forEach(ingredient => {
+    const scaledQty = ingredient.qty * multiplier;
+
+    // Case-insensitive matching
+    const pantryItem = pantry.find(p =>
+      p.name.toLowerCase() === ingredient.name.toLowerCase() &&
+      p.unit.toLowerCase() === ingredient.unit.toLowerCase()
+    );
+
+    const key = `${ingredient.name.toLowerCase()}|${ingredient.unit.toLowerCase()}`;
+    const reservedQty = reserved[key] || 0;
+
+    let needed = scaledQty;
+
+    if (pantryItem) {
+      // Calculate available (total - reserved for other meals)
+      const available = pantryItem.totalQty - reservedQty;
+      needed = Math.max(0, scaledQty - available);
+    }
+
+    if (needed > 0) {
+      // Check if already in shopping list
+      const existing = shopping.find(s =>
+        s.name.toLowerCase() === ingredient.name.toLowerCase() &&
+        s.unit.toLowerCase() === ingredient.unit.toLowerCase()
+      );
+
+      if (existing) {
+        // Increase quantity if already in list
+        existing.qty += needed;
+        if (!existing.source.includes(recipe.name)) {
+          existing.source = `${existing.source}, ${recipe.name}`;
+        }
+      } else {
+        // Add new item
+        shopping.push({
+          id: uid(),
+          name: ingredient.name,
+          qty: needed,
+          unit: ingredient.unit,
+          category: pantryItem ? pantryItem.category : "Other",
+          source: recipe.name,
+          checked: false
+        });
+        itemsAdded++;
+      }
+
+      missingItems.push(`${ingredient.name} (${needed} ${ingredient.unit})`);
+    }
+  });
+
+  saveShopping();
+  renderShoppingList();
+
+  if (itemsAdded > 0) {
+    showToast(`🛒 Added ${itemsAdded} missing item${itemsAdded > 1 ? 's' : ''} to shopping list for ${recipe.name}`);
+  } else if (missingItems.length === 0) {
+    showToast(`✅ You have all ingredients for ${recipe.name}!`);
+  } else {
+    showToast(`🛒 Updated shopping list for ${recipe.name}`);
+  }
+
+  // Close the recipe modal
+  closeModal();
 }
 
 function renderShoppingList() {
@@ -2494,13 +2591,17 @@ function calculateReservedIngredients() {
       const recipe = getRecipe(meal.recipeId);
       if (!recipe) return;
 
+      // Get serving multiplier (default to 1 if not set)
+      const multiplier = meal.servingMultiplier || 1;
+
       recipe.ingredients.forEach(ing => {
         // Normalize to lowercase for case-insensitive matching
         const key = `${ing.name.toLowerCase()}|${ing.unit.toLowerCase()}`;
         if (!reserved[key]) {
           reserved[key] = 0;
         }
-        reserved[key] += ing.qty;
+        // Apply serving multiplier to ingredient quantity
+        reserved[key] += ing.qty * multiplier;
       });
     });
   });
