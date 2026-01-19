@@ -1839,11 +1839,18 @@ function generateShoppingList() {
   // Add ingredients from planned meals that don't exist in pantry at all
   Object.keys(reserved).forEach(key => {
     const [name, unit] = key.split("|");
+
+    // Check if pantry item exists (even if qty is 0) to get correct category
+    const pantryItem = pantry.find(p =>
+      p.name.toLowerCase() === name.toLowerCase() &&
+      p.unit.toLowerCase() === unit.toLowerCase()
+    );
+
     addShoppingItem({
       name,
       qty: reserved[key],
       unit,
-      category: "Other",
+      category: pantryItem ? pantryItem.category : "Other",
       source: "Meals"
     });
   });
