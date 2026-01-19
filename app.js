@@ -17,6 +17,19 @@ function uid() {
   });
 }
 
+// Debounce utility - delays function execution until after a wait period
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 // Pantry - Multi-location data model
 let pantry = JSON.parse(localStorage.getItem("pantry") || "[]");
 window.pantry = pantry; // Expose for bridge script
@@ -181,6 +194,9 @@ async function removePlannedMeal(date, mealId) {
 
   savePlanner();
 
+  // Invalidate reserved ingredients cache since meal was removed
+  invalidateReservedCache();
+
   // Sync to database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
     // Mark this as our own change to prevent echo from realtime
@@ -192,6 +208,9 @@ async function removePlannedMeal(date, mealId) {
     });
   }
 
+  // Update shopping list since meal was removed (frees up reserved ingredients)
+  generateShoppingList();
+
   // Refresh calendar view
   if (window.reloadCalendar) {
     window.reloadCalendar();
@@ -202,12 +221,18 @@ async function clearPlannedDay(date) {
   delete planner[date];
   savePlanner();
 
+  // Invalidate reserved ingredients cache since day was cleared
+  invalidateReservedCache();
+
   // Sync to database if authenticated
   if (window.db && window.auth && window.auth.isAuthenticated()) {
     await window.db.saveMealPlansForDate(date, []).catch(err => {
       console.error('Error syncing meal plans to database:', err);
     });
   }
+
+  // Update shopping list since clearing day frees up reserved ingredients
+  generateShoppingList();
 
   // Refresh calendar view
   if (window.reloadCalendar) {
@@ -223,6 +248,9 @@ async function markMealCooked(date, mealId) {
     meal.cooked = true;
     savePlanner();
 
+    // Invalidate reserved ingredients cache since meal is now cooked
+    invalidateReservedCache();
+
     // Sync to database if authenticated
     if (window.db && window.auth && window.auth.isAuthenticated()) {
       // Mark this as our own change to prevent echo from realtime
@@ -233,6 +261,9 @@ async function markMealCooked(date, mealId) {
         console.error('Error syncing meal plans to database:', err);
       });
     }
+
+    // Update shopping list since cooked meals don't reserve ingredients
+    generateShoppingList();
 
     // Refresh calendar view
     if (window.reloadCalendar) {
@@ -582,6 +613,15 @@ async function saveIngredient(existing) {
     return;
   }
 
+  // Find and disable save button to show loading state
+  const saveButton = modal.querySelector(".modal-actions .btn-primary");
+  const originalButtonText = saveButton ? saveButton.textContent : "";
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Saving...";
+    saveButton.style.opacity = "0.7";
+  }
+
   // Collect location data
   const locationRows = modal.querySelectorAll(".modal-location-row");
   const locations = Array.from(locationRows).map(row => {
@@ -593,6 +633,18 @@ async function saveIngredient(existing) {
       expiry: inputs[2].value || ""
     };
   }).filter(loc => loc.qty > 0); // Only keep locations with qty
+
+  // Validate at least one location has quantity
+  if (locations.length === 0) {
+    showToast("❌ At least one location must have a quantity greater than 0");
+    // Re-enable button on error
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = originalButtonText;
+      saveButton.style.opacity = "1";
+    }
+    return;
+  }
 
   const totalQty = locations.reduce((sum, loc) => sum + loc.qty, 0);
 
@@ -609,6 +661,12 @@ async function saveIngredient(existing) {
 
   if (!validationResult.valid) {
     showToast(`❌ ${validationResult.error}`);
+    // Re-enable button on error
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = originalButtonText;
+      saveButton.style.opacity = "1";
+    }
     return;
   }
 
@@ -672,6 +730,12 @@ async function saveIngredient(existing) {
       return;
     } else {
       // User declined merge, don't save
+      // Re-enable button
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent = originalButtonText;
+        saveButton.style.opacity = "1";
+      }
       return;
     }
   }
@@ -704,20 +768,35 @@ async function saveIngredient(existing) {
   savePantry();
 
   // Sync to database if authenticated
+  let syncSuccess = true;
   if (window.db && window.auth && window.auth.isAuthenticated()) {
     // Mark this as our own change to prevent echo from realtime
     if (window.realtime && window.realtime.lastLocalUpdate) {
       window.realtime.lastLocalUpdate.pantry = Date.now();
     }
-    await window.db.savePantryItem(itemToSync).catch(err => {
-      handleSyncError(err, 'pantry item', true);
-    });
+    try {
+      await window.db.savePantryItem(itemToSync);
+    } catch (err) {
+      console.error('Error syncing pantry item to database:', err);
+      syncSuccess = false;
+      showToast("⚠️ Item saved locally but sync failed. Will retry when online.");
+      // Re-enable button on sync error
+      if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.textContent = originalButtonText;
+        saveButton.style.opacity = "1";
+      }
+    }
   }
 
   renderPantry();
   generateShoppingList();
   updateDashboard();
-  closeModal();
+
+  // Only close modal if sync succeeded or we're offline
+  if (syncSuccess || !window.auth || !window.auth.isAuthenticated()) {
+    closeModal();
+  }
 }
 
 async function deleteIngredient(item) {
@@ -1084,7 +1163,7 @@ async function saveRecipe(existing) {
     const unit = unitInput ? unitInput.value.trim() : "";
 
     return { name, qty, unit };
-  }).filter(ing => ing.name && ing.unit); // Must have both name AND unit
+  }).filter(ing => ing.name && ing.unit && ing.qty > 0); // Must have name, unit, and valid quantity
 
   // Validate and sanitize recipe using validation module
   const validationResult = window.validation.validateRecipe({
@@ -1831,10 +1910,17 @@ function generateShoppingList() {
         source
       });
     }
-
-    // Remove from reserved map so we can track ingredients not in pantry
-    delete reserved[key];
   });
+
+  // Remove pantry items from reserved map (using separate loop for safety)
+  const keysToDelete = [];
+  pantry.forEach(item => {
+    const key = `${item.name.toLowerCase()}|${item.unit.toLowerCase()}`;
+    if (reserved[key]) {
+      keysToDelete.push(key);
+    }
+  });
+  keysToDelete.forEach(key => delete reserved[key]);
 
   // Add ingredients from planned meals that don't exist in pantry at all
   Object.keys(reserved).forEach(key => {
@@ -4764,10 +4850,11 @@ async function init() {
     filterCategory.addEventListener("change", applyPantryFilter);
   }
 
-  // Pantry search input
+  // Pantry search input with debouncing for performance
   const pantrySearch = document.getElementById("pantry-search");
   if (pantrySearch) {
-    pantrySearch.addEventListener("input", applyPantryFilter);
+    const debouncedFilter = debounce(applyPantryFilter, 300);
+    pantrySearch.addEventListener("input", debouncedFilter);
   }
 
   // Pantry sort select
@@ -4776,10 +4863,11 @@ async function init() {
     sortPantry.addEventListener("change", applyPantryFilter);
   }
 
-  // Recipe search input
+  // Recipe search input with debouncing for performance
   const recipeSearch = document.getElementById("recipe-search");
   if (recipeSearch) {
-    recipeSearch.addEventListener("input", renderRecipes);
+    const debouncedRecipeSearch = debounce(renderRecipes, 300);
+    recipeSearch.addEventListener("input", debouncedRecipeSearch);
   }
 
   // Recipe ready filter

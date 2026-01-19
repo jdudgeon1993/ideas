@@ -36,6 +36,18 @@ body {
   padding-top: 70px;
 }
 
+/* Global Focus Styles for Accessibility */
+*:focus-visible {
+  outline: 3px solid var(--color-accent-olive, #8B9376);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove default focus outline for mouse users */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
 
 /* -------------------------------------------------------------------
    2. CSS VARIABLES
@@ -265,6 +277,14 @@ body {
   opacity: 1;
   background: rgba(255, 255, 255, 0.15);
   transform: scale(1.1);
+}
+
+/* Keyboard focus indicator */
+.nav-btn:focus-visible {
+  opacity: 1;
+  background: rgba(139, 168, 142, 0.25);
+  outline: 3px solid var(--color-accent-olive);
+  outline-offset: 3px;
 }
 
 /* Active state - when radio is checked */
