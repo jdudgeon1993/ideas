@@ -1,0 +1,266 @@
+/**
+ * Shopping List Focus Mode - Styles
+ * Python Age 5.0
+ *
+ * Clean, distraction-free shopping experience.
+ */
+
+.shopping-focus-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  z-index: 10000;
+  overflow-y: auto;
+}
+
+.focus-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.focus-header {
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 30px;
+}
+
+.focus-header h1 {
+  font-size: 2em;
+  margin: 0 0 20px 0;
+  color: #333;
+}
+
+.focus-progress {
+  margin: 15px 0;
+}
+
+.progress-bar {
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.9em;
+  color: #666;
+}
+
+.focus-exit-btn {
+  margin-top: 15px;
+  padding: 12px 30px;
+  font-size: 1em;
+  background: #2d8a4e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.focus-exit-btn:hover {
+  background: #236b3d;
+}
+
+/* Content */
+.focus-content {
+  flex: 1;
+  padding: 20px 0;
+}
+
+.focus-section {
+  margin-bottom: 40px;
+}
+
+.focus-section h2 {
+  font-size: 1.3em;
+  color: #333;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.checked-section h2 {
+  color: #4CAF50;
+}
+
+/* Items */
+.focus-items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.focus-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #f9f9f9;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.focus-item:hover {
+  background: #f0f0f0;
+  border-color: #2d8a4e;
+}
+
+.focus-item.checked {
+  opacity: 0.6;
+  background: #f0f7f4;
+  border-color: #4CAF50;
+}
+
+.item-checkbox {
+  margin-right: 15px;
+}
+
+.item-checkbox input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.item-content {
+  flex: 1;
+}
+
+.item-name {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.focus-item.checked .item-name {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.item-details {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.item-quantity {
+  font-weight: 600;
+  color: #2d8a4e;
+}
+
+.item-category {
+  padding: 2px 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+.item-source {
+  font-style: italic;
+}
+
+/* Empty State */
+.focus-empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 4em;
+  margin-bottom: 20px;
+}
+
+.focus-empty h2 {
+  font-size: 1.8em;
+  color: #333;
+  margin-bottom: 10px;
+  border: none;
+}
+
+.focus-empty p {
+  font-size: 1.1em;
+  color: #666;
+  margin: 5px 0;
+}
+
+/* Footer */
+.focus-footer {
+  position: sticky;
+  bottom: 0;
+  padding: 20px 0;
+  background: white;
+  border-top: 2px solid #e0e0e0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.focus-btn {
+  padding: 12px 24px;
+  font-size: 1em;
+  background: #2d8a4e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 150px;
+  max-width: 250px;
+}
+
+.focus-btn:hover {
+  background: #236b3d;
+  transform: translateY(-2px);
+}
+
+.focus-btn.secondary {
+  background: #666;
+}
+
+.focus-btn.secondary:hover {
+  background: #555;
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .focus-container {
+    padding: 10px;
+  }
+
+  .focus-header h1 {
+    font-size: 1.5em;
+  }
+
+  .item-name {
+    font-size: 1em;
+  }
+
+  .item-details {
+    font-size: 0.8em;
+  }
+
+  .focus-btn {
+    min-width: 100%;
+    max-width: 100%;
+  }
+}
