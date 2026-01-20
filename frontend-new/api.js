@@ -8,7 +8,8 @@
  * Python's job: Make it think.
  */
 
-const API_BASE = 'http://localhost:8000/api';  // Change for production
+// Get API base URL from config (update config.js with your Railway URL!)
+const API_BASE = window.CONFIG?.API_BASE || 'http://localhost:8000/api';
 
 class API {
   /**
