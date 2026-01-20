@@ -18,7 +18,7 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 
 # Image Processing
-pillow==10.2.0
+pillow>=10.4.0
 
 # Utilities
 python-dotenv==1.0.0
