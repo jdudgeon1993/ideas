@@ -1,4 +1,4 @@
--- Chef's Kiss - Python Age 5.0 Migration
+-- Chef's Kiss - Python Age 5.0 Migration (FIXED)
 -- New tables and columns for Python backend features
 
 -- ============================================
@@ -83,18 +83,6 @@ CREATE TRIGGER update_shopping_list_manual_updated_at
   BEFORE UPDATE ON shopping_list_manual
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-
--- ============================================
--- Optional: Add checked columns to existing shopping_list
--- (If you want to track checked status for auto-generated items)
--- ============================================
--- Note: The old shopping_list table might not be needed anymore
--- since we regenerate it dynamically. But if you want to keep it:
-
--- ALTER TABLE shopping_list
---   ADD COLUMN IF NOT EXISTS checked BOOLEAN DEFAULT FALSE,
---   ADD COLUMN IF NOT EXISTS checked_at TIMESTAMP WITH TIME ZONE,
---   ADD COLUMN IF NOT EXISTS checked_by UUID REFERENCES auth.users(id);
 
 -- ============================================
 -- Verify migration
