@@ -18,6 +18,7 @@ from collections import defaultdict
 import redis
 import pickle
 import logging
+import os
 
 from models.pantry import PantryItem
 from models.recipe import Recipe
@@ -27,19 +28,34 @@ from utils.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
-# Redis connection
+# Redis connection - works both locally and in Railway
 try:
-    redis_client = redis.Redis(
-        host='localhost',
-        port=6379,
-        db=0,
-        decode_responses=False,  # We use pickle for complex objects
-        socket_connect_timeout=2
-    )
+    # Railway provides REDIS_URL, local dev uses localhost
+    redis_url = os.getenv('REDIS_URL')
+
+    if redis_url:
+        # Railway/production environment
+        redis_client = redis.from_url(
+            redis_url,
+            decode_responses=False,  # We use pickle for complex objects
+            socket_connect_timeout=2
+        )
+        logger.info("🔗 Connecting to Redis via REDIS_URL...")
+    else:
+        # Local development
+        redis_client = redis.Redis(
+            host='localhost',
+            port=6379,
+            db=0,
+            decode_responses=False,
+            socket_connect_timeout=2
+        )
+        logger.info("🔗 Connecting to Redis on localhost...")
+
     redis_client.ping()
     logger.info("✅ Redis connected successfully")
-except (redis.ConnectionError, redis.TimeoutError):
-    logger.warning("⚠️ Redis not available - caching disabled")
+except (redis.ConnectionError, redis.TimeoutError) as e:
+    logger.warning(f"⚠️ Redis not available - caching disabled: {e}")
     redis_client = None
 
 
