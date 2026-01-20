@@ -9,7 +9,7 @@
 // Copy the URL (e.g., https://chefs-kiss-production.up.railway.app)
 
 // STEP 2: Paste it here (replace the placeholder)
-const BACKEND_URL = 'REPLACE_WITH_YOUR_RAILWAY_URL';  // ← UPDATE THIS!
+const BACKEND_URL = 'https://chefs-kiss-production.up.railway.app';  // ✅ Railway backend URL
 
 // Don't change this
 const API_BASE = `${BACKEND_URL}/api`;
