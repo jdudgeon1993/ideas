@@ -1,809 +1,325 @@
-/**
- * Chef's Kiss - Frontend Application (Python Age 5.0)
- *
- * JavaScript's job: Make the site breathe (UI interactions)
- * Python's job: Make it think (business logic, calculations, data)
- *
- * This file ONLY handles UI - all data and logic in Python backend
- */
-
 /* ============================================================================
-   APP STATE (Minimal - only UI state)
+   APP STATE
 ============================================================================ */
 
 const AppState = {
-  currentUser: null,
-  currentHousehold: null,
-  currentView: 'pantry', // pantry, recipes, planner, shopping
+  user: null,
+  household: null,
+  view: null,
   loading: false
 };
 
 /* ============================================================================
-   UTILITY FUNCTIONS
+   CORE HELPERS
 ============================================================================ */
 
-function showLoading(message = 'Loading...') {
+function waitForPaint() {
+  return new Promise(requestAnimationFrame);
+}
+
+function showLoading() {
+  if (AppState.loading) return;
   AppState.loading = true;
-  // You can add a loading spinner UI here if desired
+  document.body.classList.add('loading');
 }
 
 function hideLoading() {
   AppState.loading = false;
+  document.body.classList.remove('loading');
 }
 
-function showError(message) {
-  alert(`Error: ${message}`);
-  console.error(message);
+function showError(msg) {
+  alert(msg);
+  console.error(msg);
 }
 
-function showSuccess(message) {
-  console.log(`Success: ${message}`);
-  // You can add toast notification UI here if desired
+function showSuccess(msg) {
+  console.log(msg);
 }
 
-/* ============================================================================
-   AUTHENTICATION
-============================================================================ */
+function escapeHTML(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+const Auth = {
+  async signIn(email, password) {
+    showLoading();
+    try {
+      const res = await API.call('/auth/signin', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
 
-async function handleSignUp(email, password) {
-  try {
-    showLoading('Creating account...');
+      API.setToken(res.access_token);
+      AppState.user = res.user;
+      AppState.household = res.household_id;
 
-    const response = await API.call('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    });
-
-    if (response.access_token) {
-      API.setToken(response.access_token);
-      AppState.currentUser = response.user;
-      AppState.currentHousehold = response.household_id;
-
-      await loadApp();
-      showSuccess('Account created!');
+      await App.load();
+      showSuccess('Signed in');
+    } catch {
+      showError('Sign in failed');
+    } finally {
+      hideLoading();
     }
-  } catch (error) {
-    showError(error.message || 'Sign up failed');
-  } finally {
-    hideLoading();
-  }
-}
+  },
 
-async function handleSignIn(email, password) {
-  try {
-    showLoading('Signing in...');
+  async signUp(email, password) {
+    showLoading();
+    try {
+      const res = await API.call('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
 
-    const response = await API.call('/auth/signin', {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    });
+      API.setToken(res.access_token);
+      AppState.user = res.user;
+      AppState.household = res.household_id;
 
-    if (response.access_token) {
-      API.setToken(response.access_token);
-      AppState.currentUser = response.user;
-      AppState.currentHousehold = response.household_id;
-
-      await loadApp();
-      showSuccess('Signed in!');
+      await App.load();
+      showSuccess('Account created');
+    } catch {
+      showError('Sign up failed');
+    } finally {
+      hideLoading();
     }
-  } catch (error) {
-    showError(error.message || 'Sign in failed');
-  } finally {
-    hideLoading();
-  }
-}
+  },
 
-async function handleSignOut() {
-  try {
-    await API.call('/auth/signout', { method: 'POST' });
-  } catch (error) {
-    console.error('Sign out error:', error);
-  } finally {
+  async check() {
+    const token = API.getToken();
+    if (!token) return false;
+
+    try {
+      const res = await API.call('/auth/me');
+      AppState.user = res.user;
+      AppState.household = res.household_id;
+      return true;
+    } catch {
+      API.clearToken();
+      return false;
+    }
+  },
+
+  signOut() {
     API.clearToken();
-    AppState.currentUser = null;
-    AppState.currentHousehold = null;
-    showLandingPage();
+    AppState.user = null;
+    App.showLanding();
   }
-}
+};
+const Views = {
+  show(name) {
+    AppState.view = name;
 
-async function checkAuth() {
-  const token = API.getToken();
-  if (!token) {
-    showLandingPage();
-    return false;
+    document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+    document.getElementById(`${name}-view`)?.style.display = 'block';
+
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    document.querySelector(`[data-view="${name}"]`)?.classList.add('active');
   }
+};
+const Pantry = {
+  container: null,
 
-  try {
-    const response = await API.call('/auth/me');
-    AppState.currentUser = response.user;
-    AppState.currentHousehold = response.household_id;
-    return true;
-  } catch (error) {
-    API.clearToken();
-    showLandingPage();
-    return false;
-  }
-}
+  init() {
+    this.container = document.getElementById('pantry-list');
+    if (!this.container) return;
 
-/* ============================================================================
-   PANTRY FUNCTIONS
-============================================================================ */
-
-async function loadPantry() {
-  try {
-    showLoading();
-    const items = await API.call('/pantry');
-    renderPantryList(items);
-  } catch (error) {
-    showError('Failed to load pantry');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function addPantryItem(itemData) {
-  try {
-    showLoading();
-    const newItem = await API.call('/pantry', {
-      method: 'POST',
-      body: JSON.stringify(itemData)
+    this.container.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      if (btn.dataset.action === 'delete') this.delete(btn.dataset.id);
     });
+  },
 
-    await loadPantry(); // Reload to get updated list
-    showSuccess('Item added!');
-    return newItem;
-  } catch (error) {
-    showError('Failed to add item');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function updatePantryItem(itemId, itemData) {
-  try {
+  async load() {
     showLoading();
-    await API.call(`/pantry/${itemId}`, {
-      method: 'PUT',
-      body: JSON.stringify(itemData)
-    });
+    try {
+      const items = await API.call('/pantry');
+      this.render(items);
+    } catch {
+      this.container.innerHTML = '<p>Error loading pantry</p>';
+    } finally {
+      hideLoading();
+    }
+  },
 
-    await loadPantry();
-    showSuccess('Item updated!');
-  } catch (error) {
-    showError('Failed to update item');
-  } finally {
-    hideLoading();
+  render(items) {
+    if (!items.length) {
+      this.container.innerHTML = '<p>No pantry items</p>';
+      return;
+    }
+
+    const grouped = items.reduce((a, i) => {
+      (a[i.category || 'Other'] ||= []).push(i);
+      return a;
+    }, {});
+
+    this.container.innerHTML = Object.entries(grouped).map(([cat, list]) => `
+      <section>
+        <h3>${escapeHTML(cat)}</h3>
+        ${list.map(i => `
+          <div class="pantry-item">
+            <span>${escapeHTML(i.name)}</span>
+            <span>${i.total_quantity} ${escapeHTML(i.unit)}</span>
+            <button data-action="delete" data-id="${i.id}">🗑️</button>
+          </div>
+        `).join('')}
+      </section>
+    `).join('');
+  },
+
+  async delete(id) {
+    if (!confirm('Delete item?')) return;
+    await API.call(`/pantry/${id}`, { method: 'DELETE' });
+    await this.load();
   }
-}
+};
+const Recipes = {
+  container: null,
 
-async function deletePantryItem(itemId) {
-  if (!confirm('Delete this item?')) return;
+  init() {
+    this.container = document.getElementById('recipes-list');
+  },
 
-  try {
+  async load() {
     showLoading();
-    await API.call(`/pantry/${itemId}`, {
-      method: 'DELETE'
-    });
+    try {
+      const recipes = await API.call('/recipes');
+      this.render(recipes);
+    } finally {
+      hideLoading();
+    }
+  },
 
-    await loadPantry();
-    showSuccess('Item deleted!');
-  } catch (error) {
-    showError('Failed to delete item');
-  } finally {
-    hideLoading();
-  }
-}
-
-function renderPantryList(items) {
-  const container = document.getElementById('pantry-list');
-  if (!container) return;
-
-  if (!items || items.length === 0) {
-    container.innerHTML = '<p class="empty-state">No pantry items yet. Add your first item!</p>';
-    return;
-  }
-
-  // Group by category
-  const byCategory = {};
-  items.forEach(item => {
-    const cat = item.category || 'Other';
-    if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push(item);
-  });
-
-  let html = '';
-  for (const [category, categoryItems] of Object.entries(byCategory)) {
-    html += `
-      <div class="pantry-category">
-        <h3 class="category-title">${category}</h3>
-        <div class="pantry-items">
-          ${categoryItems.map(item => `
-            <div class="pantry-item" data-id="${item.id}">
-              <div class="item-info">
-                <span class="item-name">${item.name}</span>
-                <span class="item-qty">${item.total_quantity} ${item.unit}</span>
-              </div>
-              <div class="item-actions">
-                <button onclick="editPantryItem(${item.id})" class="btn-icon">✏️</button>
-                <button onclick="deletePantryItem(${item.id})" class="btn-icon">🗑️</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
+  render(recipes) {
+    this.container.innerHTML = recipes.map(r => `
+      <div class="recipe-card">
+        <h3>${escapeHTML(r.name)}</h3>
+        <button onclick="alert('TODO')">View</button>
       </div>
+    `).join('');
+  }
+};
+const Planner = {
+  container: null,
+
+  init() {
+    this.container = document.getElementById('meal-calendar');
+  },
+
+  async load() {
+    showLoading();
+    try {
+      const meals = await API.call('/meal-plans');
+      this.render(meals);
+    } finally {
+      hideLoading();
+    }
+  },
+
+  render(meals) {
+    if (!meals.length) {
+      this.container.innerHTML = '<p>No meals planned</p>';
+      return;
+    }
+
+    const byDate = meals.reduce((a, m) => {
+      (a[m.date] ||= []).push(m);
+      return a;
+    }, {});
+
+    this.container.innerHTML = Object.entries(byDate)
+      .sort(([a],[b]) => new Date(a)-new Date(b))
+      .map(([date, list]) => `
+        <section>
+          <h3>${new Date(date).toLocaleDateString()}</h3>
+          ${list.map(m => `<div>${m.recipe_name}</div>`).join('')}
+        </section>
+      `).join('');
+  }
+};
+const Shopping = {
+  container: null,
+
+  init() {
+    this.container = document.getElementById('shopping-list');
+  },
+
+  async load() {
+    showLoading();
+    try {
+      const res = await API.call('/shopping-list');
+      this.render(res.items || res);
+    } finally {
+      hideLoading();
+    }
+  },
+
+  render(items) {
+    this.container.innerHTML = items.map(i => `
+      <label>
+        <input type="checkbox" ${i.checked ? 'checked' : ''}>
+        ${escapeHTML(i.name)}
+      </label>
+    `).join('');
+  }
+};
+const Dashboard = {
+  container: null,
+
+  init() {
+    this.container = document.getElementById('dashboard');
+  },
+
+  async load() {
+    const data = await API.call('/alerts/dashboard');
+    this.container.innerHTML = `
+      <p>Pantry: ${data.pantry_count}</p>
+      <p>Recipes: ${data.recipe_count}</p>
     `;
   }
+};
+const App = {
+  async load() {
+    this.showApp();
+    await waitForPaint();
 
-  container.innerHTML = html;
-}
+    Pantry.init();
+    Recipes.init();
+    Planner.init();
+    Shopping.init();
+    Dashboard.init();
 
-/* ============================================================================
-   RECIPE FUNCTIONS
-============================================================================ */
+    Views.show('pantry');
+    await Pantry.load();
+  },
 
-async function loadRecipes(searchQuery = '') {
-  try {
-    showLoading();
-    const endpoint = searchQuery ? `/recipes/search?q=${encodeURIComponent(searchQuery)}` : '/recipes';
-    const recipes = await API.call(endpoint);
-    renderRecipeList(recipes);
-  } catch (error) {
-    showError('Failed to load recipes');
-  } finally {
-    hideLoading();
+  showApp() {
+    document.getElementById('landing-page')?.style.display = 'none';
+    document.getElementById('app')?.style.display = 'block';
+  },
+
+  showLanding() {
+    document.getElementById('landing-page')?.style.display = 'block';
+    document.getElementById('app')?.style.display = 'none';
   }
-}
-
-async function addRecipe(recipeData) {
-  try {
-    showLoading();
-    const newRecipe = await API.call('/recipes', {
-      method: 'POST',
-      body: JSON.stringify(recipeData)
-    });
-
-    await loadRecipes();
-    showSuccess('Recipe added!');
-    return newRecipe;
-  } catch (error) {
-    showError('Failed to add recipe');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function updateRecipe(recipeId, recipeData) {
-  try {
-    showLoading();
-    await API.call(`/recipes/${recipeId}`, {
-      method: 'PUT',
-      body: JSON.stringify(recipeData)
-    });
-
-    await loadRecipes();
-    showSuccess('Recipe updated!');
-  } catch (error) {
-    showError('Failed to update recipe');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function deleteRecipe(recipeId) {
-  if (!confirm('Delete this recipe?')) return;
-
-  try {
-    showLoading();
-    await API.call(`/recipes/${recipeId}`, {
-      method: 'DELETE'
-    });
-
-    await loadRecipes();
-    showSuccess('Recipe deleted!');
-  } catch (error) {
-    showError('Failed to delete recipe');
-  } finally {
-    hideLoading();
-  }
-}
-
-function renderRecipeList(recipes) {
-  const container = document.getElementById('recipes-list');
-  if (!container) return;
-
-  if (!recipes || recipes.length === 0) {
-    container.innerHTML = '<p class="empty-state">No recipes yet. Add your first recipe!</p>';
-    return;
-  }
-
-  container.innerHTML = recipes.map(recipe => `
-    <div class="recipe-card" data-id="${recipe.id}">
-      <h3 class="recipe-name">${recipe.name}</h3>
-      ${recipe.tags ? `<div class="recipe-tags">${recipe.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
-      <p class="recipe-servings">Serves: ${recipe.servings || 1}</p>
-      <div class="recipe-actions">
-        <button onclick="viewRecipe(${recipe.id})" class="btn-primary">View</button>
-        <button onclick="editRecipe(${recipe.id})" class="btn-secondary">Edit</button>
-        <button onclick="deleteRecipe(${recipe.id})" class="btn-danger">Delete</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-/* ============================================================================
-   MEAL PLAN FUNCTIONS
-============================================================================ */
-
-async function loadMealPlans() {
-  try {
-    showLoading();
-    const meals = await API.call('/meal-plans');
-    renderMealCalendar(meals);
-  } catch (error) {
-    showError('Failed to load meal plans');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function addMealPlan(mealData) {
-  try {
-    showLoading();
-    const newMeal = await API.call('/meal-plans', {
-      method: 'POST',
-      body: JSON.stringify(mealData)
-    });
-
-    await loadMealPlans();
-    showSuccess('Meal added to calendar!');
-    return newMeal;
-  } catch (error) {
-    showError('Failed to add meal');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function updateMealPlan(mealId, mealData) {
-  try {
-    showLoading();
-    await API.call(`/meal-plans/${mealId}`, {
-      method: 'PUT',
-      body: JSON.stringify(mealData)
-    });
-
-    await loadMealPlans();
-    showSuccess('Meal updated!');
-  } catch (error) {
-    showError('Failed to update meal');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function deleteMealPlan(mealId) {
-  if (!confirm('Remove this meal from calendar?')) return;
-
-  try {
-    showLoading();
-    await API.call(`/meal-plans/${mealId}`, {
-      method: 'DELETE'
-    });
-
-    await loadMealPlans();
-    showSuccess('Meal removed!');
-  } catch (error) {
-    showError('Failed to remove meal');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function cookMeal(mealId) {
-  if (!confirm('Mark this meal as cooked?')) return;
-
-  try {
-    showLoading();
-    await API.call(`/meal-plans/${mealId}/cook`, {
-      method: 'POST'
-    });
-
-    await loadMealPlans();
-    await loadPantry(); // Refresh pantry (ingredients were used)
-    showSuccess('Meal marked as cooked!');
-  } catch (error) {
-    showError('Failed to cook meal');
-  } finally {
-    hideLoading();
-  }
-}
-
-function renderMealCalendar(meals) {
-  const container = document.getElementById('meal-calendar');
-  if (!container) return;
-
-  if (!meals || meals.length === 0) {
-    container.innerHTML = '<p class="empty-state">No meals planned yet. Start planning!</p>';
-    return;
-  }
-
-  // Group by date
-  const byDate = {};
-  meals.forEach(meal => {
-    if (!byDate[meal.date]) byDate[meal.date] = [];
-    byDate[meal.date].push(meal);
-  });
-
-  let html = '';
-  for (const [date, dateMeals] of Object.entries(byDate).sort()) {
-    html += `
-      <div class="calendar-day">
-        <h3 class="day-date">${new Date(date).toLocaleDateString()}</h3>
-        <div class="day-meals">
-          ${dateMeals.map(meal => `
-            <div class="meal-item ${meal.cooked ? 'cooked' : ''}" data-id="${meal.id}">
-              <div class="meal-info">
-                <span class="meal-type">${meal.meal_type || 'Dinner'}</span>
-                <span class="meal-recipe">${meal.recipe_name || 'Recipe'}</span>
-              </div>
-              <div class="meal-actions">
-                ${!meal.cooked ? `<button onclick="cookMeal(${meal.id})" class="btn-cook">Cook</button>` : '<span class="cooked-badge">✓ Cooked</span>'}
-                <button onclick="deleteMealPlan(${meal.id})" class="btn-icon">🗑️</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
-}
-
-/* ============================================================================
-   SHOPPING LIST FUNCTIONS
-============================================================================ */
-
-async function loadShoppingList() {
-  try {
-    showLoading();
-    const shoppingData = await API.call('/shopping-list');
-    renderShoppingList(shoppingData.items || shoppingData);
-  } catch (error) {
-    showError('Failed to load shopping list');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function addManualItem(itemData) {
-  try {
-    showLoading();
-    await API.call('/shopping-list/items', {
-      method: 'POST',
-      body: JSON.stringify(itemData)
-    });
-
-    await loadShoppingList();
-    showSuccess('Item added to shopping list!');
-  } catch (error) {
-    showError('Failed to add item');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function checkShoppingItem(itemId, checked) {
-  try {
-    await API.call(`/shopping-list/items/${itemId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ checked })
-    });
-
-    await loadShoppingList();
-  } catch (error) {
-    showError('Failed to update item');
-  }
-}
-
-async function deleteShoppingItem(itemId) {
-  try {
-    await API.call(`/shopping-list/items/${itemId}`, {
-      method: 'DELETE'
-    });
-
-    await loadShoppingList();
-    showSuccess('Item removed!');
-  } catch (error) {
-    showError('Failed to remove item');
-  }
-}
-
-async function clearCheckedItems() {
-  if (!confirm('Clear all checked items?')) return;
-
-  try {
-    showLoading();
-    await API.call('/shopping-list/clear-checked', {
-      method: 'POST'
-    });
-
-    await loadShoppingList();
-    showSuccess('Checked items cleared!');
-  } catch (error) {
-    showError('Failed to clear items');
-  } finally {
-    hideLoading();
-  }
-}
-
-async function addCheckedToPantry() {
-  if (!confirm('Add all checked items to pantry?')) return;
-
-  try {
-    showLoading();
-    await API.call('/shopping-list/add-checked-to-pantry', {
-      method: 'POST'
-    });
-
-    await loadShoppingList();
-    await loadPantry();
-    showSuccess('Items added to pantry!');
-  } catch (error) {
-    showError('Failed to add items to pantry');
-  } finally {
-    hideLoading();
-  }
-}
-
-function renderShoppingList(items) {
-  const container = document.getElementById('shopping-list');
-  if (!container) return;
-
-  if (!items || items.length === 0) {
-    container.innerHTML = '<p class="empty-state">Shopping list is empty!</p>';
-    return;
-  }
-
-  // Group by category
-  const byCategory = {};
-  items.forEach(item => {
-    const cat = item.category || 'Other';
-    if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push(item);
-  });
-
-  let html = '<div class="shopping-actions">';
-  html += '<button onclick="clearCheckedItems()" class="btn-secondary">Clear Checked</button>';
-  html += '<button onclick="addCheckedToPantry()" class="btn-primary">Add Checked to Pantry</button>';
-  html += '</div>';
-
-  for (const [category, categoryItems] of Object.entries(byCategory)) {
-    html += `
-      <div class="shopping-category">
-        <h3 class="category-title">${category}</h3>
-        <div class="shopping-items">
-          ${categoryItems.map(item => `
-            <div class="shopping-item ${item.checked ? 'checked' : ''}" data-id="${item.id || item.name}">
-              <label class="shopping-checkbox">
-                <input
-                  type="checkbox"
-                  ${item.checked ? 'checked' : ''}
-                  onchange="checkShoppingItem('${item.id || item.name}', this.checked)"
-                >
-                <span class="item-name">${item.name}</span>
-                <span class="item-qty">${item.quantity} ${item.unit}</span>
-              </label>
-              ${item.source ? `<span class="item-source">${item.source}</span>` : ''}
-              ${item.id ? `<button onclick="deleteShoppingItem('${item.id}')" class="btn-icon">🗑️</button>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  container.innerHTML = html;
-}
-
-/* ============================================================================
-   ALERTS & DASHBOARD
-============================================================================ */
-
-async function loadDashboard() {
-  try {
-    const dashboard = await API.call('/alerts/dashboard');
-    renderDashboard(dashboard);
-  } catch (error) {
-    console.error('Failed to load dashboard:', error);
-  }
-}
-
-async function loadExpiringItems() {
-  try {
-    const expiring = await API.call('/alerts/expiring');
-    renderExpiringItems(expiring);
-  } catch (error) {
-    console.error('Failed to load expiring items:', error);
-  }
-}
-
-function renderDashboard(data) {
-  const container = document.getElementById('dashboard');
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="dashboard-stats">
-      <div class="stat-card">
-        <h3>Pantry Items</h3>
-        <p class="stat-number">${data.pantry_count || 0}</p>
-      </div>
-      <div class="stat-card">
-        <h3>Recipes</h3>
-        <p class="stat-number">${data.recipe_count || 0}</p>
-      </div>
-      <div class="stat-card">
-        <h3>Upcoming Meals</h3>
-        <p class="stat-number">${data.upcoming_meals || 0}</p>
-      </div>
-      <div class="stat-card">
-        <h3>Shopping Items</h3>
-        <p class="stat-number">${data.shopping_count || 0}</p>
-      </div>
-    </div>
-    ${data.expiring_soon && data.expiring_soon.length > 0 ? `
-      <div class="dashboard-alerts">
-        <h3>⚠️ Items Expiring Soon</h3>
-        <ul>
-          ${data.expiring_soon.map(item => `
-            <li>${item.item_name} - expires in ${item.expires_in_days} days</li>
-          `).join('')}
-        </ul>
-      </div>
-    ` : ''}
-  `;
-}
-
-function renderExpiringItems(items) {
-  const container = document.getElementById('expiring-items');
-  if (!container) return;
-
-  if (!items || items.length === 0) {
-    container.innerHTML = '<p>No items expiring soon!</p>';
-    return;
-  }
-
-  container.innerHTML = items.map(item => `
-    <div class="expiring-item ${item.is_expired ? 'expired' : ''}">
-      <span class="item-name">${item.item_name}</span>
-      <span class="item-expires">Expires: ${item.expires_on}</span>
-      <span class="item-days">${item.expires_in_days} days</span>
-    </div>
-  `).join('');
-}
-
-/* ============================================================================
-   VIEW MANAGEMENT
-============================================================================ */
-
-function showView(viewName) {
-  AppState.currentView = viewName;
-
-  // Hide all views
-  document.querySelectorAll('.view').forEach(view => {
-    view.style.display = 'none';
-  });
-
-  // Show selected view
-  const view = document.getElementById(`${viewName}-view`);
-  if (view) {
-    view.style.display = 'block';
-  }
-
-  // Update nav
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.classList.remove('active');
-  });
-  const navItem = document.querySelector(`[data-view="${viewName}"]`);
-  if (navItem) {
-    navItem.classList.add('active');
-  }
-
-  // Load data for view
-  switch(viewName) {
-    case 'pantry':
-      loadPantry();
-      break;
-    case 'recipes':
-      loadRecipes();
-      break;
-    case 'planner':
-      loadMealPlans();
-      break;
-    case 'shopping':
-      loadShoppingList();
-      break;
-    case 'dashboard':
-      loadDashboard();
-      break;
-  }
-}
-
-function showLandingPage() {
-  const landing = document.getElementById('landing-page');
-  const app = document.getElementById('app');
-
-  if (landing) landing.style.display = 'block';
-  if (app) app.style.display = 'none';
-}
-
-function showApp() {
-  const landing = document.getElementById('landing-page');
-  const app = document.getElementById('app');
-
-  if (landing) landing.style.display = 'none';
-  if (app) app.style.display = 'block';
-
-  showView('pantry'); // Default view
-}
-
-/* ============================================================================
-   APP INITIALIZATION
-============================================================================ */
-
-async function loadApp() {
-  showApp();
-  await loadDashboard();
-  showView('pantry');
-}
-
-async function initApp() {
-  console.log('🍳 Chef\'s Kiss - Python Age 5.0');
-  console.log('Backend:', window.CONFIG?.API_BASE || 'http://localhost:8000/api');
-
-  // Check if user is authenticated
-  const isAuthenticated = await checkAuth();
-
-  if (isAuthenticated) {
-    await loadApp();
+};
+document.addEventListener('DOMContentLoaded', async () => {
+  if (await Auth.check()) {
+    await App.load();
   } else {
-    showLandingPage();
+    App.showLanding();
   }
 
-  // Set up navigation
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.addEventListener('click', (e) => {
+  document.querySelectorAll('.nav-item').forEach(i => {
+    i.addEventListener('click', async e => {
       e.preventDefault();
-      const view = item.getAttribute('data-view');
-      if (view) showView(view);
+      const v = i.dataset.view;
+      Views.show(v);
+      await ({ pantry: Pantry, recipes: Recipes, planner: Planner, shopping: Shopping, dashboard: Dashboard })[v]?.load();
     });
   });
-
-  // Set up sign out button
-  const signOutBtn = document.getElementById('signout-btn');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', handleSignOut);
-  }
-}
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
-
-// Export functions to global scope for onclick handlers
-window.editPantryItem = (id) => console.log('Edit pantry item:', id);
-window.deletePantryItem = deletePantryItem;
-window.viewRecipe = (id) => console.log('View recipe:', id);
-window.editRecipe = (id) => console.log('Edit recipe:', id);
-window.deleteRecipe = deleteRecipe;
-window.deleteMealPlan = deleteMealPlan;
-window.cookMeal = cookMeal;
-window.checkShoppingItem = checkShoppingItem;
-window.deleteShoppingItem = deleteShoppingItem;
-window.clearCheckedItems = clearCheckedItems;
-window.addCheckedToPantry = addCheckedToPantry;
-window.handleSignUp = handleSignUp;
-window.handleSignIn = handleSignIn;
+});
