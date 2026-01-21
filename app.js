@@ -114,11 +114,15 @@ const Views = {
     AppState.view = name;
 
     document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
-    document.getElementById(`${name}-view`)?.style.display = 'block';
+    const viewEl = document.getElementById(`${name}-view`);
+    if (viewEl) {
+    viewEl.style.display = 'block';
+}
 
-    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-    document.querySelector(`[data-view="${name}"]`)?.classList.add('active');
-  }
+    const navEl = document.querySelector(`[data-view="${name}"]`);
+    if (navEl) {
+    navEl.classList.add('active');
+}
 };
 const Pantry = {
   container: null,
@@ -303,13 +307,19 @@ const App = {
   },
 
   showApp() {
-    document.getElementById('landing-page')?.style.display = 'none';
-    document.getElementById('app')?.style.display = 'block';
+   const landing = document.getElementById('landing-page');
+if (landing) landing.style.display = 'none';
+
+const app = document.getElementById('app');
+if (app) app.style.display = 'block';
   },
 
   showLanding() {
-    document.getElementById('landing-page')?.style.display = 'block';
-    document.getElementById('app')?.style.display = 'none';
+    const landing = document.getElementById('landing-page');
+if (landing) landing.style.display = 'block';
+
+const app = document.getElementById('app');
+if (app) app.style.display = 'none';
   }
 };
 document.addEventListener('DOMContentLoaded', async () => {
@@ -324,7 +334,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       const v = i.dataset.view;
       Views.show(v);
-      await ({ pantry: Pantry, recipes: Recipes, planner: Planner, shopping: Shopping, dashboard: Dashboard })[v]?.load();
+      const modules = {
+  pantry: Pantry,
+  recipes: Recipes,
+  planner: Planner,
+  shopping: Shopping,
+  dashboard: Dashboard
+};
+
+const mod = modules[v];
+if (mod && typeof mod.load === 'function') {
+  await mod.load();
+}
     });
   });
 });
