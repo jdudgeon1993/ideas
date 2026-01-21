@@ -452,9 +452,9 @@ async function handleLandingSignIn() {
       body: JSON.stringify({ email, password })
     });
 
-    if (response.access_token) {
+    if (response.session && response.session.access_token) {
       // Save token and reload
-      API.setToken(response.access_token);
+      API.setToken(response.session.access_token);
       window.location.reload();
     } else {
       errorDiv.textContent = 'Sign in failed';
@@ -519,9 +519,9 @@ async function handleLandingSignUp() {
       body: JSON.stringify({ email, password })
     });
 
-    if (response.access_token) {
+    if (response.session && response.session.access_token) {
       // Save token and reload
-      API.setToken(response.access_token);
+      API.setToken(response.session.access_token);
       window.location.reload();
     } else {
       errorDiv.textContent = 'Sign up failed';
