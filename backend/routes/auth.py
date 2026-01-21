@@ -4,8 +4,9 @@ Authentication Routes - Python Age 5.0
 Proxy to Supabase auth (keeping what works!)
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Header
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 from utils.supabase_client import get_supabase
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
@@ -137,20 +138,30 @@ async def signout():
 
 
 @router.get("/me")
-async def get_current_user_info():
+async def get_current_user_info(authorization: Optional[str] = Header(None)):
     """
-    Get current user information.
+    Get current user information from JWT token.
     """
+    if not authorization or not authorization.startswith('Bearer '):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid authorization header"
+        )
+
+    token = authorization.replace('Bearer ', '')
     supabase = get_supabase()
 
     try:
-        user = supabase.auth.get_user()
+        # Verify token and get user
+        user_response = supabase.auth.get_user(token)
 
-        if not user:
+        if not user_response or not user_response.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Not authenticated"
+                detail="Invalid token"
             )
+
+        user = user_response.user
 
         # Get household
         household_response = supabase.table('household_members')\
@@ -168,6 +179,8 @@ async def get_current_user_info():
             "household_id": household_id
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
