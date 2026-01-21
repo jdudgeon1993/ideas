@@ -153,9 +153,12 @@ const Pantry = {
     }
 
     const grouped = items.reduce((a, i) => {
-      (a[i.category || 'Other'] ||= []).push(i);
-      return a;
-    }, {});
+  const category = i.category || 'Other';
+  if (!a[category]) a[category] = [];
+  a[category].push(i);
+  return a;
+}, {});
+
 
     this.container.innerHTML = Object.entries(grouped).map(([cat, list]) => `
       <section>
@@ -227,9 +230,11 @@ const Planner = {
     }
 
     const byDate = meals.reduce((a, m) => {
-      (a[m.date] ||= []).push(m);
-      return a;
-    }, {});
+  if (!a[m.date]) a[m.date] = [];
+  a[m.date].push(m);
+  return a;
+}, {});
+
 
     this.container.innerHTML = Object.entries(byDate)
       .sort(([a],[b]) => new Date(a)-new Date(b))
