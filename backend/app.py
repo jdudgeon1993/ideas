@@ -29,6 +29,7 @@ app = FastAPI(
     description="Python Age 5.0 - Complete backend rebuild",
     version="5.0.0"
 )
+app.router.redirect_slashes = False
 
 # ProxyHeadersMiddleware is optional (some installs may not have the exact starlette submodule).
 # Import defensively so the app doesn't crash at startup when the dependency isn't present.
