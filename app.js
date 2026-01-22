@@ -37,4 +37,16 @@ const Dashboard = {
   }
 };
 
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("APP INIT START");
+
+  // Initialize components
+  Dashboard.init();
+
+  // Load initial data
+  await Dashboard.load();
+
+  console.log("APP INIT COMPLETE");
+});
+
 // Also ensure other places that do direct `el.innerHTML = ...` are wrapped similarly.
