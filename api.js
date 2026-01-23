@@ -50,6 +50,17 @@ class API {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: response.statusText }));
+
+      // If we get 401 and it's an auth token error, clear the token and reload
+      if (response.status === 401 && error.detail && error.detail.includes('authentication token')) {
+        console.error('Invalid authentication token detected, clearing and reloading...');
+        this.clearToken();
+        // Don't reload immediately if this is an auth endpoint to avoid loops
+        if (!endpoint.includes('/auth/')) {
+          setTimeout(() => window.location.reload(), 1000);
+        }
+      }
+
       throw new Error(error.detail || response.statusText);
     }
 

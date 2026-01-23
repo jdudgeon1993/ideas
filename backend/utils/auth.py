@@ -46,7 +46,7 @@ async def get_current_user(
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication token"
+                detail="Invalid authentication token: missing user ID"
             )
 
         return {
@@ -56,6 +56,11 @@ async def get_current_user(
         }
 
     except JWTError as e:
+        # Log the error for debugging (but don't expose full token)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"JWT validation failed: {str(e)}")
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid authentication token: {str(e)}"

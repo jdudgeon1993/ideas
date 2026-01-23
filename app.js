@@ -107,7 +107,13 @@ async function checkAuth() {
   }
 
   try {
-    const response = await API.call('/auth/me');
+    // First verify with /auth/me
+    await API.call('/auth/me');
+
+    // Then test a protected endpoint to ensure token works with JWT middleware
+    // Using a simple endpoint that should always work if authenticated
+    await API.call('/pantry');
+
     return true;
   } catch (error) {
     console.log('Authentication check failed, clearing token:', error.message);
@@ -709,6 +715,9 @@ async function initApp() {
   console.log('🍳 Chef\'s Kiss - Python Age 5.0');
   console.log('Backend:', window.CONFIG?.API_BASE || 'http://localhost:8000/api');
 
+  // Check if there was a token before auth check (since checkAuth clears invalid tokens)
+  const hadTokenBeforeCheck = API.getToken() !== null;
+
   // Check if user is authenticated
   const isAuthenticated = await checkAuth();
 
@@ -718,6 +727,20 @@ async function initApp() {
     await loadApp();
   } else {
     showLandingPage();
+
+    // If there was a token but auth failed, show helpful message
+    if (hadTokenBeforeCheck) {
+      console.log('⚠️ Your authentication token was invalid or expired and has been cleared.');
+      console.log('ℹ️ Please sign in again to continue.');
+      console.log('');
+      console.log('If you continue to see authentication errors:');
+      console.log('1. Make sure the backend is deployed and running');
+      console.log('2. Check that SUPABASE_JWT_SECRET is configured correctly in Railway');
+      console.log('3. Try signing up for a new account');
+      console.log('4. Or use the "Try Demo" option to test without authentication');
+    } else {
+      console.log('ℹ️ Welcome! Please sign in or create an account to get started.');
+    }
   }
 }
 
