@@ -69,12 +69,12 @@ except Exception as exc:
     raise
 
 # Register routes
-app.include_router(pantry.router, prefix="/api")
-app.include_router(auth.router, prefix="/api")
-app.include_router(recipes.router, prefix="/api")
-app.include_router(meal_plans.router, prefix="/api")
-app.include_router(shopping_list.router, prefix="/api")
-app.include_router(alerts.router, prefix="/api")
+app.include_router(pantry.router)
+app.include_router(auth.router)
+app.include_router(recipes.router)
+app.include_router(meal_plans.router)
+app.include_router(shopping_list.router)
+app.include_router(alerts.router)
 
 @app.get("/")
 async def root():
