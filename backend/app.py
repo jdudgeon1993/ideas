@@ -145,7 +145,7 @@ if __name__ == "__main__":
     logger.info(f"🌍 Environment: {os.getenv('ENVIRONMENT', 'development')}")
 
     uvicorn.run(
-        "app:app",
+        app,
         host="0.0.0.0",
         port=port,
         reload=os.getenv("ENVIRONMENT") == "development"
