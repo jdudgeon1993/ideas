@@ -122,10 +122,13 @@ async function checkAuth() {
 async function loadPantry() {
   try {
     showLoading();
-    const items = await API.call('/pantry');
+    const response = await API.call('/pantry');
+    // Backend returns {pantry_items: [...], shopping_list: [...]}
+    const items = response.pantry_items || response || [];
     renderPantryList(items);
   } catch (error) {
     showError('Failed to load pantry');
+    console.error('Pantry load error:', error);
   } finally {
     hideLoading();
   }
@@ -156,10 +159,13 @@ async function loadRecipes(searchQuery = '') {
   try {
     showLoading();
     const endpoint = searchQuery ? `/recipes/search?q=${encodeURIComponent(searchQuery)}` : '/recipes';
-    const recipes = await API.call(endpoint);
+    const response = await API.call(endpoint);
+    // Backend returns {recipes: [...], ready_to_cook: [...]}
+    const recipes = response.recipes || response || [];
     renderRecipeList(recipes);
   } catch (error) {
     showError('Failed to load recipes');
+    console.error('Recipe load error:', error);
   } finally {
     hideLoading();
   }
@@ -224,8 +230,13 @@ function renderRecipeList(recipes) {
 
   if (!recipes || recipes.length === 0) {
     container.innerHTML = '<p class="empty-state">No recipes yet. Add your first recipe!</p>';
+    // Store empty array globally for recipe grid script
+    window.recipes = [];
     return;
   }
+
+  // Store recipes globally for recipe grid script in index.html
+  window.recipes = recipes;
 
   container.innerHTML = recipes.map(recipe => `
     <div class="recipe-card" data-id="${recipe.id}">
@@ -247,10 +258,15 @@ function renderRecipeList(recipes) {
 async function loadMealPlans() {
   try {
     showLoading();
-    const meals = await API.call('/meal-plans');
+    const response = await API.call('/meal-plans');
+    // Backend returns {meal_plans: [...], reserved_ingredients: {...}}
+    const meals = response.meal_plans || response || [];
+    // Store globally for meal planning script
+    window.planner = meals;
     renderMealCalendar(meals);
   } catch (error) {
     showError('Failed to load meal plans');
+    console.error('Meal plans load error:', error);
   } finally {
     hideLoading();
   }
@@ -517,6 +533,7 @@ function renderShoppingList(items) {
 
 /* ============================================================================
    ALERTS & DASHBOARD
+============================================================================ */
 
 async function loadDashboard() {
   try {
