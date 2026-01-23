@@ -1,73 +1,245 @@
-// ===== HELPER =====
-function safeSetInnerHTMLById(id, html) {
-  let el = document.getElementById(id);
-  if (!el) {
-    console.warn(`Element with id="${id}" not found. Creating one automatically.`);
-    el = document.createElement('div');
-    el.id = id;
-    document.body.appendChild(el);
-  }
-  el.innerHTML = html;
-  return true;
+/**
+ * Chef's Kiss - Frontend Application (Python Age 5.0)
+ *
+ * JavaScript's job: Make the site breathe (UI interactions)
+ * Python's job: Make it think (business logic, calculations, data)
+ *
+ * This file ONLY handles UI - all data and logic in Python backend
+ */
+
+/* ============================================================================
+   APP STATE (Minimal - only UI state)
+============================================================================ */
+
+const AppState = {
+  currentUser: null,
+  currentHousehold: null,
+  currentView: 'pantry', // pantry, recipes, planner, shopping
+  loading: false
+};
+
+/* ============================================================================
+   UTILITY FUNCTIONS
+============================================================================ */
+
+function showLoading(message = 'Loading...') {
+  AppState.loading = true;
+  // You can add a loading spinner UI here if desired
 }
 
-// ===== DASHBOARD MODULE =====
-const Dashboard = {
-  container: null,
+function hideLoading() {
+  AppState.loading = false;
+}
 
-  init() {
-    // Try to find the dashboard container
-    this.container = document.getElementById('dashboard');
+function showError(message) {
+  alert(`Error: ${message}`);
+  console.error(message);
+}
 
-    // If not found, create it automatically
-    if (!this.container) {
-      console.warn('Dashboard container not found during init. Creating automatically.');
-      this.container = document.createElement('div');
-      this.container.id = 'dashboard';
-      document.body.appendChild(this.container);
+function showSuccess(message) {
+  console.log(`Success: ${message}`);
+  // You can add toast notification UI here if desired
+}
+
+/* ============================================================================
+   AUTHENTICATION
+============================================================================ */
+
+async function handleSignUp(email, password) {
+  try {
+    showLoading('Creating account...');
+
+    const response = await API.call('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+
+    if (response.access_token) {
+      API.setToken(response.access_token);
+      AppState.currentUser = response.user;
+      AppState.currentHousehold = response.household_id;
+
+      await loadApp();
+      showSuccess('Account created!');
     }
+  } catch (error) {
+    showError(error.message || 'Sign up failed');
+  } finally {
+    hideLoading();
+  }
+}
 
-    // Bind buttons (if any)
-    this.bindButtons();
-  },
+async function handleSignIn(email, password) {
+  try {
+    showLoading('Signing in...');
 
-  bindButtons() {
-    if (!this.container) return;
+    const response = await API.call('/auth/signin', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
 
-    // Example: dashboard refresh button
-    const refreshBtn = this.container.querySelector('#dashboard-refresh-btn');
-    if (refreshBtn) {
-      refreshBtn.addEventListener('click', () => {
-        this.load();
-      });
+    if (response.access_token) {
+      API.setToken(response.access_token);
+      AppState.currentUser = response.user;
+      AppState.currentHousehold = response.household_id;
+
+      await loadApp();
+      showSuccess('Signed in!');
     }
+  } catch (error) {
+    showError(error.message || 'Sign in failed');
+  } finally {
+    hideLoading();
+  }
+}
 
-    // Add more button bindings here as needed
-  },
+async function handleSignOut() {
+  try {
+    await API.call('/auth/signout', { method: 'POST' });
+  } catch (error) {
+    console.error('Sign out error:', error);
+  } finally {
+    API.clearToken();
+    AppState.currentUser = null;
+    AppState.currentHousehold = null;
+    showLandingPage();
+  }
+}
 
-  async load() {
-    if (!this.container) return;
+async function checkAuth() {
+  const token = API.getToken();
+  if (!token) {
+    showLandingPage();
+    return false;
+  }
 
-    // Show loading message immediately
-    safeSetInnerHTMLById('dashboard', '<p>Loading dashboard...</p>');
+  try {
+    const response = await API.call('/auth/me');
+    AppState.currentUser = response.user;
+    AppState.currentHousehold = response.household_id;
+    return true;
+  } catch (error) {
+    API.clearToken();
+    showLandingPage();
+    return false;
+  }
+}
 
-    try {
-      // Make sure endpoint matches your backend
-      const data = await API.call('/alerts/dashboard');
+/* ============================================================================
+   PANTRY FUNCTIONS
+============================================================================ */
 
-      const pantryCount = data?.pantry_count ?? 0;
-      const recipeCount = data?.recipe_count ?? 0;
+async function loadPantry() {
+  try {
+    showLoading();
+    const items = await API.call('/pantry');
+    renderPantryList(items);
+  } catch (error) {
+    showError('Failed to load pantry');
+  } finally {
+    hideLoading();
+  }
+}
 
-      const html = `
-        <p>Pantry: ${pantryCount}</p>
-        <p>Recipes: ${recipeCount}</p>
-      `;
+async function addPantryItem(itemData) {
+  try {
+    showLoading();
+    const newItem = await API.call('/pantry', {
+      method: 'POST',
+      body: JSON.stringify(itemData)
+    });
 
-      safeSetInnerHTMLById('dashboard', html);
+    await loadPantry(); // Reload to get updated list
+    showSuccess('Item added!');
+    return newItem;
+  } catch (error) {
+    showError('Failed to add item');
+  } finally {
+    hideLoading();
+  }
+}
 
-      // Re-bind buttons in case the container content changed
-      this.bindButtons();
+async function updatePantryItem(itemId, itemData) {
+  try {
+    showLoading();
+    await API.call(`/pantry/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify(itemData)
+    });
 
+    await loadPantry();
+    showSuccess('Item updated!');
+  } catch (error) {
+    showError('Failed to update item');
+  } finally {
+    hideLoading();
+  }
+}
+
+async function deletePantryItem(itemId) {
+  if (!confirm('Delete this item?')) return;
+
+  try {
+    showLoading();
+    await API.call(`/pantry/${itemId}`, {
+      method: 'DELETE'
+    });
+
+    await loadPantry();
+    showSuccess('Item deleted!');
+  } catch (error) {
+    showError('Failed to delete item');
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderPantryList(items) {
+  const container = document.getElementById('pantry-list');
+  if (!container) return;
+
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p class="empty-state">No pantry items yet. Add your first item!</p>';
+    return;
+  }
+
+  // Group by category
+  const byCategory = {};
+  items.forEach(item => {
+    const cat = item.category || 'Other';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(item);
+  });
+
+  let html = '';
+  for (const [category, categoryItems] of Object.entries(byCategory)) {
+    html += `
+      <div class="pantry-category">
+        <h3 class="category-title">${category}</h3>
+        <div class="pantry-items">
+          ${categoryItems.map(item => `
+            <div class="pantry-item" data-id="${item.id}">
+              <div class="item-info">
+                <span class="item-name">${item.name}</span>
+                <span class="item-qty">${item.total_quantity} ${item.unit}</span>
+              </div>
+              <div class="item-actions">
+                <button onclick="editPantryItem(${item.id})" class="btn-icon">✏️</button>
+                <button onclick="deletePantryItem(${item.id})" class="btn-icon">🗑️</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+/* ============================================================================
+   RECIPE FUNCTIONS
+============================================================================ */
 
 async function loadRecipes(searchQuery = '') {
   try {
@@ -160,6 +332,7 @@ function renderRecipeList(recipes) {
 
 /* ============================================================================
    MEAL PLAN FUNCTIONS
+============================================================================ */
 
 async function loadMealPlans() {
   try {
@@ -289,6 +462,7 @@ function renderMealCalendar(meals) {
 
 /* ============================================================================
    SHOPPING LIST FUNCTIONS
+============================================================================ */
 
 async function loadShoppingList() {
   try {
@@ -434,6 +608,7 @@ function renderShoppingList(items) {
 
 /* ============================================================================
    ALERTS & DASHBOARD
+============================================================================ */
 
 async function loadDashboard() {
   try {
@@ -509,6 +684,7 @@ function renderExpiringItems(items) {
 
 /* ============================================================================
    VIEW MANAGEMENT
+============================================================================ */
 
 function showView(viewName) {
   AppState.currentView = viewName;
@@ -555,40 +731,25 @@ function showView(viewName) {
 
 function showLandingPage() {
   const landing = document.getElementById('landing-page');
-  const mainContent = document.querySelector('.main-content');
-  const siteHeader = document.querySelector('.site-header');
-  const sidebarNav = document.querySelector('.sidebar-nav');
-  const bottomNav = document.querySelector('.bottom-nav');
+  const app = document.getElementById('app');
 
-  if (landing) landing.classList.add('show');
-  if (mainContent) mainContent.style.display = 'none';
-  if (siteHeader) siteHeader.style.display = 'none';
-  if (sidebarNav) sidebarNav.style.display = 'none';
-  if (bottomNav) bottomNav.style.display = 'none';
-
-  document.body.classList.add('landing-active');
+  if (landing) landing.style.display = 'block';
+  if (app) app.style.display = 'none';
 }
 
 function showApp() {
   const landing = document.getElementById('landing-page');
-  const mainContent = document.querySelector('.main-content');
-  const siteHeader = document.querySelector('.site-header');
-  const sidebarNav = document.querySelector('.sidebar-nav');
-  const bottomNav = document.querySelector('.bottom-nav');
+  const app = document.getElementById('app');
 
-  if (landing) landing.classList.remove('show');
-  if (mainContent) mainContent.style.display = 'block';
-  if (siteHeader) siteHeader.style.display = 'flex';
-  if (sidebarNav) sidebarNav.style.display = 'flex';
-  if (bottomNav) bottomNav.style.display = 'flex';
-
-  document.body.classList.remove('landing-active');
+  if (landing) landing.style.display = 'none';
+  if (app) app.style.display = 'block';
 
   showView('pantry'); // Default view
 }
 
 /* ============================================================================
    APP INITIALIZATION
+============================================================================ */
 
 async function loadApp() {
   showApp();
@@ -607,19 +768,42 @@ async function initApp() {
     await loadApp();
   } else {
     showLandingPage();
-    } catch (err) {
-      console.error('Failed to load dashboard data:', err);
-      safeSetInnerHTMLById('dashboard', '<p>Unable to load dashboard</p>');
-    }
   }
-};
 
-// ===== APP INIT =====
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("APP INIT START");
+  // Set up navigation
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const view = item.getAttribute('data-view');
+      if (view) showView(view);
+    });
+  });
 
-  Dashboard.init();
-  Dashboard.load(); // not awaiting so page renders immediately
+  // Set up sign out button
+  const signOutBtn = document.getElementById('signout-btn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', handleSignOut);
+  }
+}
 
-  console.log("APP INIT COMPLETE");
-});
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
+
+// Export functions to global scope for onclick handlers
+window.editPantryItem = (id) => console.log('Edit pantry item:', id);
+window.deletePantryItem = deletePantryItem;
+window.viewRecipe = (id) => console.log('View recipe:', id);
+window.editRecipe = (id) => console.log('Edit recipe:', id);
+window.deleteRecipe = deleteRecipe;
+window.deleteMealPlan = deleteMealPlan;
+window.cookMeal = cookMeal;
+window.checkShoppingItem = checkShoppingItem;
+window.deleteShoppingItem = deleteShoppingItem;
+window.clearCheckedItems = clearCheckedItems;
+window.addCheckedToPantry = addCheckedToPantry;
+window.handleSignUp = handleSignUp;
+window.handleSignIn = handleSignIn;
