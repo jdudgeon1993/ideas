@@ -67,7 +67,90 @@ const Dashboard = {
 
       // Re-bind buttons in case the container content changed
       this.bindButtons();
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      safeSetInnerHTMLById('dashboard', '<p>Unable to load dashboard</p>');
+    }
+  }
+};
 
+/* ============================================================================
+   UTILITY FUNCTIONS
+============================================================================ */
+
+function showLoading(message = 'Loading...') {
+  // You can add a loading spinner UI here if desired
+}
+
+function hideLoading() {
+  // You can hide loading spinner here if desired
+}
+
+function showError(message) {
+  console.error('Error:', message);
+  // You can add toast notification UI here if desired
+}
+
+function showSuccess(message) {
+  console.log('Success:', message);
+  // You can add toast notification UI here if desired
+}
+
+/* ============================================================================
+   AUTHENTICATION
+============================================================================ */
+
+async function checkAuth() {
+  const token = API.getToken();
+  if (!token) {
+    return false;
+  }
+
+  try {
+    const response = await API.call('/auth/me');
+    return true;
+  } catch (error) {
+    API.clearToken();
+    return false;
+  }
+}
+
+/* ============================================================================
+   PANTRY FUNCTIONS
+============================================================================ */
+
+async function loadPantry() {
+  try {
+    showLoading();
+    const items = await API.call('/pantry');
+    renderPantryList(items);
+  } catch (error) {
+    showError('Failed to load pantry');
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderPantryList(items) {
+  const container = document.getElementById('pantry-display');
+  if (!container) return;
+
+  if (!items || items.length === 0) {
+    container.innerHTML = '<p class="empty-state">No pantry items yet. Add your first item!</p>';
+    return;
+  }
+
+  // Store items globally for other scripts to access
+  window.pantry = items;
+
+  // The actual rendering is done by the pantry ledger script in index.html
+  // Just trigger a re-render event
+  container.setAttribute('data-updated', Date.now());
+}
+
+/* ============================================================================
+   RECIPE FUNCTIONS
+============================================================================ */
 
 async function loadRecipes(searchQuery = '') {
   try {
@@ -509,6 +592,13 @@ function renderExpiringItems(items) {
 
 /* ============================================================================
    VIEW MANAGEMENT
+============================================================================ */
+
+// App State
+const AppState = {
+  currentView: 'pantry',
+  loading: false
+};
 
 function showView(viewName) {
   AppState.currentView = viewName;
@@ -589,6 +679,7 @@ function showApp() {
 
 /* ============================================================================
    APP INITIALIZATION
+============================================================================ */
 
 async function loadApp() {
   showApp();
@@ -607,19 +698,12 @@ async function initApp() {
     await loadApp();
   } else {
     showLandingPage();
-    } catch (err) {
-      console.error('Failed to load dashboard data:', err);
-      safeSetInnerHTMLById('dashboard', '<p>Unable to load dashboard</p>');
-    }
   }
-};
+}
 
-// ===== APP INIT =====
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("APP INIT START");
-
-  Dashboard.init();
-  Dashboard.load(); // not awaiting so page renders immediately
-
-  console.log("APP INIT COMPLETE");
-});
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
