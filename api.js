@@ -107,11 +107,11 @@ class API {
   // ===== PANTRY =====
 
   static async getPantry() {
-    return this.call('/pantry');
+    return this.call('/pantry/');
   }
 
   static async addPantryItem(item) {
-    return this.call('/pantry', {
+    return this.call('/pantry/', {
       method: 'POST',
       body: JSON.stringify(item)
     });
@@ -133,7 +133,7 @@ class API {
   // ===== RECIPES =====
 
   static async getRecipes() {
-    return this.call('/recipes');
+    return this.call('/recipes/');
   }
 
   static async searchRecipes(params) {
@@ -151,7 +151,7 @@ class API {
   }
 
   static async addRecipe(recipe) {
-    return this.call('/recipes', {
+    return this.call('/recipes/', {
       method: 'POST',
       body: JSON.stringify(recipe)
     });
@@ -177,11 +177,11 @@ class API {
   // ===== MEAL PLANS =====
 
   static async getMealPlans() {
-    return this.call('/meal-plans');
+    return this.call('/meal-plans/');
   }
 
   static async addMealPlan(meal) {
-    return this.call('/meal-plans', {
+    return this.call('/meal-plans/', {
       method: 'POST',
       body: JSON.stringify(meal)
     });
@@ -215,7 +215,7 @@ class API {
   // ===== SHOPPING LIST =====
 
   static async getShoppingList() {
-    return this.call('/shopping-list');
+    return this.call('/shopping-list/');
   }
 
   static async regenerateShoppingList() {

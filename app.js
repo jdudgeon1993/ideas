@@ -107,13 +107,8 @@ async function checkAuth() {
   }
 
   try {
-    // First verify with /auth/me
+    // Verify token with /auth/me endpoint
     await API.call('/auth/me');
-
-    // Then test a protected endpoint to ensure token works with JWT middleware
-    // Using a simple endpoint that should always work if authenticated
-    await API.call('/pantry');
-
     return true;
   } catch (error) {
     console.log('Authentication check failed, clearing token:', error.message);
@@ -129,7 +124,7 @@ async function checkAuth() {
 async function loadPantry() {
   try {
     showLoading();
-    const response = await API.call('/pantry');
+    const response = await API.call('/pantry/');
     // Backend returns {pantry_items: [...], shopping_list: [...]}
     const items = response.pantry_items || response || [];
     renderPantryList(items);
@@ -181,7 +176,7 @@ async function loadRecipes(searchQuery = '') {
 async function addRecipe(recipeData) {
   try {
     showLoading();
-    const newRecipe = await API.call('/recipes', {
+    const newRecipe = await API.call('/recipes/', {
       method: 'POST',
       body: JSON.stringify(recipeData)
     });
@@ -265,7 +260,7 @@ function renderRecipeList(recipes) {
 async function loadMealPlans() {
   try {
     showLoading();
-    const response = await API.call('/meal-plans');
+    const response = await API.call('/meal-plans/');
     // Backend returns {meal_plans: [...], reserved_ingredients: {...}}
     const meals = response.meal_plans || response || [];
     // Store globally for meal planning script
@@ -282,7 +277,7 @@ async function loadMealPlans() {
 async function addMealPlan(mealData) {
   try {
     showLoading();
-    const newMeal = await API.call('/meal-plans', {
+    const newMeal = await API.call('/meal-plans/', {
       method: 'POST',
       body: JSON.stringify(mealData)
     });
@@ -399,7 +394,7 @@ function renderMealCalendar(meals) {
 async function loadShoppingList() {
   try {
     showLoading();
-    const shoppingData = await API.call('/shopping-list');
+    const shoppingData = await API.call('/shopping-list/');
     renderShoppingList(shoppingData.items || shoppingData);
   } catch (error) {
     showError('Failed to load shopping list');
