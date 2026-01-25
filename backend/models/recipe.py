@@ -27,25 +27,29 @@ class Recipe(BaseModel):
     @classmethod
     def from_supabase(cls, recipe_data: dict):
         """Convert Supabase data to model"""
-        # Extract ingredients if they're nested
-        ingredients_data = recipe_data.get('recipes_ingredients', [])
+        # Ingredients are stored as JSONB in the recipes table
+        ingredients_data = recipe_data.get('ingredients', [])
+
+        # Parse ingredients from JSONB
+        ingredients = []
+        if isinstance(ingredients_data, list):
+            for ing in ingredients_data:
+                if isinstance(ing, dict):
+                    ingredients.append(RecipeIngredient(**{
+                        'id': None,  # No separate ID for JSONB ingredients
+                        'name': ing.get('name', ''),
+                        'quantity': float(ing.get('quantity', ing.get('qty', 0))),
+                        'unit': ing.get('unit', '')
+                    }))
 
         return cls(
             id=recipe_data['id'],
             household_id=recipe_data['household_id'],
             name=recipe_data['name'],
             tags=recipe_data.get('tags', []),
-            photo_url=recipe_data.get('photo_url'),
+            photo_url=recipe_data.get('photo', recipe_data.get('photo_url', recipe_data.get('image_url'))),
             instructions=recipe_data.get('instructions'),
-            ingredients=[
-                RecipeIngredient(**{
-                    'id': ing.get('id'),
-                    'name': ing['name'],
-                    'quantity': ing['quantity'],
-                    'unit': ing['unit']
-                })
-                for ing in ingredients_data
-            ]
+            ingredients=ingredients
         )
 
 

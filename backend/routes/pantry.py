@@ -62,7 +62,7 @@ async def add_pantry_item(
         for location in item.locations:
             supabase.table('pantry_locations').insert({
                 'pantry_item_id': item_id,
-                'location': location['location'],
+                'location_name': location['location'],
                 'quantity': location['quantity'],
                 'expiration_date': location.get('expiration_date')
             }).execute()
@@ -125,7 +125,7 @@ async def update_pantry_item(
             for location in item.locations:
                 supabase.table('pantry_locations').insert({
                     'pantry_item_id': item_id,
-                    'location': location['location'],
+                    'location_name': location['location'],
                     'quantity': location['quantity'],
                     'expiration_date': location.get('expiration_date')
                 }).execute()

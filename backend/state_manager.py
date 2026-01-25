@@ -471,65 +471,37 @@ class StateManager:
                 PantryItem.from_supabase(item_data, locations)
             )
 
-        # Load recipes with ingredients
+        # Load recipes (ingredients stored as JSONB in recipes table)
         logger.debug("Loading recipes...")
         recipes_response = supabase.table('recipes')\
             .select('*')\
             .eq('household_id', household_id)\
             .execute()
 
-        # Load ingredients separately (no FK relationship configured in DB)
-        if recipes_response.data:
-            recipe_ids = [r['id'] for r in recipes_response.data]
-            try:
-                ingredients_response = supabase.table('recipes_ingredients')\
-                    .select('*')\
-                    .in_('recipe_id', recipe_ids)\
-                    .execute()
-
-                # Group ingredients by recipe_id
-                ingredients_by_recipe = {}
-                for ing in ingredients_response.data:
-                    recipe_id = ing['recipe_id']
-                    if recipe_id not in ingredients_by_recipe:
-                        ingredients_by_recipe[recipe_id] = []
-                    ingredients_by_recipe[recipe_id].append(ing)
-            except Exception as e:
-                logger.warning(f"Could not load recipe ingredients: {e}")
-                ingredients_by_recipe = {}
-
-            # Build recipes with their ingredients
-            recipes = []
-            for recipe_data in recipes_response.data:
-                recipe_data['recipes_ingredients'] = ingredients_by_recipe.get(recipe_data['id'], [])
-                recipes.append(Recipe.from_supabase(recipe_data))
-        else:
-            recipes = []
+        recipes = [
+            Recipe.from_supabase(recipe_data)
+            for recipe_data in recipes_response.data
+        ]
 
         # Load meal plans
         logger.debug("Loading meal plans...")
         try:
-            # Try to load with date filter, fall back to loading all
-            try:
-                meals_response = supabase.table('meal_plans')\
-                    .select('*')\
-                    .eq('household_id', household_id)\
-                    .gte('scheduled_date', date.today().isoformat())\
-                    .execute()
-            except:
-                # Column might be named differently, try without date filter
-                logger.debug("Date filter failed, loading all meal plans")
-                meals_response = supabase.table('meal_plans')\
-                    .select('*')\
-                    .eq('household_id', household_id)\
-                    .execute()
+            # Use planned_date column (actual DB column name)
+            meals_response = supabase.table('meal_plans')\
+                .select('*')\
+                .eq('household_id', household_id)\
+                .gte('planned_date', date.today().isoformat())\
+                .execute()
 
             meal_plans = []
             for meal_data in meals_response.data:
                 try:
-                    # Map scheduled_date to date if needed
-                    if 'scheduled_date' in meal_data and 'date' not in meal_data:
-                        meal_data['date'] = meal_data['scheduled_date']
+                    # Map planned_date to date for model compatibility
+                    if 'planned_date' in meal_data:
+                        meal_data['date'] = meal_data['planned_date']
+                    # Map is_cooked to cooked for model compatibility
+                    if 'is_cooked' in meal_data:
+                        meal_data['cooked'] = meal_data['is_cooked']
                     meal_plans.append(MealPlan.from_supabase(meal_data))
                 except Exception as e:
                     logger.warning(f"Could not parse meal plan: {e}")

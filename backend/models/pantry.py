@@ -43,12 +43,12 @@ class PantryItem(BaseModel):
     @classmethod
     def from_supabase(cls, item_data: dict, locations_data: List[dict]):
         """Convert Supabase data to model"""
-        # Build locations list, handling field name variations
+        # Build locations list
         locations = []
         for loc in locations_data:
             if loc.get('pantry_item_id') == item_data['id']:
-                # Handle both 'location' and 'storage_location' field names
-                location_value = loc.get('location') or loc.get('storage_location') or loc.get('storage') or 'Unknown'
+                # Use location_name (actual DB column name)
+                location_value = loc.get('location_name', 'Unknown')
 
                 locations.append(PantryLocation(**{
                     'id': loc.get('id'),

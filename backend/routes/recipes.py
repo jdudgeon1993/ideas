@@ -107,25 +107,16 @@ async def add_recipe(
     supabase = get_supabase()
 
     def update():
-        # Insert recipe
+        # Insert recipe with ingredients as JSONB
         recipe_response = supabase.table('recipes').insert({
             'household_id': household_id,
             'name': recipe.name,
             'tags': recipe.tags,
-            'instructions': recipe.instructions
+            'instructions': recipe.instructions,
+            'ingredients': recipe.ingredients  # Store as JSONB
         }).execute()
 
         recipe_id = recipe_response.data[0]['id']
-
-        # Insert ingredients
-        for ingredient in recipe.ingredients:
-            supabase.table('recipes_ingredients').insert({
-                'recipe_id': recipe_id,
-                'name': ingredient['name'],
-                'quantity': ingredient['quantity'],
-                'unit': ingredient['unit']
-            }).execute()
-
         return recipe_id
 
     recipe_id = StateManager.update_and_invalidate(household_id, update)
@@ -167,22 +158,16 @@ async def update_recipe(
                 .eq('household_id', household_id)\
                 .execute()
 
-        # Update ingredients if provided
+        # Update ingredients if provided (stored as JSONB)
         if recipe.ingredients is not None:
-            # Delete old ingredients
-            supabase.table('recipes_ingredients')\
-                .delete()\
-                .eq('recipe_id', recipe_id)\
-                .execute()
-
-            # Insert new ingredients
-            for ingredient in recipe.ingredients:
-                supabase.table('recipes_ingredients').insert({
-                    'recipe_id': recipe_id,
-                    'name': ingredient['name'],
-                    'quantity': ingredient['quantity'],
-                    'unit': ingredient['unit']
-                }).execute()
+            if 'ingredients' not in update_data:
+                update_data['ingredients'] = recipe.ingredients
+            # Re-run update if ingredients were provided separately
+            if update_data and 'ingredients' in update_data:
+                supabase.table('recipes').update({'ingredients': update_data['ingredients']})\
+                    .eq('id', recipe_id)\
+                    .eq('household_id', household_id)\
+                    .execute()
 
     StateManager.update_and_invalidate(household_id, update)
 
@@ -206,13 +191,7 @@ async def delete_recipe(
     supabase = get_supabase()
 
     def update():
-        # Delete ingredients first (foreign key)
-        supabase.table('recipes_ingredients')\
-            .delete()\
-            .eq('recipe_id', recipe_id)\
-            .execute()
-
-        # Delete recipe
+        # Delete recipe (ingredients stored as JSONB, no separate table)
         supabase.table('recipes')\
             .delete()\
             .eq('id', recipe_id)\

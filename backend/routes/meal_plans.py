@@ -46,10 +46,10 @@ async def add_meal_plan(
     def update():
         response = supabase.table('meal_plans').insert({
             'household_id': household_id,
-            'date': meal.date.isoformat(),
+            'planned_date': meal.date.isoformat(),
             'recipe_id': meal.recipe_id,
             'serving_multiplier': meal.serving_multiplier,
-            'cooked': False
+            'is_cooked': False
         }).execute()
 
         return response.data[0]['id']
@@ -81,13 +81,13 @@ async def update_meal_plan(
     def update():
         update_data = {}
         if meal.date is not None:
-            update_data['date'] = meal.date.isoformat()
+            update_data['planned_date'] = meal.date.isoformat()
         if meal.recipe_id is not None:
             update_data['recipe_id'] = meal.recipe_id
         if meal.serving_multiplier is not None:
             update_data['serving_multiplier'] = meal.serving_multiplier
         if meal.cooked is not None:
-            update_data['cooked'] = meal.cooked
+            update_data['is_cooked'] = meal.cooked
 
         if update_data:
             supabase.table('meal_plans').update(update_data)\
@@ -250,7 +250,7 @@ async def mark_meal_cooked(
 
         # Mark meal as cooked
         supabase.table('meal_plans')\
-            .update({'cooked': True})\
+            .update({'is_cooked': True})\
             .eq('id', meal_id)\
             .execute()
 
