@@ -70,7 +70,7 @@ class HouseholdState:
 
     def __init__(
         self,
-        household_id: int,
+        household_id: str,
         pantry_items: List[PantryItem],
         recipes: List[Recipe],
         meal_plans: List[MealPlan],
@@ -320,7 +320,7 @@ class HouseholdState:
 
         return suggestions
 
-    def validate_can_cook_meal(self, meal_id: int) -> dict:
+    def validate_can_cook_meal(self, meal_id: str) -> dict:
         """
         Validate if a meal can be cooked with current pantry.
 
@@ -397,7 +397,7 @@ class HouseholdState:
                 return item
         return None
 
-    def _get_recipe(self, recipe_id: int) -> Optional[Recipe]:
+    def _get_recipe(self, recipe_id: str) -> Optional[Recipe]:
         """Get recipe by ID"""
         for recipe in self.recipes:
             if recipe.id == recipe_id:
@@ -415,7 +415,7 @@ class StateManager:
     CACHE_TTL = 300  # 5 minutes
 
     @classmethod
-    def get_state(cls, household_id: int) -> HouseholdState:
+    def get_state(cls, household_id: str) -> HouseholdState:
         """
         Get state for household.
 
@@ -453,7 +453,7 @@ class StateManager:
         return state
 
     @classmethod
-    def _load_from_database(cls, household_id: int) -> HouseholdState:
+    def _load_from_database(cls, household_id: str) -> HouseholdState:
         """Load all data from Supabase"""
         supabase = get_supabase()
 
@@ -534,7 +534,7 @@ class StateManager:
         )
 
     @classmethod
-    def invalidate(cls, household_id: int):
+    def invalidate(cls, household_id: str):
         """
         Invalidate cache for a household.
 
@@ -549,7 +549,7 @@ class StateManager:
                 logger.warning(f"Cache delete error: {e}")
 
     @classmethod
-    def update_and_invalidate(cls, household_id: int, update_function):
+    def update_and_invalidate(cls, household_id: str, update_function):
         """
         Execute database update and invalidate cache.
 

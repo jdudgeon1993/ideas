@@ -25,7 +25,7 @@ class User(BaseModel):
 
 class Household(BaseModel):
     """Household that users belong to"""
-    id: int
+    id: str
     name: str
     owner_id: str  # User ID
     created_at: datetime

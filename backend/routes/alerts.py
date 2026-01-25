@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 @router.get("/expiring")
 async def get_expiring_items(
     days: int = 3,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Get items expiring soon.
@@ -38,7 +38,7 @@ async def get_expiring_items(
 
 
 @router.get("/suggestions/use-expiring")
-async def suggest_recipes_for_expiring(household_id: int = Depends(get_current_household)):
+async def suggest_recipes_for_expiring(household_id: str = Depends(get_current_household)):
     """
     Smart suggestions: Recipes that use expiring ingredients.
 
@@ -58,7 +58,7 @@ async def suggest_recipes_for_expiring(household_id: int = Depends(get_current_h
 
 
 @router.get("/suggestions/ready-to-cook")
-async def suggest_ready_recipes(household_id: int = Depends(get_current_household)):
+async def suggest_ready_recipes(household_id: str = Depends(get_current_household)):
     """
     Get recipes you can make RIGHT NOW with what you have.
 
@@ -80,7 +80,7 @@ async def suggest_ready_recipes(household_id: int = Depends(get_current_househol
 
 
 @router.get("/pantry-health")
-async def get_pantry_health(household_id: int = Depends(get_current_household)):
+async def get_pantry_health(household_id: str = Depends(get_current_household)):
     """
     Get overall pantry health status.
 
@@ -95,7 +95,7 @@ async def get_pantry_health(household_id: int = Depends(get_current_household)):
 
 
 @router.get("/dashboard")
-async def get_dashboard_summary(household_id: int = Depends(get_current_household)):
+async def get_dashboard_summary(household_id: str = Depends(get_current_household)):
     """
     Complete dashboard summary.
 

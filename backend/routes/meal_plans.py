@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/meal-plans", tags=["meal_plans"])
 
 
 @router.get("/")
-async def get_meal_plans(household_id: int = Depends(get_current_household)):
+async def get_meal_plans(household_id: str = Depends(get_current_household)):
     """
     Get all upcoming meal plans.
 
@@ -34,7 +34,7 @@ async def get_meal_plans(household_id: int = Depends(get_current_household)):
 @router.post("/")
 async def add_meal_plan(
     meal: MealPlanCreate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Add meal to plan.
@@ -69,9 +69,9 @@ async def add_meal_plan(
 
 @router.put("/{meal_id}")
 async def update_meal_plan(
-    meal_id: int,
+    meal_id: str,
     meal: MealPlanUpdate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Update meal plan.
@@ -109,8 +109,8 @@ async def update_meal_plan(
 
 @router.delete("/{meal_id}")
 async def delete_meal_plan(
-    meal_id: int,
-    household_id: int = Depends(get_current_household)
+    meal_id: str,
+    household_id: str = Depends(get_current_household)
 ):
     """
     Delete meal from plan.
@@ -140,8 +140,8 @@ async def delete_meal_plan(
 
 @router.post("/{meal_id}/validate")
 async def validate_can_cook(
-    meal_id: int,
-    household_id: int = Depends(get_current_household)
+    meal_id: str,
+    household_id: str = Depends(get_current_household)
 ):
     """
     Validate if meal can be cooked with current pantry.
@@ -157,9 +157,9 @@ async def validate_can_cook(
 
 @router.post("/{meal_id}/cook")
 async def mark_meal_cooked(
-    meal_id: int,
+    meal_id: str,
     force: bool = False,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Mark meal as cooked and deplete pantry.

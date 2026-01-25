@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/shopping-list", tags=["shopping"])
 
 
 @router.get("/")
-async def get_shopping_list(household_id: int = Depends(get_current_household)):
+async def get_shopping_list(household_id: str = Depends(get_current_household)):
     """
     Get complete shopping list.
 
@@ -43,7 +43,7 @@ async def get_shopping_list(household_id: int = Depends(get_current_household)):
 
 
 @router.post("/regenerate")
-async def regenerate_shopping_list(household_id: int = Depends(get_current_household)):
+async def regenerate_shopping_list(household_id: str = Depends(get_current_household)):
     """
     Force regeneration of shopping list.
 
@@ -62,7 +62,7 @@ async def regenerate_shopping_list(household_id: int = Depends(get_current_house
 @router.post("/items")
 async def add_manual_item(
     item: ManualShoppingItemCreate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Add manual shopping item (toilet paper, soap, etc.)
@@ -96,9 +96,9 @@ async def add_manual_item(
 
 @router.patch("/items/{item_id}")
 async def update_shopping_item(
-    item_id: int,
+    item_id: str,
     update: ShoppingItemUpdate,
-    household_id: int = Depends(get_current_household),
+    household_id: str = Depends(get_current_household),
     user: dict = Depends(get_current_user)
 ):
     """
@@ -148,8 +148,8 @@ async def update_shopping_item(
 
 @router.delete("/items/{item_id}")
 async def delete_manual_item(
-    item_id: int,
-    household_id: int = Depends(get_current_household)
+    item_id: str,
+    household_id: str = Depends(get_current_household)
 ):
     """
     Delete manual shopping item.
@@ -176,7 +176,7 @@ async def delete_manual_item(
 
 
 @router.post("/clear-checked")
-async def clear_checked_items(household_id: int = Depends(get_current_household)):
+async def clear_checked_items(household_id: str = Depends(get_current_household)):
     """
     Delete all checked manual items.
 
@@ -203,7 +203,7 @@ async def clear_checked_items(household_id: int = Depends(get_current_household)
 
 
 @router.post("/add-checked-to-pantry")
-async def add_checked_to_pantry(household_id: int = Depends(get_current_household)):
+async def add_checked_to_pantry(household_id: str = Depends(get_current_household)):
     """
     Add all checked items to pantry.
 

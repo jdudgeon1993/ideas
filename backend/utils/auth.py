@@ -66,7 +66,7 @@ async def get_current_user(
 
 async def get_current_household(
     user: dict = Depends(get_current_user)
-) -> int:
+) -> str:
     """
     Get the household ID for the current user.
 
@@ -74,7 +74,7 @@ async def get_current_household(
         HTTPException: If user has no household
 
     Returns:
-        int: Household ID
+        str: Household ID (UUID)
     """
     supabase = get_supabase()
 
@@ -95,10 +95,13 @@ async def get_current_household(
 
 async def get_optional_household(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
-) -> Optional[int]:
+) -> Optional[str]:
     """
     Get household ID if authenticated, None otherwise.
     Use for optional authentication.
+
+    Returns:
+        Optional[str]: Household ID (UUID) if authenticated, None otherwise
     """
     if not credentials:
         return None

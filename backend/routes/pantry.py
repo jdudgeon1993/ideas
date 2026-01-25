@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/pantry", tags=["pantry"])
 
 
 @router.get("/")
-async def get_pantry(household_id: int = Depends(get_current_household)):
+async def get_pantry(household_id: str = Depends(get_current_household)):
     """
     Get all pantry items with automatically calculated data.
 
@@ -37,7 +37,7 @@ async def get_pantry(household_id: int = Depends(get_current_household)):
 @router.post("/")
 async def add_pantry_item(
     item: PantryItemCreate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Add new pantry item.
@@ -84,9 +84,9 @@ async def add_pantry_item(
 
 @router.put("/{item_id}")
 async def update_pantry_item(
-    item_id: int,
+    item_id: str,
     item: PantryItemUpdate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Update pantry item.
@@ -144,8 +144,8 @@ async def update_pantry_item(
 
 @router.delete("/{item_id}")
 async def delete_pantry_item(
-    item_id: int,
-    household_id: int = Depends(get_current_household)
+    item_id: str,
+    household_id: str = Depends(get_current_household)
 ):
     """
     Delete pantry item.

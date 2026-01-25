@@ -9,7 +9,7 @@ from datetime import date
 
 class PantryLocation(BaseModel):
     """Where an item is stored and how much"""
-    id: Optional[int] = None
+    id: Optional[str] = None
     location: str  # "Pantry", "Fridge", "Freezer"
     quantity: float
     expiration_date: Optional[date] = None
@@ -17,8 +17,8 @@ class PantryLocation(BaseModel):
 
 class PantryItem(BaseModel):
     """Complete pantry item with all locations"""
-    id: int
-    household_id: int
+    id: str
+    household_id: str
     name: str
     category: str
     unit: str

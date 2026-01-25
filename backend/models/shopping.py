@@ -11,7 +11,7 @@ from datetime import datetime
 
 class ShoppingItem(BaseModel):
     """Single item on shopping list (auto-generated or manual)"""
-    id: Optional[int] = None  # Only for manual items stored in DB
+    id: Optional[str] = None  # Only for manual items stored in DB
     name: str
     quantity: float
     unit: str
@@ -19,8 +19,8 @@ class ShoppingItem(BaseModel):
     source: str  # "Meals", "Threshold", or "Manual"
     checked: bool = False
     checked_at: Optional[datetime] = None
-    checked_by: Optional[int] = None
-    household_id: Optional[int] = None
+    checked_by: Optional[str] = None
+    household_id: Optional[str] = None
 
     class Config:
         json_schema_extra = {
