@@ -160,7 +160,7 @@ function renderPantryList(items) {
 async function loadRecipes(searchQuery = '') {
   try {
     showLoading();
-    const endpoint = searchQuery ? `/recipes/search?q=${encodeURIComponent(searchQuery)}` : '/recipes';
+    const endpoint = searchQuery ? `/recipes/search?q=${encodeURIComponent(searchQuery)}` : '/recipes/';
     const response = await API.call(endpoint);
     // Backend returns {recipes: [...], ready_to_cook: [...]}
     const recipes = response.recipes || response || [];
