@@ -8,7 +8,7 @@ from typing import List, Optional
 
 class RecipeIngredient(BaseModel):
     """Single ingredient in a recipe"""
-    id: Optional[int] = None
+    id: Optional[str] = None
     name: str
     quantity: float
     unit: str
@@ -16,8 +16,8 @@ class RecipeIngredient(BaseModel):
 
 class Recipe(BaseModel):
     """Complete recipe with ingredients"""
-    id: int
-    household_id: int
+    id: str
+    household_id: str
     name: str
     tags: List[str] = []
     photo_url: Optional[str] = None

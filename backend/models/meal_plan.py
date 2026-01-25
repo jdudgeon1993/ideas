@@ -9,10 +9,10 @@ from datetime import date
 
 class MealPlan(BaseModel):
     """Meal planned for a specific date"""
-    id: int
-    household_id: int
+    id: str
+    household_id: str
     date: date
-    recipe_id: int
+    recipe_id: str
     serving_multiplier: float = 1.0
     cooked: bool = False
 
@@ -32,14 +32,14 @@ class MealPlan(BaseModel):
 class MealPlanCreate(BaseModel):
     """Create new meal plan"""
     date: date
-    recipe_id: int
+    recipe_id: str
     serving_multiplier: float = Field(default=1.0, gt=0, le=10)
 
     class Config:
         json_schema_extra = {
             "example": {
                 "date": "2024-12-25",
-                "recipe_id": 1,
+                "recipe_id": "550e8400-e29b-41d4-a716-446655440000",
                 "serving_multiplier": 1.5
             }
         }
@@ -48,6 +48,6 @@ class MealPlanCreate(BaseModel):
 class MealPlanUpdate(BaseModel):
     """Update existing meal plan"""
     date: Optional[date] = None
-    recipe_id: Optional[int] = None
+    recipe_id: Optional[str] = None
     serving_multiplier: Optional[float] = Field(None, gt=0, le=10)
     cooked: Optional[bool] = None

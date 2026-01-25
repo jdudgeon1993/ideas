@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/recipes", tags=["recipes"])
 
 
 @router.get("/")
-async def get_recipes(household_id: int = Depends(get_current_household)):
+async def get_recipes(household_id: str = Depends(get_current_household)):
     """
     Get all recipes.
     """
@@ -34,7 +34,7 @@ async def search_recipes(
     tags: Optional[List[str]] = Query(None),
     ready_only: bool = False,
     has_ingredients: Optional[List[str]] = Query(None),
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Search and filter recipes.
@@ -77,8 +77,8 @@ async def search_recipes(
 
 @router.get("/{recipe_id}")
 async def get_recipe(
-    recipe_id: int,
-    household_id: int = Depends(get_current_household)
+    recipe_id: str,
+    household_id: str = Depends(get_current_household)
 ):
     """
     Get single recipe by ID.
@@ -99,7 +99,7 @@ async def get_recipe(
 @router.post("/")
 async def add_recipe(
     recipe: RecipeCreate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Add new recipe.
@@ -142,9 +142,9 @@ async def add_recipe(
 
 @router.put("/{recipe_id}")
 async def update_recipe(
-    recipe_id: int,
+    recipe_id: str,
     recipe: RecipeUpdate,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Update existing recipe.
@@ -197,8 +197,8 @@ async def update_recipe(
 
 @router.delete("/{recipe_id}")
 async def delete_recipe(
-    recipe_id: int,
-    household_id: int = Depends(get_current_household)
+    recipe_id: str,
+    household_id: str = Depends(get_current_household)
 ):
     """
     Delete recipe.
@@ -232,9 +232,9 @@ async def delete_recipe(
 
 @router.get("/{recipe_id}/scaled")
 async def get_scaled_recipe(
-    recipe_id: int,
+    recipe_id: str,
     multiplier: float = 1.0,
-    household_id: int = Depends(get_current_household)
+    household_id: str = Depends(get_current_household)
 ):
     """
     Get recipe with scaled ingredient quantities.
