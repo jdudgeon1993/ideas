@@ -23,47 +23,44 @@ async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> dict:
     """
-    Validate JWT token and return user info.
+    Validate JWT token using Supabase API and return user info.
 
     Raises:
         HTTPException: If token is invalid or expired
 
     Returns:
-        dict: User info from token payload
+        dict: User info from Supabase
     """
     token = credentials.credentials
+    supabase = get_supabase()
 
     try:
-        # Decode token (Supabase uses HS256)
-        payload = jwt.decode(
-            token,
-            JWT_SECRET,
-            algorithms=["HS256"],
-            options={"verify_aud": False}  # Supabase tokens don't use aud
-        )
+        # Use Supabase API to validate token (works with any algorithm)
+        user_response = supabase.auth.get_user(token)
 
-        user_id: str = payload.get("sub")
-        if user_id is None:
+        if not user_response or not user_response.user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication token: missing user ID"
+                detail="Invalid authentication token"
             )
 
+        user = user_response.user
+
         return {
-            "id": user_id,
-            "email": payload.get("email"),
-            "role": payload.get("role")
+            "id": user.id,
+            "email": user.email,
+            "role": user.role if hasattr(user, 'role') else None
         }
 
-    except JWTError as e:
-        # Log the error for debugging (but don't expose full token)
+    except Exception as e:
+        # Log the error for debugging
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"JWT validation failed: {str(e)}")
+        logger.error(f"Token validation failed: {str(e)}")
 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication token: {str(e)}"
+            detail="Invalid authentication token"
         )
 
 
