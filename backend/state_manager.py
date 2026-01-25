@@ -474,14 +474,37 @@ class StateManager:
         # Load recipes with ingredients
         logger.debug("Loading recipes...")
         recipes_response = supabase.table('recipes')\
-            .select('*, recipes_ingredients(*)')\
+            .select('*')\
             .eq('household_id', household_id)\
             .execute()
 
-        recipes = [
-            Recipe.from_supabase(recipe_data)
-            for recipe_data in recipes_response.data
-        ]
+        # Load ingredients separately (no FK relationship configured in DB)
+        if recipes_response.data:
+            recipe_ids = [r['id'] for r in recipes_response.data]
+            try:
+                ingredients_response = supabase.table('recipes_ingredients')\
+                    .select('*')\
+                    .in_('recipe_id', recipe_ids)\
+                    .execute()
+
+                # Group ingredients by recipe_id
+                ingredients_by_recipe = {}
+                for ing in ingredients_response.data:
+                    recipe_id = ing['recipe_id']
+                    if recipe_id not in ingredients_by_recipe:
+                        ingredients_by_recipe[recipe_id] = []
+                    ingredients_by_recipe[recipe_id].append(ing)
+            except Exception as e:
+                logger.warning(f"Could not load recipe ingredients: {e}")
+                ingredients_by_recipe = {}
+
+            # Build recipes with their ingredients
+            recipes = []
+            for recipe_data in recipes_response.data:
+                recipe_data['recipes_ingredients'] = ingredients_by_recipe.get(recipe_data['id'], [])
+                recipes.append(Recipe.from_supabase(recipe_data))
+        else:
+            recipes = []
 
         # Load meal plans (only future/today)
         logger.debug("Loading meal plans...")
