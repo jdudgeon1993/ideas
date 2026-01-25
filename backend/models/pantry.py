@@ -43,6 +43,20 @@ class PantryItem(BaseModel):
     @classmethod
     def from_supabase(cls, item_data: dict, locations_data: List[dict]):
         """Convert Supabase data to model"""
+        # Build locations list, handling field name variations
+        locations = []
+        for loc in locations_data:
+            if loc.get('pantry_item_id') == item_data['id']:
+                # Handle both 'location' and 'storage_location' field names
+                location_value = loc.get('location') or loc.get('storage_location') or loc.get('storage') or 'Unknown'
+
+                locations.append(PantryLocation(**{
+                    'id': loc.get('id'),
+                    'location': location_value,
+                    'quantity': loc.get('quantity', 0),
+                    'expiration_date': loc.get('expiration_date')
+                }))
+
         return cls(
             id=item_data['id'],
             household_id=item_data['household_id'],
@@ -50,16 +64,7 @@ class PantryItem(BaseModel):
             category=item_data['category'],
             unit=item_data['unit'],
             min_threshold=item_data.get('min_threshold', 0),
-            locations=[
-                PantryLocation(**{
-                    'id': loc.get('id'),
-                    'location': loc['location'],
-                    'quantity': loc['quantity'],
-                    'expiration_date': loc.get('expiration_date')
-                })
-                for loc in locations_data
-                if loc.get('pantry_item_id') == item_data['id']
-            ]
+            locations=locations
         )
 
 
