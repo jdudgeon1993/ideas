@@ -2046,7 +2046,6 @@ window.openSettingsModal = openSettingsModal;
 window.showInviteHousehold = showInviteHousehold;
 window.showHouseholdMembers = showHouseholdMembers;
 window.exportData = exportData;
-window.confirmDeleteAccount = confirmDeleteAccount;
 
 async function initApp() {
   console.log('🍳 Chef\'s Kiss - Python Age 5.0');
