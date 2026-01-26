@@ -62,7 +62,7 @@ app.add_middleware(
 
 # Import routes (deferred after middleware setup)
 try:
-    from routes import auth, pantry, recipes, meal_plans, shopping_list, alerts
+    from routes import auth, pantry, recipes, meal_plans, shopping_list, alerts, settings
 except Exception as exc:
     # Defensive: if route import fails, log the error but keep the startup trace clear for the logs.
     logger.exception("Failed to import routes at startup. Check that backend routes exist and imports succeed.")
@@ -75,6 +75,7 @@ app.include_router(recipes.router)
 app.include_router(meal_plans.router)
 app.include_router(shopping_list.router)
 app.include_router(alerts.router)
+app.include_router(settings.router)
 
 @app.get("/")
 async def root():

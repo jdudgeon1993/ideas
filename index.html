@@ -1012,8 +1012,8 @@
 
       // Watch for recipe changes using MutationObserver
       function setupRecipeObserver() {
-        const recipeList = document.getElementById('recipe-list');
-        if (!recipeList) {
+        const recipesGrid = document.getElementById('recipes-grid');
+        if (!recipesGrid) {
           setTimeout(setupRecipeObserver, 500);
           return;
         }
@@ -1025,10 +1025,11 @@
           renderRecipesGrid();
         });
 
-        observer.observe(recipeList, {
+        observer.observe(recipesGrid, {
           childList: true,
           subtree: true,
-          characterData: true
+          characterData: true,
+          attributes: true
         });
       }
 
@@ -1437,7 +1438,8 @@
         observer.observe(pantryDisplay, {
           childList: true,
           subtree: true,
-          characterData: true
+          characterData: true,
+          attributes: true
         });
       }
 

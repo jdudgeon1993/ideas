@@ -608,22 +608,8 @@ async function clearCheckedItems() {
 }
 
 async function addCheckedToPantry() {
-  if (!confirm('Add all checked items to pantry?')) return;
-
-  try {
-    showLoading();
-    await API.call('/shopping-list/add-checked-to-pantry', {
-      method: 'POST'
-    });
-
-    await loadShoppingList();
-    await loadPantry();
-    showSuccess('Items added to pantry!');
-  } catch (error) {
-    showError('Failed to add items to pantry');
-  } finally {
-    hideLoading();
-  }
+  // Use the checkout modal instead of confirm prompt
+  openCheckoutModal();
 }
 
 // Track checked state for auto-generated items (no IDs) in localStorage
@@ -1782,6 +1768,7 @@ async function loadApp() {
   // Load all data in parallel for faster startup
   try {
     await Promise.all([
+      loadSettings(),  // Load settings first for categories/locations
       loadPantry(),
       loadRecipes(),
       loadMealPlans(),
@@ -1835,21 +1822,10 @@ function wireUpButtons() {
     });
   }
 
-  // Checkout button
+  // Checkout button - use the checkout modal
   const btnCheckout = document.getElementById('btn-checkout');
   if (btnCheckout) {
-    btnCheckout.addEventListener('click', async () => {
-      if (confirm('Add all checked items to pantry and clear them from the list?')) {
-        try {
-          await API.call('/shopping-list/add-checked-to-pantry', { method: 'POST' });
-          await loadShoppingList();
-          await loadPantry();
-        } catch (error) {
-          console.error('Error during checkout:', error);
-          alert('Checkout failed: ' + error.message);
-        }
-      }
-    });
+    btnCheckout.addEventListener('click', openCheckoutModal);
   }
 
   // Onboarding/bulk entry buttons
@@ -1888,30 +1864,47 @@ function wireUpButtons() {
 const DEFAULT_LOCATIONS = ['Pantry', 'Refrigerator', 'Freezer', 'Cabinet', 'Counter'];
 const DEFAULT_CATEGORIES = ['Meat', 'Dairy', 'Produce', 'Pantry', 'Frozen', 'Spices', 'Beverages', 'Snacks', 'Other'];
 
-function getSavedLocations() {
+// Global settings cache (loaded from API)
+window.householdSettings = {
+  locations: DEFAULT_LOCATIONS,
+  categories: DEFAULT_CATEGORIES,
+  category_emojis: {}
+};
+
+/**
+ * Load settings from API
+ */
+async function loadSettings() {
   try {
-    const saved = localStorage.getItem('pantryLocations');
-    return saved ? JSON.parse(saved) : DEFAULT_LOCATIONS;
-  } catch {
-    return DEFAULT_LOCATIONS;
+    const response = await API.call('/settings/');
+    window.householdSettings = {
+      locations: response.locations || DEFAULT_LOCATIONS,
+      categories: response.categories || DEFAULT_CATEGORIES,
+      category_emojis: response.category_emojis || {}
+    };
+    console.log('Settings loaded from API:', window.householdSettings);
+  } catch (error) {
+    console.warn('Failed to load settings from API, using defaults:', error);
+    // Keep using defaults
   }
+}
+
+function getSavedLocations() {
+  return window.householdSettings.locations || DEFAULT_LOCATIONS;
 }
 
 function setSavedLocations(locations) {
-  localStorage.setItem('pantryLocations', JSON.stringify(locations));
+  window.householdSettings.locations = locations;
+  // API save happens in saveSettings()
 }
 
 function getSavedCategories() {
-  try {
-    const saved = localStorage.getItem('pantryCategories');
-    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
-  } catch {
-    return DEFAULT_CATEGORIES;
-  }
+  return window.householdSettings.categories || DEFAULT_CATEGORIES;
 }
 
 function setSavedCategories(categories) {
-  localStorage.setItem('pantryCategories', JSON.stringify(categories));
+  window.householdSettings.categories = categories;
+  // API save happens in saveSettings()
 }
 
 /**
@@ -2138,16 +2131,37 @@ function removeCategory(idx) {
   if (item) item.remove();
 }
 
-function resetSettingsToDefaults() {
+async function resetSettingsToDefaults() {
   if (!confirm('Reset all settings to defaults?')) return;
-  setSavedLocations(DEFAULT_LOCATIONS);
-  setSavedCategories(DEFAULT_CATEGORIES);
-  localStorage.setItem('expirationDays', '3');
-  openSettingsModal(); // Refresh modal
-  showSuccess('Settings reset to defaults');
+
+  try {
+    showLoading();
+
+    // Save defaults to API
+    await API.call('/settings/', {
+      method: 'PUT',
+      body: JSON.stringify({
+        locations: DEFAULT_LOCATIONS,
+        categories: DEFAULT_CATEGORIES
+      })
+    });
+
+    // Update local cache
+    window.householdSettings.locations = DEFAULT_LOCATIONS;
+    window.householdSettings.categories = DEFAULT_CATEGORIES;
+
+    localStorage.setItem('expirationDays', '3');
+    openSettingsModal(); // Refresh modal
+    showSuccess('Settings reset to defaults');
+  } catch (error) {
+    console.error('Failed to reset settings:', error);
+    showError('Failed to reset settings');
+  } finally {
+    hideLoading();
+  }
 }
 
-function saveSettings() {
+async function saveSettings() {
   // Collect locations
   const locationInputs = document.querySelectorAll('.location-input');
   const locations = [];
@@ -2164,7 +2178,7 @@ function saveSettings() {
     if (val) categories.push(val);
   });
 
-  // Save expiration days
+  // Save expiration days (still local - per-user preference)
   const expirationDays = document.getElementById('setting-expiration-days').value;
 
   // Validate
@@ -2177,13 +2191,35 @@ function saveSettings() {
     return;
   }
 
-  // Save
-  setSavedLocations(locations);
-  setSavedCategories(categories);
-  localStorage.setItem('expirationDays', expirationDays);
+  try {
+    showLoading();
 
-  closeModal();
-  showSuccess('Settings saved!');
+    // Save to API
+    const response = await API.call('/settings/', {
+      method: 'PUT',
+      body: JSON.stringify({ locations, categories })
+    });
+
+    // Update local cache
+    window.householdSettings.locations = response.locations || locations;
+    window.householdSettings.categories = response.categories || categories;
+
+    // Save expiration days locally (user preference)
+    localStorage.setItem('expirationDays', expirationDays);
+
+    closeModal();
+    showSuccess('Settings saved!');
+
+    // Reload pantry to update category emojis
+    if (window.reloadCategoryEmojis) {
+      window.reloadCategoryEmojis();
+    }
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    showError('Failed to save settings');
+  } finally {
+    hideLoading();
+  }
 }
 
 // Expose functions globally
@@ -2192,6 +2228,8 @@ window.removeLocation = removeLocation;
 window.addCategory = addCategory;
 window.removeCategory = removeCategory;
 window.resetSettingsToDefaults = resetSettingsToDefaults;
+window.saveSettings = saveSettings;
+window.loadSettings = loadSettings;
 window.handleLogout = handleLogout;
 
 // Expose functions globally
