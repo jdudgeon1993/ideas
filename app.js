@@ -608,22 +608,8 @@ async function clearCheckedItems() {
 }
 
 async function addCheckedToPantry() {
-  if (!confirm('Add all checked items to pantry?')) return;
-
-  try {
-    showLoading();
-    await API.call('/shopping-list/add-checked-to-pantry', {
-      method: 'POST'
-    });
-
-    await loadShoppingList();
-    await loadPantry();
-    showSuccess('Items added to pantry!');
-  } catch (error) {
-    showError('Failed to add items to pantry');
-  } finally {
-    hideLoading();
-  }
+  // Use the checkout modal instead of confirm prompt
+  openCheckoutModal();
 }
 
 // Track checked state for auto-generated items (no IDs) in localStorage
@@ -1835,21 +1821,10 @@ function wireUpButtons() {
     });
   }
 
-  // Checkout button
+  // Checkout button - use the checkout modal
   const btnCheckout = document.getElementById('btn-checkout');
   if (btnCheckout) {
-    btnCheckout.addEventListener('click', async () => {
-      if (confirm('Add all checked items to pantry and clear them from the list?')) {
-        try {
-          await API.call('/shopping-list/add-checked-to-pantry', { method: 'POST' });
-          await loadShoppingList();
-          await loadPantry();
-        } catch (error) {
-          console.error('Error during checkout:', error);
-          alert('Checkout failed: ' + error.message);
-        }
-      }
-    });
+    btnCheckout.addEventListener('click', openCheckoutModal);
   }
 
   // Onboarding/bulk entry buttons
