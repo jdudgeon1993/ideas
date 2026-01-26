@@ -3574,3 +3574,226 @@ body {
     gap: 1rem;
   }
 }
+
+/* -------------------------------------------------------------------
+   10. NEW MODAL STYLES (for app.js modals)
+   ------------------------------------------------------------------- */
+
+/* Modal Content - Alternative to modal-card */
+.modal-content {
+  background: var(--color-card-bg, #FFF8F0);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  padding: 1.5rem 2rem;
+  border: 2px solid #B8E3E9;
+  box-shadow: 0 12px 32px rgba(156,175,136,0.2);
+  position: relative;
+  box-sizing: border-box;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  font-family: "Lato", sans-serif;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #6a4f35;
+}
+
+.modal-content h3 {
+  font-size: 1.1rem;
+  margin: 1rem 0 0.5rem;
+  color: #6a4f35;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.35rem;
+  color: #2F3E46;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.25);
+  background: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #F1C338;
+  box-shadow: 0 0 0 2px rgba(241,195,56,0.25);
+  outline: none;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.4;
+}
+
+/* Form Row - Horizontal layout */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.form-row .form-group {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(120, 94, 60, 0.15);
+}
+
+/* Location and Ingredient Rows */
+.location-row,
+.ingredient-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.location-row input,
+.ingredient-row input {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.location-row input:focus,
+.ingredient-row input:focus {
+  outline: none;
+  border-color: #F1C338;
+  box-shadow: 0 0 0 2px rgba(241,195,56,0.1);
+}
+
+.location-row .loc-name,
+.ingredient-row .ing-name {
+  flex: 2;
+}
+
+.location-row .loc-qty,
+.ingredient-row .ing-qty {
+  flex: 0.7;
+  max-width: 80px;
+}
+
+.location-row .loc-expiry,
+.ingredient-row .ing-unit {
+  flex: 1;
+}
+
+/* Scheduled Meal Row */
+.scheduled-meal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Small button variant */
+.btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+/* Danger button */
+.btn-danger {
+  background: #d9534f;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background: #c9302c;
+}
+
+/* Quick use modal */
+.quick-use-modal {
+  max-width: 400px;
+}
+
+.quick-use-modal p {
+  margin: 0.5rem 0 1rem;
+  color: #666;
+}
+
+/* Cook modal */
+.cook-modal ul {
+  margin: 0.5rem 0 1rem 1rem;
+  padding: 0;
+}
+
+.cook-modal li {
+  margin-bottom: 0.25rem;
+}
+
+/* Day modal */
+.day-modal .scheduled-meals {
+  margin: 1rem 0;
+}
+
+.day-modal hr {
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+/* Mobile responsive modals */
+@media (max-width: 480px) {
+  .modal-content {
+    width: 95%;
+    padding: 1rem;
+    max-height: 85vh;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .location-row,
+  .ingredient-row {
+    flex-wrap: wrap;
+  }
+
+  .location-row input,
+  .ingredient-row input {
+    flex: 1 1 calc(50% - 0.25rem);
+  }
+
+  .location-row .loc-name,
+  .ingredient-row .ing-name {
+    flex: 1 1 100%;
+  }
+}
