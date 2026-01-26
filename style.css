@@ -3928,3 +3928,160 @@ body.dark-theme .form-group textarea {
     width: 100%;
   }
 }
+
+/* -------------------------------------------------------------------
+   12. CHECKOUT MODAL
+   ------------------------------------------------------------------- */
+
+.checkout-modal {
+  max-width: 600px;
+  max-height: 85vh;
+}
+
+.checkout-items {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin: 1rem 0;
+}
+
+.checkout-item {
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.checkout-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.checkout-item-header strong {
+  color: #6a4f35;
+  font-size: 1.1rem;
+}
+
+.checkout-item-fields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.checkout-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkout-field label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.checkout-field input,
+.checkout-field select {
+  padding: 0.5rem;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.checkout-field input:focus,
+.checkout-field select:focus {
+  border-color: #F1C338;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(241,195,56,0.2);
+}
+
+/* -------------------------------------------------------------------
+   13. SETTINGS LIST (Categories & Locations)
+   ------------------------------------------------------------------- */
+
+.settings-list {
+  margin: 0.75rem 0;
+}
+
+.setting-item {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+
+.setting-item input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.setting-item input:focus {
+  border-color: #F1C338;
+  outline: none;
+}
+
+.btn-remove {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f8d7da;
+  border: none;
+  color: #c00;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove:hover {
+  background: #f1b0b7;
+}
+
+/* Account Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-connected {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-disconnected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.small-text {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 0.25rem;
+}
+
+/* Mobile responsive for checkout */
+@media (max-width: 480px) {
+  .checkout-modal {
+    max-width: 95%;
+    padding: 1rem;
+  }
+
+  .checkout-item-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-items {
+    max-height: 40vh;
+  }
+}

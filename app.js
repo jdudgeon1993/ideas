@@ -254,7 +254,7 @@ async function deleteRecipe(recipeId) {
 }
 
 function renderRecipeList(recipes) {
-  const container = document.getElementById('recipes-list');
+  const container = document.getElementById('recipes-grid');
   if (!container) return;
 
   if (!recipes || recipes.length === 0) {
@@ -626,26 +626,61 @@ async function addCheckedToPantry() {
   }
 }
 
+// Track checked state for auto-generated items (no IDs) in localStorage
+function getLocalCheckedItems() {
+  try {
+    return JSON.parse(localStorage.getItem('checkedShoppingItems') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function setLocalCheckedItem(itemKey, checked) {
+  const checkedItems = getLocalCheckedItems();
+  if (checked) {
+    checkedItems[itemKey] = true;
+  } else {
+    delete checkedItems[itemKey];
+  }
+  localStorage.setItem('checkedShoppingItems', JSON.stringify(checkedItems));
+}
+
+function clearLocalCheckedItems() {
+  localStorage.removeItem('checkedShoppingItems');
+}
+
 function renderShoppingList(items) {
   const container = document.getElementById('shopping-list');
   if (!container) return;
+
+  // Store items globally for checkout
+  window.shoppingList = items || [];
 
   if (!items || items.length === 0) {
     container.innerHTML = '<p class="empty-state">Shopping list is empty!</p>';
     return;
   }
 
+  // Get locally tracked checked items
+  const localChecked = getLocalCheckedItems();
+
   // Group by category
   const byCategory = {};
   items.forEach(item => {
     const cat = item.category || 'Other';
     if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push(item);
+
+    // Create unique key for items without IDs
+    const itemKey = item.id || `${item.name}|${item.unit}`;
+    // Check if item is checked (from backend or local)
+    const isChecked = item.checked || localChecked[itemKey];
+
+    byCategory[cat].push({ ...item, itemKey, isChecked });
   });
 
   let html = '<div class="shopping-actions">';
-  html += '<button onclick="clearCheckedItems()" class="btn-secondary">Clear Checked</button>';
-  html += '<button onclick="addCheckedToPantry()" class="btn-primary">Add Checked to Pantry</button>';
+  html += '<button onclick="openCheckoutModal()" class="btn-primary">Checkout & Add to Pantry</button>';
+  html += '<button onclick="clearAllChecked()" class="btn-secondary">Clear Checked</button>';
   html += '</div>';
 
   for (const [category, categoryItems] of Object.entries(byCategory)) {
@@ -654,12 +689,12 @@ function renderShoppingList(items) {
         <h3 class="category-title">${category}</h3>
         <div class="shopping-items">
           ${categoryItems.map(item => `
-            <div class="shopping-item ${item.checked ? 'checked' : ''}" data-id="${item.id || item.name}">
+            <div class="shopping-item ${item.isChecked ? 'checked' : ''}" data-key="${item.itemKey}">
               <label class="shopping-checkbox">
                 <input
                   type="checkbox"
-                  ${item.checked ? 'checked' : ''}
-                  onchange="checkShoppingItem('${item.id || item.name}', this.checked)"
+                  ${item.isChecked ? 'checked' : ''}
+                  onchange="toggleShoppingItem('${item.itemKey}', ${item.id ? `'${item.id}'` : 'null'}, this.checked)"
                 >
                 <span class="item-name">${item.name}</span>
                 <span class="item-qty">${item.quantity} ${item.unit}</span>
@@ -675,6 +710,263 @@ function renderShoppingList(items) {
 
   container.innerHTML = html;
 }
+
+/**
+ * Toggle shopping item checked state
+ * For items with IDs: update backend
+ * For auto-generated items: track locally
+ */
+async function toggleShoppingItem(itemKey, itemId, checked) {
+  if (itemId) {
+    // Manual item with ID - update backend
+    try {
+      await API.call(`/shopping-list/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ checked })
+      });
+    } catch (error) {
+      console.error('Error updating item:', error);
+      // Still track locally as fallback
+      setLocalCheckedItem(itemKey, checked);
+    }
+  } else {
+    // Auto-generated item - track locally
+    setLocalCheckedItem(itemKey, checked);
+  }
+
+  // Update UI immediately
+  const itemElement = document.querySelector(`[data-key="${itemKey}"]`);
+  if (itemElement) {
+    itemElement.classList.toggle('checked', checked);
+  }
+}
+
+/**
+ * Clear all checked items
+ */
+async function clearAllChecked() {
+  if (!confirm('Clear all checked items from the list?')) return;
+
+  try {
+    // Clear backend manual items
+    await API.call('/shopping-list/clear-checked', { method: 'POST' });
+    // Clear local tracked items
+    clearLocalCheckedItems();
+    await loadShoppingList();
+    showSuccess('Checked items cleared!');
+  } catch (error) {
+    showError('Failed to clear items');
+  }
+}
+
+/**
+ * Open checkout modal to confirm details before adding to pantry
+ */
+function openCheckoutModal() {
+  const items = window.shoppingList || [];
+  const localChecked = getLocalCheckedItems();
+
+  // Get checked items
+  const checkedItems = items.filter(item => {
+    const itemKey = item.id || `${item.name}|${item.unit}`;
+    return item.checked || localChecked[itemKey];
+  });
+
+  if (checkedItems.length === 0) {
+    alert('Please check off items you want to add to pantry first.');
+    return;
+  }
+
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  // Get saved locations and categories
+  const savedLocations = getSavedLocations();
+  const savedCategories = getSavedCategories();
+
+  const locationOptions = savedLocations.map(loc => `<option value="${loc}">${loc}</option>`).join('');
+  const categoryOptions = savedCategories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+
+  // Build item rows
+  const itemsHTML = checkedItems.map((item, idx) => `
+    <div class="checkout-item" data-idx="${idx}">
+      <div class="checkout-item-header">
+        <strong>${item.name}</strong>
+        <span>${item.quantity} ${item.unit}</span>
+      </div>
+      <div class="checkout-item-fields">
+        <div class="checkout-field">
+          <label>Location</label>
+          <select class="checkout-location">
+            ${locationOptions}
+          </select>
+        </div>
+        <div class="checkout-field">
+          <label>Category</label>
+          <select class="checkout-category">
+            ${categoryOptions.replace(`value="${item.category}"`, `value="${item.category}" selected`)}
+          </select>
+        </div>
+        <div class="checkout-field">
+          <label>Quantity</label>
+          <input type="number" class="checkout-qty" value="${item.quantity}" min="0.1" step="0.1">
+        </div>
+        <div class="checkout-field">
+          <label>Expiration</label>
+          <input type="date" class="checkout-expiry" value="">
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-content checkout-modal" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <h2>🛒 Checkout - Add to Pantry</h2>
+        <p class="help-text">Confirm details for each item before adding to your pantry.</p>
+
+        <div class="checkout-items">
+          ${itemsHTML}
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="confirmCheckout()">Add All to Pantry</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Confirm checkout and add items to pantry
+ */
+async function confirmCheckout() {
+  const items = window.shoppingList || [];
+  const localChecked = getLocalCheckedItems();
+
+  // Get checked items
+  const checkedItems = items.filter(item => {
+    const itemKey = item.id || `${item.name}|${item.unit}`;
+    return item.checked || localChecked[itemKey];
+  });
+
+  // Collect form data
+  const checkoutRows = document.querySelectorAll('.checkout-item');
+  const itemsToAdd = [];
+
+  checkoutRows.forEach((row, idx) => {
+    if (idx >= checkedItems.length) return;
+
+    const item = checkedItems[idx];
+    const location = row.querySelector('.checkout-location').value;
+    const category = row.querySelector('.checkout-category').value;
+    const quantity = parseFloat(row.querySelector('.checkout-qty').value) || item.quantity;
+    const expiry = row.querySelector('.checkout-expiry').value || null;
+
+    itemsToAdd.push({
+      name: item.name,
+      unit: item.unit,
+      category: category,
+      quantity: quantity,
+      location: location,
+      expiration_date: expiry
+    });
+  });
+
+  if (itemsToAdd.length === 0) {
+    alert('No items to add.');
+    return;
+  }
+
+  try {
+    showLoading();
+
+    // Add each item to pantry
+    for (const item of itemsToAdd) {
+      // Check if item exists in pantry
+      const pantryItem = (window.pantry || []).find(p =>
+        p.name.toLowerCase() === item.name.toLowerCase() && p.unit === item.unit
+      );
+
+      if (pantryItem) {
+        // Update existing item - add to locations
+        const existingLocation = pantryItem.locations.find(l => l.location === item.location);
+        let newLocations;
+
+        if (existingLocation) {
+          // Add to existing location quantity
+          newLocations = pantryItem.locations.map(l => {
+            if (l.location === item.location) {
+              return {
+                location: l.location,
+                quantity: l.qty + item.quantity,
+                expiration_date: item.expiration_date || l.expiry
+              };
+            }
+            return { location: l.location, quantity: l.qty, expiration_date: l.expiry };
+          });
+        } else {
+          // Add new location
+          newLocations = [
+            ...pantryItem.locations.map(l => ({
+              location: l.location,
+              quantity: l.qty,
+              expiration_date: l.expiry
+            })),
+            {
+              location: item.location,
+              quantity: item.quantity,
+              expiration_date: item.expiration_date
+            }
+          ];
+        }
+
+        await API.call(`/pantry/${pantryItem.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ locations: newLocations })
+        });
+      } else {
+        // Create new pantry item
+        await API.call('/pantry/', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: item.name,
+            category: item.category,
+            unit: item.unit,
+            min_threshold: 0,
+            locations: [{
+              location: item.location,
+              quantity: item.quantity,
+              expiration_date: item.expiration_date
+            }]
+          })
+        });
+      }
+    }
+
+    // Clear checked items
+    await API.call('/shopping-list/clear-checked', { method: 'POST' });
+    clearLocalCheckedItems();
+
+    closeModal();
+    await loadPantry();
+    await loadShoppingList();
+    showSuccess(`Added ${itemsToAdd.length} items to pantry!`);
+  } catch (error) {
+    console.error('Checkout error:', error);
+    showError('Failed to add items to pantry: ' + error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+// Expose functions globally
+window.toggleShoppingItem = toggleShoppingItem;
+window.clearAllChecked = clearAllChecked;
+window.openCheckoutModal = openCheckoutModal;
+window.confirmCheckout = confirmCheckout;
 
 /* ============================================================================
    ALERTS & DASHBOARD
@@ -1434,6 +1726,40 @@ function wireUpButtons() {
   }
 }
 
+/* ============================================================================
+   SAVED LOCATIONS & CATEGORIES (for settings and checkout)
+============================================================================ */
+
+// Default locations and categories
+const DEFAULT_LOCATIONS = ['Pantry', 'Refrigerator', 'Freezer', 'Cabinet', 'Counter'];
+const DEFAULT_CATEGORIES = ['Meat', 'Dairy', 'Produce', 'Pantry', 'Frozen', 'Spices', 'Beverages', 'Snacks', 'Other'];
+
+function getSavedLocations() {
+  try {
+    const saved = localStorage.getItem('pantryLocations');
+    return saved ? JSON.parse(saved) : DEFAULT_LOCATIONS;
+  } catch {
+    return DEFAULT_LOCATIONS;
+  }
+}
+
+function setSavedLocations(locations) {
+  localStorage.setItem('pantryLocations', JSON.stringify(locations));
+}
+
+function getSavedCategories() {
+  try {
+    const saved = localStorage.getItem('pantryCategories');
+    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
+  } catch {
+    return DEFAULT_CATEGORIES;
+  }
+}
+
+function setSavedCategories(categories) {
+  localStorage.setItem('pantryCategories', JSON.stringify(categories));
+}
+
 /**
  * Open account/household management modal
  */
@@ -1441,13 +1767,26 @@ async function openAccountModal() {
   const modalRoot = document.getElementById('modal-root');
   if (!modalRoot) return;
 
+  // Show loading state
+  modalRoot.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal-content account-modal">
+        <h2>Loading...</h2>
+      </div>
+    </div>
+  `;
+
   // Try to get current user info
-  let userInfo = { email: 'Unknown' };
+  let userInfo = null;
   try {
     userInfo = await API.getCurrentUser();
   } catch (e) {
     console.error('Failed to get user info:', e);
   }
+
+  const email = userInfo?.user?.email || 'Not available';
+  const householdId = userInfo?.household_id;
+  const userId = userInfo?.user?.id;
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" onclick="closeModal()">
@@ -1458,8 +1797,9 @@ async function openAccountModal() {
         <div class="account-section">
           <h3>Your Account</h3>
           <div class="account-info">
-            <p><strong>Email:</strong> ${userInfo.email || 'Not available'}</p>
-            <p><strong>Household:</strong> ${userInfo.household_id ? 'Connected' : 'Not connected'}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Status:</strong> <span class="status-badge ${householdId ? 'status-connected' : 'status-disconnected'}">${householdId ? '✓ Connected to Household' : '✗ No Household'}</span></p>
+            ${householdId ? `<p class="small-text">Household ID: ${householdId.substring(0, 8)}...</p>` : ''}
           </div>
         </div>
 
@@ -1476,7 +1816,7 @@ async function openAccountModal() {
           <h3>Data Management</h3>
           <div class="data-actions">
             <button class="btn btn-secondary" onclick="exportData()">Export All Data</button>
-            <button class="btn btn-danger" onclick="confirmDeleteAccount()">Delete Account</button>
+            <button class="btn btn-danger" onclick="handleLogout()">Sign Out</button>
           </div>
         </div>
 
@@ -1497,29 +1837,62 @@ function showHouseholdMembers() {
 }
 
 function exportData() {
-  alert('Export functionality coming soon! You will be able to download all your data.');
+  // Export pantry, recipes, and planner data as JSON
+  const data = {
+    pantry: window.pantry || [],
+    recipes: window.recipes || [],
+    planner: window.planner || {},
+    exportDate: new Date().toISOString()
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chefs-kiss-export-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  showSuccess('Data exported!');
 }
 
-function confirmDeleteAccount() {
-  if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
-    alert('Account deletion coming soon. Contact support for now.');
+async function handleLogout() {
+  if (!confirm('Are you sure you want to sign out?')) return;
+
+  try {
+    await API.logout();
+    showSuccess('Signed out successfully');
+    closeModal();
+    showLandingPage();
+  } catch (error) {
+    console.error('Logout error:', error);
+    showError('Failed to sign out');
   }
 }
 
 /**
- * Open settings modal
+ * Open settings modal - for managing categories and locations
  */
 function openSettingsModal() {
   const modalRoot = document.getElementById('modal-root');
   if (!modalRoot) return;
 
-  // Get current settings from localStorage
-  const settings = {
-    theme: localStorage.getItem('theme') || 'light',
-    defaultView: localStorage.getItem('defaultView') || 'pantry',
-    showExpiring: localStorage.getItem('showExpiring') !== 'false',
-    expirationDays: localStorage.getItem('expirationDays') || '3'
-  };
+  const locations = getSavedLocations();
+  const categories = getSavedCategories();
+
+  const locationsHTML = locations.map((loc, idx) => `
+    <div class="setting-item" data-idx="${idx}">
+      <input type="text" value="${loc}" class="location-input">
+      <button type="button" class="btn-icon btn-remove" onclick="removeLocation(${idx})">×</button>
+    </div>
+  `).join('');
+
+  const categoriesHTML = categories.map((cat, idx) => `
+    <div class="setting-item" data-idx="${idx}">
+      <input type="text" value="${cat}" class="category-input">
+      <button type="button" class="btn-icon btn-remove" onclick="removeCategory(${idx})">×</button>
+    </div>
+  `).join('');
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" onclick="closeModal()">
@@ -1527,78 +1900,145 @@ function openSettingsModal() {
         <button class="modal-close" onclick="closeModal()">×</button>
         <h2>⚙️ Settings</h2>
 
-        <form id="settings-form">
-          <div class="settings-section">
-            <h3>Display</h3>
-            <div class="form-group">
-              <label>Theme</label>
-              <select id="setting-theme">
-                <option value="light" ${settings.theme === 'light' ? 'selected' : ''}>Light (Cottage Kitchen)</option>
-                <option value="dark" ${settings.theme === 'dark' ? 'selected' : ''}>Dark Mode</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Default View</label>
-              <select id="setting-default-view">
-                <option value="pantry" ${settings.defaultView === 'pantry' ? 'selected' : ''}>Pantry</option>
-                <option value="recipes" ${settings.defaultView === 'recipes' ? 'selected' : ''}>Recipes</option>
-                <option value="shopping" ${settings.defaultView === 'shopping' ? 'selected' : ''}>Shopping List</option>
-                <option value="meal-planning" ${settings.defaultView === 'meal-planning' ? 'selected' : ''}>Meal Planning</option>
-              </select>
-            </div>
+        <div class="settings-section">
+          <h3>Storage Locations</h3>
+          <p class="help-text">Customize where you store items in your kitchen.</p>
+          <div id="locations-list" class="settings-list">
+            ${locationsHTML}
           </div>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="addLocation()">+ Add Location</button>
+        </div>
 
-          <div class="settings-section">
-            <h3>Notifications</h3>
-            <div class="form-group checkbox-group">
-              <label>
-                <input type="checkbox" id="setting-show-expiring" ${settings.showExpiring ? 'checked' : ''}>
-                Show expiring items alerts
-              </label>
-            </div>
-            <div class="form-group">
-              <label>Alert for items expiring within (days)</label>
-              <input type="number" id="setting-expiration-days" value="${settings.expirationDays}" min="1" max="14">
-            </div>
+        <div class="settings-section">
+          <h3>Item Categories</h3>
+          <p class="help-text">Organize your pantry and shopping list by category.</p>
+          <div id="categories-list" class="settings-list">
+            ${categoriesHTML}
           </div>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="addCategory()">+ Add Category</button>
+        </div>
 
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Settings</button>
+        <div class="settings-section">
+          <h3>Expiration Alerts</h3>
+          <div class="form-group">
+            <label>Alert me about items expiring within:</label>
+            <select id="setting-expiration-days">
+              <option value="1" ${localStorage.getItem('expirationDays') === '1' ? 'selected' : ''}>1 day</option>
+              <option value="3" ${localStorage.getItem('expirationDays') === '3' || !localStorage.getItem('expirationDays') ? 'selected' : ''}>3 days</option>
+              <option value="5" ${localStorage.getItem('expirationDays') === '5' ? 'selected' : ''}>5 days</option>
+              <option value="7" ${localStorage.getItem('expirationDays') === '7' ? 'selected' : ''}>7 days</option>
+            </select>
           </div>
-        </form>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="resetSettingsToDefaults()">Reset to Defaults</button>
+          <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
       </div>
     </div>
   `;
+}
 
-  const form = document.getElementById('settings-form');
-  form.onsubmit = (e) => {
-    e.preventDefault();
-    saveSettings();
-  };
+function addLocation() {
+  const list = document.getElementById('locations-list');
+  if (!list) return;
+  const idx = list.children.length;
+  const div = document.createElement('div');
+  div.className = 'setting-item';
+  div.dataset.idx = idx;
+  div.innerHTML = `
+    <input type="text" value="" class="location-input" placeholder="New location">
+    <button type="button" class="btn-icon btn-remove" onclick="removeLocation(${idx})">×</button>
+  `;
+  list.appendChild(div);
+  div.querySelector('input').focus();
+}
+
+function removeLocation(idx) {
+  const list = document.getElementById('locations-list');
+  if (!list) return;
+  const item = list.querySelector(`[data-idx="${idx}"]`);
+  if (item) item.remove();
+}
+
+function addCategory() {
+  const list = document.getElementById('categories-list');
+  if (!list) return;
+  const idx = list.children.length;
+  const div = document.createElement('div');
+  div.className = 'setting-item';
+  div.dataset.idx = idx;
+  div.innerHTML = `
+    <input type="text" value="" class="category-input" placeholder="New category">
+    <button type="button" class="btn-icon btn-remove" onclick="removeCategory(${idx})">×</button>
+  `;
+  list.appendChild(div);
+  div.querySelector('input').focus();
+}
+
+function removeCategory(idx) {
+  const list = document.getElementById('categories-list');
+  if (!list) return;
+  const item = list.querySelector(`[data-idx="${idx}"]`);
+  if (item) item.remove();
+}
+
+function resetSettingsToDefaults() {
+  if (!confirm('Reset all settings to defaults?')) return;
+  setSavedLocations(DEFAULT_LOCATIONS);
+  setSavedCategories(DEFAULT_CATEGORIES);
+  localStorage.setItem('expirationDays', '3');
+  openSettingsModal(); // Refresh modal
+  showSuccess('Settings reset to defaults');
 }
 
 function saveSettings() {
-  const theme = document.getElementById('setting-theme').value;
-  const defaultView = document.getElementById('setting-default-view').value;
-  const showExpiring = document.getElementById('setting-show-expiring').checked;
+  // Collect locations
+  const locationInputs = document.querySelectorAll('.location-input');
+  const locations = [];
+  locationInputs.forEach(input => {
+    const val = input.value.trim();
+    if (val) locations.push(val);
+  });
+
+  // Collect categories
+  const categoryInputs = document.querySelectorAll('.category-input');
+  const categories = [];
+  categoryInputs.forEach(input => {
+    const val = input.value.trim();
+    if (val) categories.push(val);
+  });
+
+  // Save expiration days
   const expirationDays = document.getElementById('setting-expiration-days').value;
 
-  localStorage.setItem('theme', theme);
-  localStorage.setItem('defaultView', defaultView);
-  localStorage.setItem('showExpiring', showExpiring);
-  localStorage.setItem('expirationDays', expirationDays);
-
-  // Apply theme immediately
-  if (theme === 'dark') {
-    document.body.classList.add('dark-theme');
-  } else {
-    document.body.classList.remove('dark-theme');
+  // Validate
+  if (locations.length === 0) {
+    alert('You need at least one location.');
+    return;
   }
+  if (categories.length === 0) {
+    alert('You need at least one category.');
+    return;
+  }
+
+  // Save
+  setSavedLocations(locations);
+  setSavedCategories(categories);
+  localStorage.setItem('expirationDays', expirationDays);
 
   closeModal();
   showSuccess('Settings saved!');
 }
+
+// Expose functions globally
+window.addLocation = addLocation;
+window.removeLocation = removeLocation;
+window.addCategory = addCategory;
+window.removeCategory = removeCategory;
+window.resetSettingsToDefaults = resetSettingsToDefaults;
+window.handleLogout = handleLogout;
 
 // Expose functions globally
 window.openAccountModal = openAccountModal;
