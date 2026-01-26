@@ -3797,3 +3797,134 @@ body {
     flex: 1 1 100%;
   }
 }
+
+/* -------------------------------------------------------------------
+   11. ACCOUNT & SETTINGS MODALS
+   ------------------------------------------------------------------- */
+
+/* Account Modal */
+.account-modal {
+  max-width: 500px;
+}
+
+.account-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.account-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.account-section h3 {
+  font-size: 1.1rem;
+  color: #6a4f35;
+  margin-bottom: 0.75rem;
+}
+
+.account-info p {
+  margin: 0.5rem 0;
+  color: #555;
+}
+
+.account-info strong {
+  color: #333;
+}
+
+.help-text {
+  font-size: 0.9rem;
+  color: #777;
+  margin-bottom: 1rem;
+}
+
+.household-actions,
+.data-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.household-actions .btn,
+.data-actions .btn {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Settings Modal */
+.settings-modal {
+  max-width: 500px;
+}
+
+.settings-section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.settings-section:last-of-type {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  font-size: 1.1rem;
+  color: #6a4f35;
+  margin-bottom: 1rem;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+/* Dark Theme Support (for settings toggle) */
+body.dark-theme {
+  --color-card-bg: #2a2a2a;
+  --color-text: #e0e0e0;
+  background: #1a1a1a;
+  color: #e0e0e0;
+}
+
+body.dark-theme .modal-content {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+body.dark-theme .modal-content h2,
+body.dark-theme .modal-content h3 {
+  color: #f0f0f0;
+}
+
+body.dark-theme .form-group input,
+body.dark-theme .form-group select,
+body.dark-theme .form-group textarea {
+  background: #3a3a3a;
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+/* Mobile responsive for account/settings */
+@media (max-width: 480px) {
+  .account-modal,
+  .settings-modal {
+    max-width: 95%;
+  }
+
+  .household-actions,
+  .data-actions {
+    flex-direction: column;
+  }
+
+  .household-actions .btn,
+  .data-actions .btn {
+    width: 100%;
+  }
+}

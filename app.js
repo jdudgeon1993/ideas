@@ -536,9 +536,11 @@ async function loadShoppingList() {
   try {
     showLoading();
     const shoppingData = await API.call('/shopping-list/');
-    renderShoppingList(shoppingData.items || shoppingData);
+    // Backend returns {shopping_list: [...], total_items: ..., checked_items: ...}
+    renderShoppingList(shoppingData.shopping_list || shoppingData);
   } catch (error) {
     showError('Failed to load shopping list');
+    console.error('Shopping list load error:', error);
   } finally {
     hideLoading();
   }
@@ -829,8 +831,11 @@ function showApp() {
   if (landing) landing.classList.remove('show');
   if (mainContent) mainContent.style.display = 'block';
   if (siteHeader) siteHeader.style.display = 'flex';
-  if (sidebarNav) sidebarNav.style.display = 'flex';
-  if (bottomNav) bottomNav.style.display = 'flex';
+
+  // Remove inline styles to let CSS media queries handle sidebar vs bottom nav
+  // CSS shows sidebar on desktop (min-width: 768px) and bottom nav on mobile
+  if (sidebarNav) sidebarNav.style.display = '';
+  if (bottomNav) bottomNav.style.display = '';
 
   document.body.classList.remove('landing-active');
 
@@ -1419,19 +1424,189 @@ function wireUpButtons() {
   // Account button
   const btnAccount = document.getElementById('btn-account');
   if (btnAccount) {
-    btnAccount.addEventListener('click', () => {
-      alert('Account settings coming soon!');
-    });
+    btnAccount.addEventListener('click', openAccountModal);
   }
 
   // Settings button
   const btnSettings = document.getElementById('btn-settings');
   if (btnSettings) {
-    btnSettings.addEventListener('click', () => {
-      alert('Settings coming soon!');
-    });
+    btnSettings.addEventListener('click', openSettingsModal);
   }
 }
+
+/**
+ * Open account/household management modal
+ */
+async function openAccountModal() {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  // Try to get current user info
+  let userInfo = { email: 'Unknown' };
+  try {
+    userInfo = await API.getCurrentUser();
+  } catch (e) {
+    console.error('Failed to get user info:', e);
+  }
+
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-content account-modal" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <h2>👤 Account & Household</h2>
+
+        <div class="account-section">
+          <h3>Your Account</h3>
+          <div class="account-info">
+            <p><strong>Email:</strong> ${userInfo.email || 'Not available'}</p>
+            <p><strong>Household:</strong> ${userInfo.household_id ? 'Connected' : 'Not connected'}</p>
+          </div>
+        </div>
+
+        <div class="account-section">
+          <h3>Household Management</h3>
+          <p class="help-text">Share your household with family members to collaborate on meal planning and shopping.</p>
+          <div class="household-actions">
+            <button class="btn btn-secondary" onclick="showInviteHousehold()">Invite Member</button>
+            <button class="btn btn-secondary" onclick="showHouseholdMembers()">View Members</button>
+          </div>
+        </div>
+
+        <div class="account-section">
+          <h3>Data Management</h3>
+          <div class="data-actions">
+            <button class="btn btn-secondary" onclick="exportData()">Export All Data</button>
+            <button class="btn btn-danger" onclick="confirmDeleteAccount()">Delete Account</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="closeModal()">Done</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function showInviteHousehold() {
+  alert('Invite functionality coming soon! You will be able to share a link with family members.');
+}
+
+function showHouseholdMembers() {
+  alert('Member list coming soon! You will see all household members here.');
+}
+
+function exportData() {
+  alert('Export functionality coming soon! You will be able to download all your data.');
+}
+
+function confirmDeleteAccount() {
+  if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
+    alert('Account deletion coming soon. Contact support for now.');
+  }
+}
+
+/**
+ * Open settings modal
+ */
+function openSettingsModal() {
+  const modalRoot = document.getElementById('modal-root');
+  if (!modalRoot) return;
+
+  // Get current settings from localStorage
+  const settings = {
+    theme: localStorage.getItem('theme') || 'light',
+    defaultView: localStorage.getItem('defaultView') || 'pantry',
+    showExpiring: localStorage.getItem('showExpiring') !== 'false',
+    expirationDays: localStorage.getItem('expirationDays') || '3'
+  };
+
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-content settings-modal" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <h2>⚙️ Settings</h2>
+
+        <form id="settings-form">
+          <div class="settings-section">
+            <h3>Display</h3>
+            <div class="form-group">
+              <label>Theme</label>
+              <select id="setting-theme">
+                <option value="light" ${settings.theme === 'light' ? 'selected' : ''}>Light (Cottage Kitchen)</option>
+                <option value="dark" ${settings.theme === 'dark' ? 'selected' : ''}>Dark Mode</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Default View</label>
+              <select id="setting-default-view">
+                <option value="pantry" ${settings.defaultView === 'pantry' ? 'selected' : ''}>Pantry</option>
+                <option value="recipes" ${settings.defaultView === 'recipes' ? 'selected' : ''}>Recipes</option>
+                <option value="shopping" ${settings.defaultView === 'shopping' ? 'selected' : ''}>Shopping List</option>
+                <option value="meal-planning" ${settings.defaultView === 'meal-planning' ? 'selected' : ''}>Meal Planning</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Notifications</h3>
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" id="setting-show-expiring" ${settings.showExpiring ? 'checked' : ''}>
+                Show expiring items alerts
+              </label>
+            </div>
+            <div class="form-group">
+              <label>Alert for items expiring within (days)</label>
+              <input type="number" id="setting-expiration-days" value="${settings.expirationDays}" min="1" max="14">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
+
+  const form = document.getElementById('settings-form');
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    saveSettings();
+  };
+}
+
+function saveSettings() {
+  const theme = document.getElementById('setting-theme').value;
+  const defaultView = document.getElementById('setting-default-view').value;
+  const showExpiring = document.getElementById('setting-show-expiring').checked;
+  const expirationDays = document.getElementById('setting-expiration-days').value;
+
+  localStorage.setItem('theme', theme);
+  localStorage.setItem('defaultView', defaultView);
+  localStorage.setItem('showExpiring', showExpiring);
+  localStorage.setItem('expirationDays', expirationDays);
+
+  // Apply theme immediately
+  if (theme === 'dark') {
+    document.body.classList.add('dark-theme');
+  } else {
+    document.body.classList.remove('dark-theme');
+  }
+
+  closeModal();
+  showSuccess('Settings saved!');
+}
+
+// Expose functions globally
+window.openAccountModal = openAccountModal;
+window.openSettingsModal = openSettingsModal;
+window.showInviteHousehold = showInviteHousehold;
+window.showHouseholdMembers = showHouseholdMembers;
+window.exportData = exportData;
+window.confirmDeleteAccount = confirmDeleteAccount;
 
 async function initApp() {
   console.log('🍳 Chef\'s Kiss - Python Age 5.0');
