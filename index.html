@@ -1010,7 +1010,23 @@
         searchInput.addEventListener('input', filterRecipes);
       }
 
-      // Watch for recipe changes using MutationObserver
+      // Watch for recipe data changes
+      let _recipeRenderInProgress = false;
+
+      function safeRenderRecipesGrid() {
+        if (_recipeRenderInProgress) return;
+        _recipeRenderInProgress = true;
+        try {
+          filteredRecipes = [...window.recipes];
+          renderFilterPills();
+          renderTagFilterPills();
+          renderRecipesGrid();
+        } finally {
+          // Release flag after current microtask so observer callbacks from this render are ignored
+          Promise.resolve().then(() => { _recipeRenderInProgress = false; });
+        }
+      }
+
       function setupRecipeObserver() {
         const recipesGrid = document.getElementById('recipes-grid');
         if (!recipesGrid) {
@@ -1019,10 +1035,7 @@
         }
 
         const observer = new MutationObserver(() => {
-          filteredRecipes = [...window.recipes];
-          renderFilterPills();
-          renderTagFilterPills();
-          renderRecipesGrid();
+          safeRenderRecipesGrid();
         });
 
         observer.observe(recipesGrid, {
@@ -1422,6 +1435,8 @@
       }
 
       // Watch for pantry changes using MutationObserver
+      let _pantryRenderInProgress = false;
+
       function setupPantryObserver() {
         const pantryDisplay = document.getElementById('pantry-display');
         if (!pantryDisplay) {
@@ -1429,10 +1444,14 @@
           return;
         }
 
-        // Observe changes to #pantry-display (app.js renders here)
         const observer = new MutationObserver(() => {
-          // When app.js updates the hidden pantry display, re-render our table
-          renderPantryLedger();
+          if (_pantryRenderInProgress) return;
+          _pantryRenderInProgress = true;
+          try {
+            renderPantryLedger();
+          } finally {
+            Promise.resolve().then(() => { _pantryRenderInProgress = false; });
+          }
         });
 
         observer.observe(pantryDisplay, {

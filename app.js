@@ -292,18 +292,11 @@ function renderRecipeList(recipes) {
   // Store transformed recipes globally for recipe grid script in index.html
   window.recipes = transformedRecipes;
 
-  container.innerHTML = transformedRecipes.map(recipe => `
-    <div class="recipe-card" data-id="${recipe.id}">
-      <h3 class="recipe-name">${recipe.name}</h3>
-      ${recipe.tags && recipe.tags.length ? `<div class="recipe-tags">${recipe.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}</div>` : ''}
-      <p class="recipe-servings">Serves: ${recipe.servings}</p>
-      <div class="recipe-actions">
-        <button onclick="viewRecipe('${recipe.id}')" class="btn-primary">View</button>
-        <button onclick="editRecipe('${recipe.id}')" class="btn-secondary">Edit</button>
-        <button onclick="deleteRecipe('${recipe.id}')" class="btn-danger">Delete</button>
-      </div>
-    </div>
-  `).join('');
+  // Signal the recipe grid observer to re-render by touching a data attribute.
+  // The actual rendering is handled by renderRecipesGrid() in index.html.
+  if (container) {
+    container.setAttribute('data-updated', Date.now());
+  }
 }
 
 /* ============================================================================
