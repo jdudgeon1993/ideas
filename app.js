@@ -1159,24 +1159,20 @@ const AppState = {
 function showView(viewName) {
   AppState.currentView = viewName;
 
-  // Hide all views
-  document.querySelectorAll('.view').forEach(view => {
-    view.style.display = 'none';
-  });
+  // Map view names to radio button IDs
+  const radioMap = {
+    'pantry': 'nav-pantry',
+    'recipes': 'nav-recipes',
+    'shopping': 'nav-shopping',
+    'planner': 'nav-meal-planning',
+    'meal-planning': 'nav-meal-planning',
+    'onboarding': 'nav-onboarding'
+  };
 
-  // Show selected view
-  const view = document.getElementById(`${viewName}-view`);
-  if (view) {
-    view.style.display = 'block';
-  }
-
-  // Update nav
-  document.querySelectorAll('.nav-item').forEach(item => {
-    item.classList.remove('active');
-  });
-  const navItem = document.querySelector(`[data-view="${viewName}"]`);
-  if (navItem) {
-    navItem.classList.add('active');
+  const radioId = radioMap[viewName];
+  if (radioId) {
+    const radio = document.getElementById(radioId);
+    if (radio) radio.checked = true;
   }
 
   // Load data for view
@@ -1188,13 +1184,11 @@ function showView(viewName) {
       loadRecipes();
       break;
     case 'planner':
+    case 'meal-planning':
       loadMealPlans();
       break;
     case 'shopping':
       loadShoppingList();
-      break;
-    case 'dashboard':
-      loadDashboard();
       break;
   }
 }

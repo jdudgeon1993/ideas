@@ -520,7 +520,7 @@ class StateManager:
 
             manual_shopping_items = [
                 ShoppingItem(
-                    id=item['id'],
+                    id=str(item['id']),
                     name=item['name'],
                     quantity=item['quantity'],
                     unit=item['unit'],
