@@ -89,6 +89,19 @@ async def root():
     }
 
 
+@app.get("/api/realtime/config")
+async def realtime_config():
+    """Return Supabase project URL and anon key for frontend Realtime subscriptions."""
+    supabase_url = os.getenv("SUPABASE_URL", "")
+    anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+    if not supabase_url or not anon_key:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Realtime not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY."}
+        )
+    return {"supabase_url": supabase_url, "anon_key": anon_key}
+
+
 @app.get("/health")
 async def health():
     """Health check endpoint"""

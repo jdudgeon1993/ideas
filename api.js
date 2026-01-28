@@ -48,6 +48,12 @@ class API {
       headers['X-Household-Id'] = householdId;
     }
 
+    // Mark local write for Realtime debounce (skip GET requests)
+    const method = (options.method || 'GET').toUpperCase();
+    if (method !== 'GET' && typeof window.markLocalWrite === 'function') {
+      window.markLocalWrite();
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers
