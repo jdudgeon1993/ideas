@@ -1901,7 +1901,6 @@ async function openAccountModal() {
   const modalRoot = document.getElementById('modal-root');
   if (!modalRoot) return;
 
-  // Show loading state
   modalRoot.innerHTML = `
     <div class="modal-overlay">
       <div class="modal-content account-modal">
@@ -1910,46 +1909,80 @@ async function openAccountModal() {
     </div>
   `;
 
-  // Try to get current user info
   let userInfo = null;
+  let households = [];
   try {
-    userInfo = await API.getCurrentUser();
+    [userInfo, households] = await Promise.all([
+      API.getCurrentUser().catch(() => null),
+      API.getMyHouseholds().then(r => r.households).catch(() => [])
+    ]);
   } catch (e) {
-    console.error('Failed to get user info:', e);
+    console.error('Failed to load account info:', e);
   }
 
   const email = userInfo?.user?.email || 'Not available';
-  const householdId = userInfo?.household_id;
-  const userId = userInfo?.user?.id;
+  const activeHid = API.getActiveHouseholdId() || userInfo?.household_id;
+  const activeHousehold = households.find(h => h.id === activeHid);
+
+  const householdOptions = households.map(h => {
+    const isActive = h.id === activeHid;
+    const label = `${h.name} (${h.role})`;
+    return `<option value="${h.id}" ${isActive ? 'selected' : ''}>${label}</option>`;
+  }).join('');
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" onclick="closeModal()">
       <div class="modal-content account-modal" onclick="event.stopPropagation()">
-        <button class="modal-close" onclick="closeModal()">×</button>
-        <h2>👤 Account & Household</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <h2>Account & Household</h2>
 
         <div class="account-section">
           <h3>Your Account</h3>
           <div class="account-info">
             <p><strong>Email:</strong> ${email}</p>
-            <p><strong>Status:</strong> <span class="status-badge ${householdId ? 'status-connected' : 'status-disconnected'}">${householdId ? '✓ Connected to Household' : '✗ No Household'}</span></p>
-            ${householdId ? `<p class="small-text">Household ID: ${householdId.substring(0, 8)}...</p>` : ''}
+          </div>
+        </div>
+
+        ${households.length > 1 ? `
+        <div class="account-section">
+          <h3>Switch Household</h3>
+          <select id="household-switcher" class="form-control" onchange="switchHousehold(this.value)">
+            ${householdOptions}
+          </select>
+        </div>
+        ` : `
+        <div class="account-section">
+          <h3>Household</h3>
+          <p>${activeHousehold?.name || 'Your Household'} <span class="status-badge status-connected">${activeHousehold?.role || 'owner'}</span></p>
+        </div>
+        `}
+
+        <div class="account-section">
+          <h3>Members</h3>
+          <div id="members-list"><p>Loading members...</p></div>
+        </div>
+
+        <div class="account-section">
+          <h3>Invite a Member</h3>
+          <p class="help-text">Generate a code to share with someone. They enter it here to join your household.</p>
+          <div id="invite-section">
+            <button class="btn btn-secondary" onclick="generateInviteCode()">Generate Invite Code</button>
           </div>
         </div>
 
         <div class="account-section">
-          <h3>Household Management</h3>
-          <p class="help-text">Share your household with family members to collaborate on meal planning and shopping.</p>
-          <div class="household-actions">
-            <button class="btn btn-secondary" onclick="showInviteHousehold()">Invite Member</button>
-            <button class="btn btn-secondary" onclick="showHouseholdMembers()">View Members</button>
+          <h3>Join a Household</h3>
+          <p class="help-text">Enter an invite code from someone to join their household.</p>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="accept-invite-input" class="form-control" placeholder="Enter invite code" style="flex:1;text-transform:uppercase;" maxlength="8" />
+            <button class="btn btn-primary" onclick="acceptInviteCode()">Join</button>
           </div>
+          <div id="accept-invite-status"></div>
         </div>
 
         <div class="account-section">
-          <h3>Data Management</h3>
-          <div class="data-actions">
-            <button class="btn btn-secondary" onclick="exportData()">Export All Data</button>
+          <div class="data-actions" style="display:flex;gap:8px;">
+            <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
             <button class="btn btn-danger" onclick="handleLogout()">Sign Out</button>
           </div>
         </div>
@@ -1960,14 +1993,126 @@ async function openAccountModal() {
       </div>
     </div>
   `;
+
+  // Load members immediately
+  loadMembersList();
+  loadActiveInvite();
 }
 
-function showInviteHousehold() {
-  alert('Invite functionality coming soon! You will be able to share a link with family members.');
+async function loadMembersList() {
+  const container = document.getElementById('members-list');
+  if (!container) return;
+
+  try {
+    const data = await API.getHouseholdMembers();
+    if (!data.members || data.members.length === 0) {
+      container.innerHTML = '<p>No members found.</p>';
+      return;
+    }
+
+    container.innerHTML = data.members.map(m => {
+      const roleClass = m.role === 'owner' ? 'status-connected' : 'status-badge';
+      const youLabel = m.is_you ? ' (You)' : '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-color, #333);">
+        <span>Member${youLabel}</span>
+        <span class="status-badge ${roleClass}">${m.role}</span>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = '<p>Failed to load members.</p>';
+  }
 }
 
-function showHouseholdMembers() {
-  alert('Member list coming soon! You will see all household members here.');
+async function loadActiveInvite() {
+  const container = document.getElementById('invite-section');
+  if (!container) return;
+
+  try {
+    const data = await API.getActiveInvite();
+    if (data.invite) {
+      const expiresAt = new Date(data.invite.expires_at);
+      const hoursLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 3600000));
+      container.innerHTML = `
+        <div style="padding:12px;background:var(--card-bg, #1a1a2e);border-radius:8px;text-align:center;">
+          <p style="margin:0 0 8px;opacity:0.7;">Active invite code:</p>
+          <p style="font-size:1.5rem;font-weight:bold;letter-spacing:4px;margin:0 0 8px;">${data.invite.code}</p>
+          <p style="margin:0;opacity:0.5;font-size:0.85rem;">Expires in ${hoursLeft}h</p>
+          <button class="btn btn-secondary" style="margin-top:8px;" onclick="copyInviteCode('${data.invite.code}')">Copy Code</button>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:8px;" onclick="generateInviteCode()">Generate New Code</button>
+      `;
+    }
+  } catch (e) {
+    // No active invite, keep the generate button
+  }
+}
+
+async function generateInviteCode() {
+  const container = document.getElementById('invite-section');
+  if (!container) return;
+
+  container.innerHTML = '<p>Generating...</p>';
+
+  try {
+    const data = await API.createInvite(48);
+    container.innerHTML = `
+      <div style="padding:12px;background:var(--card-bg, #1a1a2e);border-radius:8px;text-align:center;">
+        <p style="margin:0 0 8px;opacity:0.7;">Share this code:</p>
+        <p style="font-size:1.5rem;font-weight:bold;letter-spacing:4px;margin:0 0 8px;">${data.code}</p>
+        <p style="margin:0;opacity:0.5;font-size:0.85rem;">Expires in ${data.expires_hours}h</p>
+        <button class="btn btn-secondary" style="margin-top:8px;" onclick="copyInviteCode('${data.code}')">Copy Code</button>
+      </div>
+    `;
+  } catch (e) {
+    container.innerHTML = `<p style="color:var(--danger-color,red);">Failed to generate code: ${e.message}</p>
+      <button class="btn btn-secondary" onclick="generateInviteCode()">Try Again</button>`;
+  }
+}
+
+function copyInviteCode(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    showSuccess('Invite code copied!');
+  }).catch(() => {
+    // Fallback
+    prompt('Copy this invite code:', code);
+  });
+}
+
+async function acceptInviteCode() {
+  const input = document.getElementById('accept-invite-input');
+  const statusEl = document.getElementById('accept-invite-status');
+  if (!input || !statusEl) return;
+
+  const code = input.value.trim();
+  if (!code) {
+    statusEl.innerHTML = '<p style="color:var(--danger-color,red);">Please enter a code.</p>';
+    return;
+  }
+
+  statusEl.innerHTML = '<p>Joining...</p>';
+
+  try {
+    const data = await API.acceptInvite(code);
+    statusEl.innerHTML = `<p style="color:var(--success-color,#4ade80);">${data.message}</p>`;
+    input.value = '';
+
+    // Switch to the new household
+    API.setActiveHouseholdId(data.household_id);
+
+    // Refresh the modal after a moment
+    setTimeout(() => openAccountModal(), 1500);
+    // Reload app data for new household
+    setTimeout(() => window.location.reload(), 2000);
+  } catch (e) {
+    statusEl.innerHTML = `<p style="color:var(--danger-color,red);">${e.message}</p>`;
+  }
+}
+
+async function switchHousehold(householdId) {
+  API.setActiveHouseholdId(householdId);
+  showSuccess('Switching household...');
+  // Reload to fetch data for new household
+  setTimeout(() => window.location.reload(), 500);
 }
 
 function exportData() {
@@ -1994,7 +2139,7 @@ async function handleLogout() {
   if (!confirm('Are you sure you want to sign out?')) return;
 
   try {
-    await API.logout();
+    await API.signOut();
     showSuccess('Signed out successfully');
     closeModal();
     showLandingPage();
@@ -2222,8 +2367,10 @@ window.handleLogout = handleLogout;
 // Expose functions globally
 window.openAccountModal = openAccountModal;
 window.openSettingsModal = openSettingsModal;
-window.showInviteHousehold = showInviteHousehold;
-window.showHouseholdMembers = showHouseholdMembers;
+window.generateInviteCode = generateInviteCode;
+window.copyInviteCode = copyInviteCode;
+window.acceptInviteCode = acceptInviteCode;
+window.switchHousehold = switchHousehold;
 window.exportData = exportData;
 
 async function initApp() {
@@ -2259,29 +2406,11 @@ async function initApp() {
   }
 }
 
-// Sign out handler
-function handleSignOut() {
-  API.clearToken();
-  window.location.reload();
-}
-
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     initApp();
-
-    // Wire up sign out button
-    const signOutBtn = document.getElementById('btn-signout');
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', handleSignOut);
-    }
   });
 } else {
   initApp();
-
-  // Wire up sign out button
-  const signOutBtn = document.getElementById('btn-signout');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', handleSignOut);
-  }
 }

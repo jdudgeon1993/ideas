@@ -12,25 +12,24 @@
 const API_BASE = window.CONFIG?.API_BASE || 'http://localhost:8000/api';
 
 class API {
-  /**
-   * Get auth token from localStorage
-   */
   static getToken() {
     return localStorage.getItem('auth_token');
   }
 
-  /**
-   * Save auth token to localStorage
-   */
   static setToken(token) {
     localStorage.setItem('auth_token', token);
   }
 
-  /**
-   * Clear auth token
-   */
   static clearToken() {
     localStorage.removeItem('auth_token');
+  }
+
+  static getActiveHouseholdId() {
+    return localStorage.getItem('active_household_id');
+  }
+
+  static setActiveHouseholdId(id) {
+    localStorage.setItem('active_household_id', id);
   }
 
   /**
@@ -38,14 +37,20 @@ class API {
    */
   static async call(endpoint, options = {}) {
     const token = this.getToken();
+    const householdId = this.getActiveHouseholdId();
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': token ? `Bearer ${token}` : '',
+      ...options.headers
+    };
+    if (householdId) {
+      headers['X-Household-Id'] = householdId;
+    }
 
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-        ...options.headers
-      }
+      headers
     });
 
     if (!response.ok) {
@@ -78,6 +83,9 @@ class API {
     if (data.session?.access_token) {
       this.setToken(data.session.access_token);
     }
+    if (data.household_id) {
+      this.setActiveHouseholdId(data.household_id);
+    }
 
     return data;
   }
@@ -91,6 +99,9 @@ class API {
     if (data.session?.access_token) {
       this.setToken(data.session.access_token);
     }
+    if (data.household_id) {
+      this.setActiveHouseholdId(data.household_id);
+    }
 
     return data;
   }
@@ -98,6 +109,7 @@ class API {
   static async signOut() {
     await this.call('/auth/signout', { method: 'POST' });
     this.clearToken();
+    localStorage.removeItem('active_household_id');
   }
 
   static async getCurrentUser() {
@@ -276,6 +288,41 @@ class API {
 
   static async getDashboard() {
     return this.call('/alerts/dashboard');
+  }
+
+  // ===== HOUSEHOLDS =====
+
+  static async getMyHouseholds() {
+    return this.call('/households/');
+  }
+
+  static async getHouseholdMembers() {
+    return this.call('/households/members');
+  }
+
+  static async createInvite(expiresHours = 48) {
+    return this.call('/households/invite', {
+      method: 'POST',
+      body: JSON.stringify({ expires_hours: expiresHours })
+    });
+  }
+
+  static async getActiveInvite() {
+    return this.call('/households/invite');
+  }
+
+  static async acceptInvite(code) {
+    return this.call('/households/invite/accept', {
+      method: 'POST',
+      body: JSON.stringify({ code })
+    });
+  }
+
+  static async leaveHousehold(householdId) {
+    return this.call('/households/leave', {
+      method: 'POST',
+      body: JSON.stringify({ household_id: householdId })
+    });
   }
 }
 
