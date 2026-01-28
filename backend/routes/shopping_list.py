@@ -272,7 +272,7 @@ async def add_checked_to_pantry(household_id: str = Depends(get_current_househol
                 # Create location
                 supabase.table('pantry_locations').insert({
                     'pantry_item_id': pantry_id,
-                    'location': 'Pantry',
+                    'location_name': 'Pantry',
                     'quantity': item.quantity
                 }).execute()
 

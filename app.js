@@ -1820,6 +1820,7 @@ function wireUpButtons() {
   if (btnOnboarding) {
     btnOnboarding.addEventListener('click', () => {
       document.getElementById('nav-onboarding').checked = true;
+      initBulkEntry();
     });
   }
 
@@ -1829,6 +1830,16 @@ function wireUpButtons() {
       document.getElementById('nav-pantry').checked = true;
     });
   }
+
+  // Bulk entry action buttons
+  const btnAddRows = document.getElementById('btn-add-rows-live');
+  if (btnAddRows) btnAddRows.addEventListener('click', () => addBulkRows(5));
+
+  const btnClearAll = document.getElementById('btn-clear-all-live');
+  if (btnClearAll) btnClearAll.addEventListener('click', clearBulkEntry);
+
+  const btnSaveAll = document.getElementById('btn-save-all-items');
+  if (btnSaveAll) btnSaveAll.addEventListener('click', saveBulkEntry);
 
   // Account button
   const btnAccount = document.getElementById('btn-account');
@@ -1892,6 +1903,127 @@ function getSavedCategories() {
 function setSavedCategories(categories) {
   window.householdSettings.categories = categories;
   // API save happens in saveSettings()
+}
+
+/* ============================================================================
+   BULK PANTRY ENTRY
+   ============================================================================ */
+
+function initBulkEntry() {
+  const tbody = document.getElementById('bulk-entry-tbody-live');
+  if (!tbody) return;
+  if (tbody.children.length === 0) {
+    addBulkRows(5);
+  }
+  updateBulkEntryCount();
+}
+
+function addBulkRows(count) {
+  const tbody = document.getElementById('bulk-entry-tbody-live');
+  if (!tbody) return;
+
+  const locations = (window.householdSettings?.locations || ['Pantry', 'Refrigerator', 'Freezer', 'Cabinet', 'Counter']);
+  const categories = (window.householdSettings?.categories || ['Meat', 'Dairy', 'Produce', 'Pantry', 'Frozen', 'Spices', 'Beverages', 'Snacks', 'Other']);
+
+  const locOptions = locations.map(l => `<option value="${l}">${l}</option>`).join('');
+  const catOptions = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+  for (let i = 0; i < count; i++) {
+    const row = document.createElement('tr');
+    row.className = 'bulk-entry-row';
+    row.innerHTML = `
+      <td><input type="text" class="bulk-name form-control" placeholder="Item name" /></td>
+      <td><input type="number" class="bulk-qty form-control" placeholder="0" min="0" step="0.5" /></td>
+      <td><input type="text" class="bulk-unit form-control" placeholder="unit" /></td>
+      <td><select class="bulk-category form-control">${catOptions}</select></td>
+      <td><select class="bulk-location form-control">${locOptions}</select></td>
+      <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();updateBulkEntryCount();">&times;</button></td>
+    `;
+    tbody.appendChild(row);
+  }
+  updateBulkEntryCount();
+}
+
+function clearBulkEntry() {
+  const tbody = document.getElementById('bulk-entry-tbody-live');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  addBulkRows(5);
+}
+
+function updateBulkEntryCount() {
+  const countEl = document.getElementById('onboarding-item-count');
+  if (!countEl) return;
+  const rows = document.querySelectorAll('#bulk-entry-tbody-live .bulk-entry-row');
+  let filled = 0;
+  rows.forEach(row => {
+    const name = row.querySelector('.bulk-name');
+    if (name && name.value.trim()) filled++;
+  });
+  countEl.textContent = `${filled} items entered`;
+}
+
+async function saveBulkEntry() {
+  const tbody = document.getElementById('bulk-entry-tbody-live');
+  const btnText = document.getElementById('btn-save-text');
+  if (!tbody) return;
+
+  const rows = tbody.querySelectorAll('.bulk-entry-row');
+  const items = [];
+
+  rows.forEach(row => {
+    const name = row.querySelector('.bulk-name')?.value.trim();
+    if (!name) return;
+    const qty = parseFloat(row.querySelector('.bulk-qty')?.value) || 0;
+    const unit = row.querySelector('.bulk-unit')?.value.trim() || 'unit';
+    const category = row.querySelector('.bulk-category')?.value || 'Other';
+    const location = row.querySelector('.bulk-location')?.value || 'Pantry';
+
+    items.push({ name, quantity: qty, unit, category, location });
+  });
+
+  if (items.length === 0) {
+    showError('No items to save. Enter at least one item name.');
+    return;
+  }
+
+  if (btnText) btnText.textContent = 'Saving...';
+
+  let savedCount = 0;
+  let errorCount = 0;
+
+  for (const item of items) {
+    try {
+      await API.call('/pantry/', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: item.name,
+          category: item.category,
+          unit: item.unit,
+          min_threshold: 0,
+          locations: [{
+            location: item.location,
+            quantity: item.quantity
+          }]
+        })
+      });
+      savedCount++;
+    } catch (e) {
+      console.error(`Failed to save ${item.name}:`, e);
+      errorCount++;
+    }
+  }
+
+  if (btnText) btnText.textContent = 'Save & Add All Items';
+
+  if (errorCount > 0) {
+    showError(`Saved ${savedCount} items. ${errorCount} failed.`);
+  } else {
+    showSuccess(`${savedCount} items added to pantry!`);
+    clearBulkEntry();
+    // Reload pantry data
+    loadPantry();
+  }
 }
 
 /**
@@ -2372,6 +2504,11 @@ window.copyInviteCode = copyInviteCode;
 window.acceptInviteCode = acceptInviteCode;
 window.switchHousehold = switchHousehold;
 window.exportData = exportData;
+window.updateBulkEntryCount = updateBulkEntryCount;
+window.loadPantry = loadPantry;
+window.loadRecipes = loadRecipes;
+window.loadShoppingList = loadShoppingList;
+window.loadMealPlans = loadMealPlans;
 
 async function initApp() {
   console.log('🍳 Chef\'s Kiss - Python Age 5.0');

@@ -328,23 +328,22 @@ function loadDemoAccount() {
     }
 
     // Show toast notification
-    if (window.showToast) {
-      window.showToast('🎉 Welcome to the demo! Explore all features with sample data.');
+    if (window.showSuccess) {
+      window.showSuccess('Welcome to the demo! Explore all features with sample data.');
     }
 
     // Refresh all views
-    if (window.renderPantry) window.renderPantry();
-    if (window.renderRecipes) window.renderRecipes();
-    if (window.generateShoppingList) window.generateShoppingList();
-    if (window.updateDashboard) window.updateDashboard();
-    if (window.renderCalendar) window.renderCalendar();
+    if (window.loadPantry) window.loadPantry();
+    if (window.loadRecipes) window.loadRecipes();
+    if (window.loadShoppingList) window.loadShoppingList();
+    if (window.loadMealPlans) window.loadMealPlans();
 
     console.log('✅ Demo mode activated');
 
   } catch (err) {
     console.error('Error loading demo account:', err);
-    if (window.showToast) {
-      window.showToast('❌ Failed to load demo');
+    if (window.showError) {
+      window.showError('Failed to load demo');
     }
   }
 }
