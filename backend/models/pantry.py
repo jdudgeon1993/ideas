@@ -10,8 +10,8 @@ from datetime import date
 class PantryLocation(BaseModel):
     """Where an item is stored and how much"""
     id: Optional[str] = None
-    location: str  # "Pantry", "Fridge", "Freezer"
-    quantity: float
+    location: str = "Unspecified"  # "Pantry", "Fridge", "Freezer", etc.
+    quantity: float = 0  # Default 0 means "unknown quantity"
     expiration_date: Optional[date] = None
 
 
@@ -69,12 +69,12 @@ class PantryItem(BaseModel):
 
 
 class PantryItemCreate(BaseModel):
-    """Create new pantry item"""
+    """Create new pantry item - only name is required"""
     name: str = Field(..., min_length=1, max_length=100)
-    category: str = Field(..., min_length=1, max_length=50)
-    unit: str = Field(..., min_length=1, max_length=20)
+    category: str = Field(default="Other", max_length=50)
+    unit: str = Field(default="unit", max_length=20)
     min_threshold: float = Field(default=0, ge=0)
-    locations: List[dict] = Field(..., min_items=1)
+    locations: List[dict] = Field(default_factory=list)  # Optional, can be empty
 
     class Config:
         json_schema_extra = {

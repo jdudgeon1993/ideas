@@ -1,0 +1,53 @@
+name: Dump Supabase Schema
+
+on:
+  # Run when database migrations change
+  push:
+    branches: [main]
+    paths:
+      - 'database/**'
+  # Weekly on Monday at 6 AM UTC
+  schedule:
+    - cron: '0 6 * * 1'
+  # Manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dump-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install supabase
+
+      - name: Dump schema
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/dump_schema.py
+
+      - name: Check for changes
+        id: check
+        run: |
+          git diff --quiet database/schema_snapshot.md || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changed
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add database/schema_snapshot.md
+          git commit -m "chore: Update schema snapshot [automated]"
+          git push

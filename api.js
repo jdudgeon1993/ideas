@@ -122,6 +122,10 @@ class API {
     return this.call('/pantry/');
   }
 
+  static async getUnits() {
+    return this.call('/pantry/units');
+  }
+
   static async addPantryItem(item) {
     return this.call('/pantry/', {
       method: 'POST',

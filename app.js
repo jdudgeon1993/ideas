@@ -1247,21 +1247,17 @@ function openIngredientModal(item) {
   ).join('');
 
   const locations = item.locations || [];
-  const locationsHTML = locations.map((loc, idx) => `
+  // Only show location rows if item already has locations (editing) - otherwise start empty (adding)
+  const locationsHTML = locations.length > 0 ? locations.map((loc, idx) => `
     <div class="location-row" data-idx="${idx}">
       <select class="loc-name">
         ${savedLocations.map(l => `<option value="${l}" ${loc.location === l ? 'selected' : ''}>${l}</option>`).join('')}
       </select>
-      <input type="number" class="loc-qty" value="${loc.qty || 0}" step="0.1" min="0" placeholder="Qty">
-      <input type="date" class="loc-expiry" value="${loc.expiry || ''}">
+      <input type="number" class="loc-qty" value="${loc.qty || loc.quantity || 0}" step="0.1" min="0" placeholder="Qty">
+      <input type="date" class="loc-expiry" value="${loc.expiry || loc.expiration_date || ''}">
       <button type="button" class="btn-icon btn-remove" onclick="this.parentElement.remove()">×</button>
     </div>
-  `).join('') || `<div class="location-row">
-      <select class="loc-name">${locationOptions}</select>
-      <input type="number" class="loc-qty" value="1" step="0.1" min="0" placeholder="Qty">
-      <input type="date" class="loc-expiry">
-      <button type="button" class="btn-icon btn-remove" onclick="this.parentElement.remove()">×</button>
-    </div>`;
+  `).join('') : '<p class="help-text" style="margin:0.5rem 0;">Optional - add locations if you want to track where and how much.</p>';
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" onclick="closeModal()">
@@ -1282,7 +1278,7 @@ function openIngredientModal(item) {
             </div>
             <div class="form-group">
               <label>Unit</label>
-              <input type="text" id="ing-unit" value="${item.unit || ''}" placeholder="lb, oz, etc">
+              <input type="text" id="ing-unit" value="${item.unit || ''}" placeholder="lb, oz, etc" list="unit-suggestions">
             </div>
             <div class="form-group">
               <label>Min Stock</label>
@@ -1349,7 +1345,8 @@ async function saveIngredient(itemId) {
     const locName = locNameEl ? (locNameEl.value || '').trim() : '';
     const locQty = parseFloat(row.querySelector('.loc-qty')?.value) || 0;
     const locExpiry = row.querySelector('.loc-expiry')?.value || null;
-    if (locName && locQty > 0) {
+    // Include location even if qty is 0 (means "unknown quantity")
+    if (locName) {
       locations.push({ location: locName, quantity: locQty, expiration_date: locExpiry });
     }
   });
@@ -1359,11 +1356,7 @@ async function saveIngredient(itemId) {
     return;
   }
 
-  // Ensure at least one location
-  if (locations.length === 0) {
-    alert('Please add at least one location with quantity');
-    return;
-  }
+  // Locations are now optional - item can exist without specifying where it is
 
   try {
     if (itemId) {
@@ -1472,9 +1465,9 @@ function openRecipeModal(recipeId) {
     <div class="ingredient-row" data-idx="${idx}">
       <input type="text" class="ing-name" value="${ing.name || ''}" placeholder="Ingredient">
       <input type="number" class="ing-qty" value="${ing.qty || 0}" step="0.1" min="0">
-      <input type="text" class="ing-unit" value="${ing.unit || ''}" placeholder="unit">
+      <input type="text" class="ing-unit" value="${ing.unit || ''}" placeholder="unit" list="unit-suggestions">
     </div>
-  `).join('') || '<div class="ingredient-row"><input type="text" class="ing-name" placeholder="Ingredient"><input type="number" class="ing-qty" value="1" step="0.1" min="0"><input type="text" class="ing-unit" placeholder="unit"></div>';
+  `).join('') || '<div class="ingredient-row"><input type="text" class="ing-name" placeholder="Ingredient"><input type="number" class="ing-qty" value="1" step="0.1" min="0"><input type="text" class="ing-unit" placeholder="unit" list="unit-suggestions"></div>';
 
   modalRoot.innerHTML = `
     <div class="modal-overlay" onclick="closeModal()">
@@ -1526,7 +1519,7 @@ function addIngredientRow() {
   if (!list) return;
   const row = document.createElement('div');
   row.className = 'ingredient-row';
-  row.innerHTML = '<input type="text" class="ing-name" placeholder="Ingredient"><input type="number" class="ing-qty" value="1" step="0.1" min="0"><input type="text" class="ing-unit" placeholder="unit">';
+  row.innerHTML = '<input type="text" class="ing-name" placeholder="Ingredient"><input type="number" class="ing-qty" value="1" step="0.1" min="0"><input type="text" class="ing-unit" placeholder="unit" list="unit-suggestions">';
   list.appendChild(row);
 }
 
@@ -1756,6 +1749,7 @@ async function loadApp() {
   try {
     await Promise.all([
       loadSettings(),  // Load settings first for categories/locations
+      loadUnits(),     // Load unit suggestions for autocomplete
       loadPantry(),
       loadRecipes(),
       loadMealPlans(),
@@ -1765,11 +1759,42 @@ async function loadApp() {
     console.error('Error loading initial data:', error);
   }
 
+  // Create global unit datalist for autocomplete
+  createUnitDatalist();
+
   // Wire up UI buttons
   wireUpButtons();
 
   // Show default view
   showView('pantry');
+}
+
+/**
+ * Load available units for autocomplete
+ */
+window.cachedUnits = [];
+
+async function loadUnits() {
+  try {
+    const response = await API.getUnits();
+    window.cachedUnits = response.units || [];
+    console.log('Units loaded:', window.cachedUnits.length);
+  } catch (error) {
+    console.warn('Failed to load units, using defaults:', error);
+    window.cachedUnits = ['each', 'lb', 'oz', 'cup', 'tbsp', 'tsp', 'gallon', 'g', 'kg', 'ml', 'bunch', 'can', 'bottle', 'bag', 'box'];
+  }
+}
+
+function createUnitDatalist() {
+  // Remove existing if any
+  const existing = document.getElementById('unit-suggestions');
+  if (existing) existing.remove();
+
+  // Create new datalist
+  const datalist = document.createElement('datalist');
+  datalist.id = 'unit-suggestions';
+  datalist.innerHTML = window.cachedUnits.map(u => `<option value="${u}">`).join('');
+  document.body.appendChild(datalist);
 }
 
 /**
@@ -1887,6 +1912,26 @@ async function loadSettings() {
   }
 }
 
+/**
+ * Display mode (compact/comfortable)
+ */
+function applyDisplayMode() {
+  const isCompact = localStorage.getItem('display_mode') === 'compact';
+  document.body.classList.toggle('compact', isCompact);
+}
+
+function toggleDisplayMode() {
+  const isCurrentlyCompact = document.body.classList.contains('compact');
+  const newMode = isCurrentlyCompact ? 'comfortable' : 'compact';
+  localStorage.setItem('display_mode', newMode);
+  document.body.classList.toggle('compact', newMode === 'compact');
+  return newMode;
+}
+
+function getDisplayMode() {
+  return localStorage.getItem('display_mode') || 'comfortable';
+}
+
 function getSavedLocations() {
   return window.householdSettings.locations || DEFAULT_LOCATIONS;
 }
@@ -1933,8 +1978,8 @@ function addBulkRows(count) {
     row.className = 'bulk-entry-row';
     row.innerHTML = `
       <td><input type="text" class="bulk-name form-control" placeholder="Item name" /></td>
-      <td><input type="number" class="bulk-qty form-control" placeholder="0" min="0" step="0.5" /></td>
-      <td><input type="text" class="bulk-unit form-control" placeholder="unit" /></td>
+      <td><input type="number" class="bulk-qty form-control" placeholder="Qty" min="0" step="0.5" /></td>
+      <td><input type="text" class="bulk-unit form-control" placeholder="unit" list="unit-suggestions" /></td>
       <td><select class="bulk-category form-control">${catOptions}</select></td>
       <td><select class="bulk-location form-control">${locOptions}</select></td>
       <td><button class="btn btn-danger btn-sm" onclick="this.closest('tr').remove();updateBulkEntryCount();">&times;</button></td>
@@ -2342,6 +2387,18 @@ function openSettingsModal() {
           </div>
         </div>
 
+        <div class="settings-section">
+          <h3>Display</h3>
+          <div class="form-group" style="display:flex;align-items:center;gap:1rem;">
+            <label style="margin:0;">Layout density:</label>
+            <button type="button" class="btn btn-sm ${getDisplayMode() === 'compact' ? 'btn-primary' : 'btn-secondary'}"
+                    onclick="this.textContent = toggleDisplayMode() === 'compact' ? 'Compact' : 'Comfortable'; this.classList.toggle('btn-primary'); this.classList.toggle('btn-secondary');">
+              ${getDisplayMode() === 'compact' ? 'Compact' : 'Comfortable'}
+            </button>
+          </div>
+          <p class="help-text">Compact mode shows more content with less spacing.</p>
+        </div>
+
         <div class="form-actions">
           <button type="button" class="btn btn-secondary" onclick="resetSettingsToDefaults()">Reset to Defaults</button>
           <button type="button" class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
@@ -2494,6 +2551,8 @@ window.removeCategory = removeCategory;
 window.resetSettingsToDefaults = resetSettingsToDefaults;
 window.saveSettings = saveSettings;
 window.loadSettings = loadSettings;
+window.toggleDisplayMode = toggleDisplayMode;
+window.getDisplayMode = getDisplayMode;
 window.handleLogout = handleLogout;
 
 // Expose functions globally
@@ -2509,10 +2568,14 @@ window.loadPantry = loadPantry;
 window.loadRecipes = loadRecipes;
 window.loadShoppingList = loadShoppingList;
 window.loadMealPlans = loadMealPlans;
+window.loadUnits = loadUnits;
 
 async function initApp() {
   console.log('🍳 Chef\'s Kiss - Python Age 5.0');
   console.log('Backend:', window.CONFIG?.API_BASE || 'http://localhost:8000/api');
+
+  // Apply compact mode if enabled
+  applyDisplayMode();
 
   // Check if there was a token before auth check (since checkAuth clears invalid tokens)
   const hadTokenBeforeCheck = API.getToken() !== null;

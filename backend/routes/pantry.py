@@ -34,6 +34,51 @@ async def get_pantry(household_id: str = Depends(get_current_household)):
     }
 
 
+@router.get("/units")
+async def get_units(household_id: str = Depends(get_current_household)):
+    """
+    Get all distinct units used in this household's pantry and recipes.
+
+    Useful for autocomplete/suggestions when adding new items.
+    """
+    supabase = get_supabase()
+
+    # Get units from pantry
+    pantry_units = supabase.table('pantry_items')\
+        .select('unit')\
+        .eq('household_id', household_id)\
+        .execute()
+
+    # Get units from recipe ingredients
+    recipes = supabase.table('recipes')\
+        .select('ingredients')\
+        .eq('household_id', household_id)\
+        .execute()
+
+    units = set()
+
+    # Add pantry units
+    for item in pantry_units.data:
+        if item.get('unit'):
+            units.add(item['unit'].lower().strip())
+
+    # Add recipe ingredient units
+    for recipe in recipes.data:
+        ingredients = recipe.get('ingredients', []) or []
+        for ing in ingredients:
+            if ing.get('unit'):
+                units.add(ing['unit'].lower().strip())
+
+    # Add some common defaults if we don't have many
+    common_units = ['each', 'lb', 'oz', 'cup', 'tbsp', 'tsp', 'gallon', 'quart', 'pint', 'g', 'kg', 'ml', 'l', 'bunch', 'can', 'bottle', 'bag', 'box', 'package']
+    if len(units) < 5:
+        for u in common_units[:10]:
+            units.add(u)
+
+    # Sort and return
+    return {"units": sorted(list(units))}
+
+
 @router.post("/")
 async def add_pantry_item(
     item: PantryItemCreate,
@@ -58,12 +103,12 @@ async def add_pantry_item(
 
         item_id = item_response.data[0]['id']
 
-        # Insert locations
+        # Insert locations (if any provided)
         for location in item.locations:
             supabase.table('pantry_locations').insert({
                 'pantry_item_id': item_id,
-                'location_name': location['location'],
-                'quantity': location['quantity'],
+                'location_name': location.get('location', 'Unspecified'),
+                'quantity': location.get('quantity', 0),
                 'expiration_date': location.get('expiration_date')
             }).execute()
 
@@ -125,8 +170,8 @@ async def update_pantry_item(
             for location in item.locations:
                 supabase.table('pantry_locations').insert({
                     'pantry_item_id': item_id,
-                    'location_name': location['location'],
-                    'quantity': location['quantity'],
+                    'location_name': location.get('location', 'Unspecified'),
+                    'quantity': location.get('quantity', 0),
                     'expiration_date': location.get('expiration_date')
                 }).execute()
 
