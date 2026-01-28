@@ -4,7 +4,7 @@ Authentication Middleware - Python Age 5.0
 Validates Supabase JWT tokens and extracts user/household info.
 """
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from typing import Optional
@@ -65,10 +65,15 @@ async def get_current_user(
 
 
 async def get_current_household(
+    request: Request,
     user: dict = Depends(get_current_user)
 ) -> str:
     """
     Get the household ID for the current user.
+
+    Supports multi-household via X-Household-Id header.
+    If header is provided and user is a member, use that household.
+    Otherwise fall back to the user's first household.
 
     Raises:
         HTTPException: If user has no household
@@ -78,7 +83,10 @@ async def get_current_household(
     """
     supabase = get_supabase()
 
-    # Get household membership
+    # Check for explicit household selection via header
+    requested_hid = request.headers.get('X-Household-Id')
+
+    # Get all household memberships
     response = supabase.table('household_members')\
         .select('household_id')\
         .eq('user_id', user['id'])\
@@ -90,10 +98,18 @@ async def get_current_household(
             detail="User is not part of any household"
         )
 
-    return response.data[0]['household_id']
+    member_hids = [m['household_id'] for m in response.data]
+
+    # If a specific household was requested, verify membership
+    if requested_hid and requested_hid in member_hids:
+        return requested_hid
+
+    # Default to first household
+    return member_hids[0]
 
 
 async def get_optional_household(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))
 ) -> Optional[str]:
     """
@@ -108,6 +124,6 @@ async def get_optional_household(
 
     try:
         user = await get_current_user(credentials)
-        return await get_current_household(user)
+        return await get_current_household(request, user)
     except HTTPException:
         return None
