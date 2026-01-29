@@ -135,7 +135,11 @@ async function checkAuth() {
 
   try {
     // Verify token with /auth/me endpoint
-    await API.call('/auth/me');
+    const data = await API.call('/auth/me');
+    // Ensure household_id is in localStorage for Realtime and API headers
+    if (data.household_id) {
+      API.setActiveHouseholdId(data.household_id);
+    }
     return true;
   } catch (error) {
     console.log('Authentication check failed, clearing token:', error.message);
